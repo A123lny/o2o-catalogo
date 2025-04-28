@@ -229,17 +229,26 @@ export default function VehicleDetailPage() {
       });
     }
     
+    // Per debug - mostra le opzioni generate nella console
+    console.log("Opzioni di noleggio generate:", result);
+    
     return result;
   }, [rentalOptions]);
 
   useEffect(() => {
     // Set the default rental option
     if (enhancedRentalOptions && enhancedRentalOptions.length > 0) {
-      // Trovia l'opzione consigliata (quella a 36 mesi)
+      // Troviamo l'opzione consigliata (quella a 36 mesi)
       const recommendedOption = enhancedRentalOptions.find(option => 
         option.duration === 36 && option.type === 'NLT'
       );
-      setSelectedRentalOption(recommendedOption ? recommendedOption.id : enhancedRentalOptions[0].id);
+      
+      const optionId = recommendedOption ? recommendedOption.id : enhancedRentalOptions[0].id;
+      setSelectedRentalOption(optionId);
+      
+      // Debug: mostra l'opzione selezionata
+      console.log("ID opzione selezionata:", optionId);
+      console.log("Opzione selezionata:", enhancedRentalOptions.find(o => o.id === optionId));
     }
   }, [enhancedRentalOptions]);
 
