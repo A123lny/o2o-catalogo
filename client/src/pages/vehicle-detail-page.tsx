@@ -24,7 +24,7 @@ export default function VehicleDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [clientType, setClientType] = useState<'privato' | 'azienda'>('privato');
-  const [activeContractType, setActiveContractType] = useState<'all' | 'NLT' | 'RTB'>('all');
+  const [activeContractType, setActiveContractType] = useState<'NLT' | 'RTB'>('NLT');
 
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery<Vehicle>({
     queryKey: [`/api/vehicles/${vehicleId}`],
@@ -419,12 +419,6 @@ export default function VehicleDetailPage() {
                     {/* Filtro per tipo di contratto */}
                     <div className="flex border border-gray-200 rounded-lg mb-4 overflow-hidden">
                       <button 
-                        className={`flex-1 py-2 px-3 text-sm font-medium text-center ${activeContractType === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
-                        onClick={() => setActiveContractType('all')}
-                      >
-                        Tutte le soluzioni
-                      </button>
-                      <button 
                         className={`flex-1 py-2 px-3 text-sm font-medium text-center ${activeContractType === 'NLT' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                         onClick={() => setActiveContractType('NLT')}
                       >
@@ -440,8 +434,9 @@ export default function VehicleDetailPage() {
                     
                     <div className="space-y-4">
                       {enhancedRentalOptions
-                        .filter(option => activeContractType === 'all' || option.type === activeContractType)
-                        .map((option) => {
+                        .filter(option => option.type === activeContractType)
+                        .map((enhancedOption) => {
+                        const option = enhancedOption as EnhancedRentalOption;
                         const isRecommended = option.duration === 36 && option.type === 'NLT';
                         const isRecommendedRTB = option.duration === 36 && option.type === 'RTB';
                         const isRecommendedForKm = option.recommendedForKm === 20000;
