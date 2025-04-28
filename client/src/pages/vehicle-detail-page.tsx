@@ -421,6 +421,59 @@ export default function VehicleDetailPage() {
                   </TabsContent>
                 </Tabs>
               </div>
+              
+              {/* Auto simili */}
+              {relatedVehicles && relatedVehicles.length > 0 && (
+                <div className="mt-8 pt-8 border-t border-gray-200">
+                  <h2 className="text-2xl font-bold mb-6">Auto simili</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {relatedVehicles.map(relatedVehicle => (
+                      <div key={relatedVehicle.id} className="bg-white rounded-lg shadow-sm overflow-hidden transition-transform hover:translate-y-[-5px]">
+                        {/* Immagine */}
+                        <div className="relative h-44">
+                          <img 
+                            src={relatedVehicle.mainImage || "https://placehold.co/600x400?text=Immagine+non+disponibile"} 
+                            alt={relatedVehicle.title} 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute top-2 left-2 flex flex-col gap-1">
+                            {relatedVehicle.badges && Array.isArray(relatedVehicle.badges) && (relatedVehicle.badges as string[]).map((badge, idx) => (
+                              <span key={idx} className={`text-xs font-bold py-1 px-2 rounded uppercase ${
+                                badge === 'nlt' ? 'bg-blue-500 text-white' : 
+                                badge === 'rtb' ? 'bg-orange-500 text-white' : 
+                                badge === 'promo' ? 'bg-red-500 text-white' : 
+                                badge === 'new' ? 'bg-green-500 text-white' : 
+                                'bg-gray-500 text-white'
+                              }`}>
+                                {badge === 'nlt' ? 'NLT' : 
+                                badge === 'rtb' ? 'RTB' : 
+                                badge === 'promo' ? 'PROMO' : 
+                                badge === 'new' ? 'NUOVO' : 
+                                badge.toUpperCase()}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Dettagli */}
+                        <div className="p-4">
+                          <h3 className="font-semibold text-gray-800 text-lg mb-1">{relatedVehicle.title}</h3>
+                          <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
+                            <span>{relatedVehicle.fuelType} - {relatedVehicle.power} CV</span>
+                            <span>{relatedVehicle.mileage.toLocaleString()} km</span>
+                          </div>
+                          <div className="flex justify-between items-center mt-2">
+                            <span className="text-lg font-bold text-blue-600">€{relatedVehicle.discountPrice || relatedVehicle.price}/mese</span>
+                            <a href={`/vehicle/${relatedVehicle.id}`} className="text-blue-500 hover:text-blue-700 text-sm font-medium flex items-center">
+                              Dettagli <ChevronRight className="h-4 w-4 ml-1" />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Column - Info & Opzioni */}
