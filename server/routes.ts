@@ -299,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/categories/:id", async (req, res) => {
+  app.delete("/api/admin/categories/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteCategory(id);
@@ -310,7 +310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CRUD operations for rental options
-  app.get("/api/admin/vehicles/:id/rental-options", async (req, res) => {
+  app.get("/api/admin/vehicles/:id/rental-options", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const rentalOptions = await storage.getRentalOptions(id);
@@ -320,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/admin/rental-options/:id", async (req, res) => {
+  app.get("/api/admin/rental-options/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const rentalOption = await storage.getRentalOption(id);
@@ -335,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/vehicles/:id/rental-options", async (req, res) => {
+  app.post("/api/admin/vehicles/:id/rental-options", isAdmin, async (req, res) => {
     try {
       const vehicleId = parseInt(req.params.id);
       const validatedData = insertRentalOptionSchema.parse({
@@ -350,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/rental-options/:id", async (req, res) => {
+  app.put("/api/admin/rental-options/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertRentalOptionSchema.parse(req.body);
@@ -362,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/rental-options/:id", async (req, res) => {
+  app.delete("/api/admin/rental-options/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteRentalOption(id);
@@ -373,7 +373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Information requests management
-  app.get("/api/admin/requests", async (req, res) => {
+  app.get("/api/admin/requests", isAdmin, async (req, res) => {
     try {
       const requests = await storage.getRequests();
       res.json(requests);
@@ -382,7 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/requests/:id", async (req, res) => {
+  app.put("/api/admin/requests/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
@@ -398,7 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/requests/:id", async (req, res) => {
+  app.delete("/api/admin/requests/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteRequest(id);
