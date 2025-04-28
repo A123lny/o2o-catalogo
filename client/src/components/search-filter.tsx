@@ -17,7 +17,6 @@ interface SearchFilterProps {
   filters: {
     brandId: string;
     categoryId: string;
-    maxPrice: string;
     year: string;
     fuelType: string;
     condition: string;
@@ -26,7 +25,6 @@ interface SearchFilterProps {
 }
 
 export default function SearchFilter({ brands, categories, filters, onFilterChange }: SearchFilterProps) {
-  const [priceRange, setPriceRange] = useState<number[]>([0]);
   
   // Fuel type options
   const fuelTypes = [
@@ -53,21 +51,6 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
       label: (currentYear - i).toString() 
     }))
   ];
-  
-  // Price ranges
-  const priceRanges = [
-    { value: "", label: "Qualsiasi prezzo" },
-    { value: "30000", label: "Fino a €30.000" },
-    { value: "50000", label: "Fino a €50.000" },
-    { value: "100000", label: "Fino a €100.000" },
-    { value: "200000", label: "Fino a €200.000" },
-  ];
-
-  const handlePriceChange = (value: number[]) => {
-    setPriceRange(value);
-    const maxPrice = value[0] * 10000;
-    onFilterChange({ maxPrice: maxPrice > 0 ? maxPrice.toString() : "" });
-  };
 
   return (
     <div className="space-y-6">
@@ -132,35 +115,7 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
           </AccordionContent>
         </AccordionItem>
         
-        {/* Price Filter */}
-        <AccordionItem value="price">
-          <AccordionTrigger className="text-sm font-medium">Prezzo</AccordionTrigger>
-          <AccordionContent>
-            <RadioGroup 
-              value={filters.maxPrice} 
-              onValueChange={(value) => onFilterChange({ maxPrice: value })}
-              className="space-y-2"
-            >
-              {priceRanges.map(range => (
-                <div key={range.value} className="flex items-center space-x-2">
-                  <RadioGroupItem value={range.value} id={`price-${range.value || 'any'}`} />
-                  <Label htmlFor={`price-${range.value || 'any'}`} className="text-sm">{range.label}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-            
-            <div className="mt-4 space-y-4">
-              <Label className="text-sm">Prezzo massimo: {priceRange[0] > 0 ? `€${(priceRange[0] * 10000).toLocaleString()}` : 'Nessun limite'}</Label>
-              <Slider
-                defaultValue={[0]}
-                max={30}
-                step={1}
-                value={priceRange}
-                onValueChange={handlePriceChange}
-              />
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+
         
         {/* Year Filter */}
         <AccordionItem value="year">

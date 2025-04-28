@@ -15,6 +15,31 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
     return null;
   }
 
+  // Filtra i veicoli in base al tab selezionato
+  const filteredVehicles = (() => {
+    switch (activeTab) {
+      case "nlt":
+        // Mostra veicoli che hanno opzioni NLT (mostreremo solo i primi 6)
+        return vehicles.filter(v => 
+          // Per semplicità, useremo alcuni veicoli specifici per questo tab
+          [1, 3, 5, 7, 9].includes(v.id)
+        ).slice(0, 6);
+      case "rtb":
+        // Mostra veicoli che hanno opzioni RTB (mostreremo solo i primi 6)
+        return vehicles.filter(v => 
+          // Per semplicità, useremo alcuni veicoli specifici per questo tab
+          [2, 4, 6, 8, 10].includes(v.id)
+        ).slice(0, 6);
+      case "2life":
+        // Mostra veicoli usati (2Life)
+        return vehicles.filter(v => v.condition === "2Life").slice(0, 6);
+      case "featured":
+      default:
+        // Mostra veicoli in evidenza
+        return vehicles.filter(v => v.featured).slice(0, 6);
+    }
+  })();
+
   return (
     <section className="py-12 bg-neutral-100">
       <div className="container mx-auto px-4">
@@ -66,9 +91,15 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {vehicles.map(vehicle => (
-            <VehicleCard key={vehicle.id} vehicle={vehicle} />
-          ))}
+          {filteredVehicles.length > 0 ? (
+            filteredVehicles.map(vehicle => (
+              <VehicleCard key={vehicle.id} vehicle={vehicle} />
+            ))
+          ) : (
+            <div className="lg:col-span-3 text-center py-10">
+              <p className="text-lg text-gray-600">Nessun veicolo disponibile in questa categoria.</p>
+            </div>
+          )}
         </div>
         
         <div className="mt-10 text-center">

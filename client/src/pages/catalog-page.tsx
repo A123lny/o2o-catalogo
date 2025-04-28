@@ -12,7 +12,6 @@ export default function CatalogPage() {
   const [filters, setFilters] = useState({
     brandId: "",
     categoryId: "",
-    maxPrice: "",
     year: "",
     fuelType: "",
     condition: "",
@@ -38,7 +37,6 @@ export default function CatalogPage() {
     setFilters({
       brandId: "",
       categoryId: "",
-      maxPrice: "",
       year: "",
       fuelType: "",
       condition: "",

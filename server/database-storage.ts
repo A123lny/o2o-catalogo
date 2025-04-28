@@ -184,9 +184,11 @@ export class DatabaseStorage implements IStorage {
         query = query.where(eq(vehicles.categoryId, parseInt(filters.categoryId)));
       }
       
-      if (filters.maxPrice) {
+      // Il filtro per il prezzo è stato rimosso poiché i prezzi di vendita non sono più utilizzati
+      // Teniamo il codice commentato come riferimento
+      /* if (filters.maxPrice) {
         query = query.where(lte(vehicles.price, parseInt(filters.maxPrice)));
-      }
+      } */
       
       if (filters.year) {
         query = query.where(eq(vehicles.year, parseInt(filters.year)));
