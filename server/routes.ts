@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
@@ -12,6 +12,14 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   }
 });
+
+// Middleware per la verifica dell'amministratore
+const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated() || req.user.role !== "admin") {
+    return res.status(403).json({ message: "Accesso negato" });
+  }
+  next();
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
@@ -112,7 +120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin API routes
 
   // Dashboard stats
-  app.get("/api/admin/stats", async (req, res) => {
+  app.get("/api/admin/stats", isAdmin, async (req, res) => {
     try {
       const stats = await storage.getStats();
       res.json(stats);
@@ -122,7 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CRUD operations for vehicles
-  app.get("/api/admin/vehicles", async (req, res) => {
+  app.get("/api/admin/vehicles", isAdmin, async (req, res) => {
     try {
       const vehicles = await storage.getAdminVehicles();
       res.json(vehicles);
@@ -131,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/vehicles", upload.single("mainImage"), async (req, res) => {
+  app.post("/api/admin/vehicles", isAdmin, upload.single("mainImage"), async (req, res) => {
     try {
       const vehicleData = JSON.parse(req.body.data);
       const validatedData = insertVehicleSchema.parse(vehicleData);

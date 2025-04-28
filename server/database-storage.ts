@@ -299,6 +299,15 @@ export class DatabaseStorage implements IStorage {
       .where(eq(rentalOptions.vehicleId, vehicleId));
   }
   
+  async getRentalOption(id: number): Promise<RentalOption | undefined> {
+    const [option] = await db
+      .select()
+      .from(rentalOptions)
+      .where(eq(rentalOptions.id, id));
+    
+    return option;
+  }
+  
   async createRentalOption(option: InsertRentalOption): Promise<RentalOption> {
     const [newOption] = await db
       .insert(rentalOptions)
