@@ -78,7 +78,7 @@ const badgeOptions = [
 
 export default function VehicleEditPage() {
   const [, params] = useRoute("/admin/vehicles/:id/edit");
-  const [, navigate] = useLocation();
+  const [location, setLocation] = useLocation();
   const isEditMode = !!params?.id;
   const vehicleId = params?.id ? parseInt(params.id) : null;
   
@@ -179,7 +179,7 @@ export default function VehicleEditPage() {
           ? "Il veicolo è stato aggiornato con successo." 
           : "Il nuovo veicolo è stato creato con successo.",
       });
-      navigate('/admin/vehicles');
+      setLocation('/admin/vehicles');
     },
     onError: (error: Error) => {
       toast({
@@ -288,7 +288,7 @@ export default function VehicleEditPage() {
                 variant="ghost" 
                 size="icon" 
                 className="mr-2"
-                onClick={() => navigate('/admin/vehicles')}
+                onClick={() => setLocation('/admin/vehicles')}
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
@@ -938,7 +938,7 @@ export default function VehicleEditPage() {
                   type="button"
                   variant="outline"
                   className="mr-2"
-                  onClick={() => navigate('/admin/vehicles')}
+                  onClick={() => setLocation('/admin/vehicles')}
                 >
                   Annulla
                 </Button>

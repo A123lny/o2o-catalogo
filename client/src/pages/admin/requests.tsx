@@ -221,7 +221,7 @@ export default function RequestsPage() {
                   <SelectValue placeholder="Filtra per stato" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tutti gli stati</SelectItem>
+                  <SelectItem value="all">Tutti gli stati</SelectItem>
                   <SelectItem value="new">Nuove</SelectItem>
                   <SelectItem value="in_progress">In gestione</SelectItem>
                   <SelectItem value="completed">Completate</SelectItem>

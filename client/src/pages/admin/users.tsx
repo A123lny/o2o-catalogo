@@ -239,7 +239,7 @@ export default function UsersPage() {
                   <SelectValue placeholder="Filtra per ruolo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tutti i ruoli</SelectItem>
+                  <SelectItem value="all">Tutti i ruoli</SelectItem>
                   <SelectItem value="admin">Amministratori</SelectItem>
                   <SelectItem value="user">Utenti</SelectItem>
                 </SelectContent>

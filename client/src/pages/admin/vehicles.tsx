@@ -52,10 +52,11 @@ import {
   EyeIcon,
   Badge,
   TagIcon,
+  Car,
 } from "lucide-react";
 
 export default function VehiclesPage() {
-  const [, navigate] = useLocation();
+  const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
@@ -144,7 +145,7 @@ export default function VehiclesPage() {
               <p className="text-neutral-500">Gestisci il catalogo dei veicoli</p>
             </div>
             
-            <Button onClick={() => navigate('/admin/vehicles/new')} className="bg-primary">
+            <Button onClick={() => setLocation('/admin/vehicles/new')} className="bg-primary">
               <PlusCircle className="h-4 w-4 mr-2" /> Nuovo Veicolo
             </Button>
           </div>
@@ -167,7 +168,7 @@ export default function VehiclesPage() {
                   <SelectValue placeholder="Filtra per marca" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tutte le marche</SelectItem>
+                  <SelectItem value="all">Tutte le marche</SelectItem>
                   {brands?.map(brand => (
                     <SelectItem key={brand.id} value={brand.id.toString()}>
                       {brand.name}
@@ -181,7 +182,7 @@ export default function VehiclesPage() {
                   <SelectValue placeholder="Filtra per categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tutte le categorie</SelectItem>
+                  <SelectItem value="all">Tutte le categorie</SelectItem>
                   {categories?.map(category => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
@@ -278,10 +279,10 @@ export default function VehiclesPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Azioni</DropdownMenuLabel>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => navigate(`/vehicle/${vehicle.id}`)}>
+                              <DropdownMenuItem onClick={() => setLocation(`/vehicle/${vehicle.id}`)}>
                                 <EyeIcon className="h-4 w-4 mr-2" /> Visualizza
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => navigate(`/admin/vehicles/${vehicle.id}/edit`)}>
+                              <DropdownMenuItem onClick={() => setLocation(`/admin/vehicles/${vehicle.id}/edit`)}>
                                 <Edit className="h-4 w-4 mr-2" /> Modifica
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDeleteClick(vehicle.id)}>
@@ -304,7 +305,7 @@ export default function VehiclesPage() {
                     ? 'Nessun veicolo corrisponde ai criteri di ricerca' 
                     : 'Aggiungi il tuo primo veicolo per iniziare'}
                 </p>
-                <Button onClick={() => navigate('/admin/vehicles/new')}>
+                <Button onClick={() => setLocation('/admin/vehicles/new')}>
                   <PlusCircle className="h-4 w-4 mr-2" /> Nuovo Veicolo
                 </Button>
               </div>

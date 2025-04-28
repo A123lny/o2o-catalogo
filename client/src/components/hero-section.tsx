@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Brand, Category } from "@shared/schema";
 import { 
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 
 export default function HeroSection() {
-  const [location, navigate] = useNavigate();
+  const [location, setLocation] = useLocation();
   const [filters, setFilters] = useState({
     brandId: "",
     modelId: "",
@@ -40,7 +40,7 @@ export default function HeroSection() {
     });
     
     // Navigate to catalog with filters
-    navigate(`/catalog?${queryParams.toString()}`);
+    setLocation(`/catalog?${queryParams.toString()}`);
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -94,7 +94,7 @@ export default function HeroSection() {
                     <SelectValue placeholder="Tutte le marche" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tutte le marche</SelectItem>
+                    <SelectItem value="all">Tutte le marche</SelectItem>
                     {brands?.map(brand => (
                       <SelectItem key={brand.id} value={brand.id.toString()}>
                         {brand.name}
@@ -114,7 +114,7 @@ export default function HeroSection() {
                     <SelectValue placeholder="Tutti i modelli" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tutti i modelli</SelectItem>
+                    <SelectItem value="all">Tutti i modelli</SelectItem>
                     {/* Would populate with models based on selected brand */}
                   </SelectContent>
                 </Select>
@@ -129,7 +129,7 @@ export default function HeroSection() {
                     <SelectValue placeholder="Tutte le categorie" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tutte le categorie</SelectItem>
+                    <SelectItem value="all">Tutte le categorie</SelectItem>
                     {categories?.map(category => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
