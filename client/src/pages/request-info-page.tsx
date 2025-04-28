@@ -441,7 +441,12 @@ export default function RequestInfoPage() {
                       
                       <div className="flex justify-between items-baseline mb-2">
                         <span className="text-gray-600">Canone mensile:</span>
-                        <span className="text-xl font-bold text-blue-600">€ {selectedOption.monthlyPrice.toLocaleString()}</span>
+                        <span className="text-xl font-bold text-blue-600">
+                          € {selectedOption.monthlyPrice.toLocaleString()}
+                          <span className="text-xs ml-1 text-gray-500 font-normal">
+                            {vehicle?.categoryId === 2 ? "(IVA esclusa)" : "(IVA inclusa)"}
+                          </span>
+                        </span>
                       </div>
                       
                       <div className="text-sm text-gray-600 space-y-1">
@@ -451,7 +456,12 @@ export default function RequestInfoPage() {
                         </div>
                         <div className="flex justify-between">
                           <span>Anticipo:</span>
-                          <span className="font-medium">€ {selectedOption.deposit.toLocaleString()}</span>
+                          <span className="font-medium">
+                            € {selectedOption.deposit.toLocaleString()}
+                            <span className="text-xs ml-1 text-gray-500">
+                              {vehicle?.categoryId === 2 ? "(IVA esclusa)" : "(IVA inclusa)"}
+                            </span>
+                          </span>
                         </div>
                         
                         {/* Deposito cauzionale */}
@@ -486,7 +496,12 @@ export default function RequestInfoPage() {
                         {selectedOption.finalPayment && (
                           <div className="flex justify-between">
                             <span>Riscatto finale:</span>
-                            <span className="font-medium">€ {selectedOption.finalPayment.toLocaleString()}</span>
+                            <span className="font-medium">
+                              € {selectedOption.finalPayment.toLocaleString()}
+                              <span className="text-xs ml-1 text-gray-500">
+                                {vehicle?.categoryId === 2 ? "(IVA esclusa)" : "(IVA inclusa)"}
+                              </span>
+                            </span>
                           </div>
                         )}
                       </div>
