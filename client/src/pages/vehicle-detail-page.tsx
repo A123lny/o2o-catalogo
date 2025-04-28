@@ -16,6 +16,66 @@ interface EnhancedRentalOption extends RentalOption {
   includedServices?: string[];
 }
 
+// Funzione per convertire i nomi dei colori comuni in esadecimali
+function getColorHex(colorName: string): string | null {
+  const colorMap: Record<string, string> = {
+    // Colori base
+    'nero': '#000000',
+    'bianco': '#FFFFFF',
+    'grigio': '#808080',
+    'argento': '#C0C0C0',
+    'rosso': '#FF0000',
+    'blu': '#0000FF',
+    'verde': '#008000',
+    'giallo': '#FFFF00',
+    'arancione': '#FFA500',
+    'marrone': '#8B4513',
+    'beige': '#F5F5DC',
+    'viola': '#800080',
+    'azzurro': '#007FFF',
+    
+    // Varianti specifiche
+    'grigio chiaro': '#D3D3D3',
+    'grigio scuro': '#696969',
+    'blu scuro': '#00008B',
+    'blu navy': '#000080',
+    'rosso scuro': '#8B0000',
+    'verde scuro': '#006400',
+    'verde chiaro': '#90EE90',
+    'verde oliva': '#808000',
+    'bordeaux': '#800000',
+    'nero metallizzato': '#2C2C2C',
+    'bianco perla': '#F5F5F5',
+    
+    // Interni
+    'pelle nera': '#1A1A1A',
+    'pelle beige': '#E8E6D9',
+    'pelle marrone': '#704214',
+    'pelle grigia': '#9E9E9E',
+    'tessuto nero': '#222222',
+    'tessuto grigio': '#777777',
+    'alcantara': '#383838'
+  };
+  
+  // Case insensitive search
+  const lowerColorName = colorName.toLowerCase();
+  
+  // Cerca corrispondenza esatta
+  if (colorMap[lowerColorName]) {
+    return colorMap[lowerColorName];
+  }
+  
+  // Cerca corrispondenza parziale
+  for (const [key, value] of Object.entries(colorMap)) {
+    if (lowerColorName.includes(key)) {
+      return value;
+    }
+  }
+  
+  // Nessuna corrispondenza trovata
+  return null;
+}
+
 export default function VehicleDetailPage() {
   const [, navigate] = useLocation();
   const [, params] = useRoute("/vehicle/:id");
@@ -321,6 +381,12 @@ export default function VehicleDetailPage() {
                       Equipaggiamenti
                     </TabsTrigger>
                     <TabsTrigger 
+                      value="colors" 
+                      className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium"
+                    >
+                      Colori
+                    </TabsTrigger>
+                    <TabsTrigger 
                       value="details" 
                       className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium"
                     >
@@ -345,6 +411,52 @@ export default function VehicleDetailPage() {
                         )) : 
                         <p className="text-gray-500 italic">Nessun equipaggiamento specificato.</p>
                       }
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="colors" className="pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Colore Esterno</h3>
+                        <div className="flex items-start gap-4">
+                          {vehicle.color && (
+                            <div className="flex flex-col items-center">
+                              <div 
+                                className="w-16 h-16 rounded-full border border-gray-200 shadow-sm"
+                                style={{ 
+                                  backgroundColor: vehicle.colorHex || getColorHex(vehicle.color) || '#e5e5e5',
+                                  backgroundImage: vehicle.colorHex ? 'none' : 'linear-gradient(to bottom right, #f5f5f5, #e0e0e0)' 
+                                }}
+                              ></div>
+                              <span className="mt-2 text-sm text-center">{vehicle.color}</span>
+                            </div>
+                          )}
+                          {!vehicle.color && (
+                            <p className="text-gray-500 italic">Nessun colore esterno specificato.</p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Colore Interno</h3>
+                        <div className="flex items-start gap-4">
+                          {vehicle.interiorColor && (
+                            <div className="flex flex-col items-center">
+                              <div 
+                                className="w-16 h-16 rounded-full border border-gray-200 shadow-sm"
+                                style={{ 
+                                  backgroundColor: vehicle.interiorColorHex || getColorHex(vehicle.interiorColor) || '#e5e5e5',
+                                  backgroundImage: vehicle.interiorColorHex ? 'none' : 'linear-gradient(to bottom right, #f5f5f5, #e0e0e0)' 
+                                }}
+                              ></div>
+                              <span className="mt-2 text-sm text-center">{vehicle.interiorColor}</span>
+                            </div>
+                          )}
+                          {!vehicle.interiorColor && (
+                            <p className="text-gray-500 italic">Nessun colore interno specificato.</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </TabsContent>
                   
