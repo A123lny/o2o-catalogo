@@ -605,113 +605,155 @@ export default function VehicleDetailPage() {
                 
                 {/* Opzioni contratto */}
                 {filteredOptions.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {filteredOptions
-                      .sort((a, b) => a.duration - b.duration) // Ordina per durata
+                      // Mette 36 mesi all'inizio, poi ordina il resto per durata
+                      .sort((a, b) => {
+                        if (a.duration === 36) return -1;
+                        if (b.duration === 36) return 1;
+                        return a.duration - b.duration;
+                      })
                       .map((option) => {
-                        // Determina se questa è l'opzione consigliata per la durata (36 mesi)
+                        // Determina se questa è l'opzione consigliata
                         const isRecommended = option.duration === 36;
+                        
+                        // Calcola i prezzi con/senza IVA (assumendo che i prezzi nel DB sono senza IVA)
+                        const vatMultiplier = 1.22; // IVA al 22%
+                        const monthlyPrice = clientType === 'private' 
+                          ? Math.round(option.monthlyPrice * vatMultiplier) 
+                          : option.monthlyPrice;
+                        const deposit = clientType === 'private'
+                          ? Math.round(option.deposit * vatMultiplier)
+                          : option.deposit;
+                        
+                        // Nome dell'opzione (es. Smart 24)
+                        const optionName = `${option.type === 'NLT' ? 'Smart' : 'Flex'} ${option.duration}`;
                         
                         return (
                           <div 
                             key={option.id}
-                            onClick={() => setSelectedRentalOption(option.id)}
-                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                            className={`border rounded-xl overflow-hidden transition-all ${
                               selectedRentalOption === option.id 
-                                ? `border-2 ${option.type === 'NLT' ? 'border-blue-400' : 'border-orange-400'} bg-gray-50` 
-                                : 'border-gray-200 hover:border-gray-300'
+                                ? `border-2 ${option.type === 'NLT' ? 'border-blue-500' : 'border-orange-500'}` 
+                                : 'border-gray-200'
                             }`}
                           >
-                            <div className="flex justify-between mb-2">
-                              <h3 className="font-bold text-gray-800">{option.duration} mesi</h3>
-                              <div className="flex items-center">
-                                <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                                  option.type === 'NLT' ? 'bg-blue-500' : 'bg-orange-500'
-                                }`}></span>
-                                <span className="text-sm font-medium text-gray-600">
-                                  {option.type === 'NLT' ? 'Noleggio' : 'Rent to Buy'}
-                                </span>
+                            {/* Header con bordo colorato */}
+                            <div 
+                              className="relative"
+                              style={{ 
+                                borderLeft: `4px solid ${option.type === 'NLT' ? '#3b82f6' : '#f97316'}`
+                              }}
+                            >
+                              {/* Badge "Popolare" o "Consigliato" */}
+                              {isRecommended && (
+                                <div className="absolute right-3 top-3">
+                                  <span className="inline-block text-xs font-medium bg-blue-500 text-white px-3 py-1 rounded-full">
+                                    Popolare
+                                  </span>
+                                </div>
+                              )}
+                              
+                              <div className="p-4">
+                                <div className="flex items-center mb-2">
+                                  {/* Radio button per la selezione */}
+                                  <div 
+                                    className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
+                                      selectedRentalOption === option.id 
+                                        ? option.type === 'NLT' ? 'border-blue-500' : 'border-orange-500' 
+                                        : 'border-gray-300'
+                                    }`}
+                                    onClick={() => setSelectedRentalOption(option.id)}
+                                  >
+                                    {selectedRentalOption === option.id && (
+                                      <div className={`w-3 h-3 rounded-full ${
+                                        option.type === 'NLT' ? 'bg-blue-500' : 'bg-orange-500'
+                                      }`}></div>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Nome dell'opzione */}
+                                  <h3 className="text-xl font-bold text-gray-800">{optionName}</h3>
+                                </div>
+                                
+                                {/* Prezzo mensile in evidenza */}
+                                <div className="mt-3">
+                                  <div className="flex items-baseline">
+                                    <span className="text-3xl font-bold text-blue-600">€{monthlyPrice}</span>
+                                    <span className="text-gray-500 ml-1">/mese {clientType === 'private' ? '(IVA incl.)' : '(IVA escl.)'}</span>
+                                  </div>
+                                </div>
+                                
+                                {/* Dettagli veloci */}
+                                <div className="flex flex-wrap mt-4 text-gray-600 text-sm">
+                                  <div className="flex items-center mr-6 mb-2">
+                                    <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                                    <span>Durata: {option.duration} mesi</span>
+                                  </div>
+                                  
+                                  {option.annualMileage && (
+                                    <div className="flex items-center mb-2">
+                                      <Gauge className="h-4 w-4 mr-2 text-gray-500" />
+                                      <span>{option.annualMileage.toLocaleString()} km/anno</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Anticipo */}
+                                <div className="mt-3 text-gray-600 text-sm">
+                                  <span className="inline-block mr-1">€</span>
+                                  <span>Anticipo: {deposit.toLocaleString()}</span>
+                                </div>
                               </div>
                             </div>
                             
-                            {isRecommended && (
-                              <div className="mb-2">
-                                <span className="inline-block text-xs font-medium bg-green-100 text-green-800 px-2 py-0.5 rounded">
-                                  Soluzione consigliata
-                                </span>
-                              </div>
-                            )}
-                            
-                            <div className="grid grid-cols-2 gap-4 mb-3">
-                              <div>
-                                <span className="text-sm text-gray-500">Anticipo</span>
-                                <p className="font-bold text-gray-900">€{option.deposit.toLocaleString()}</p>
-                                <p className="text-xs text-gray-500 mt-0.5">
-                                  {clientType === 'private' ? 'IVA inclusa' : 'IVA esclusa'}
-                                </p>
-                              </div>
-                              <div>
-                                <span className="text-sm text-gray-500">Canone mensile</span>
-                                <p className="font-bold text-gray-900">€{option.monthlyPrice.toLocaleString()}</p>
-                                <p className="text-xs text-gray-500 mt-0.5">
-                                  {clientType === 'private' ? 'IVA inclusa' : 'IVA esclusa'}
-                                </p>
-                              </div>
-                              
-                              {/* Mostra il deposito cauzionale se presente */}
-                              {option.caution !== null && option.caution !== undefined && (
-                                <div>
-                                  <span className="text-sm text-gray-500">Deposito cauzionale</span>
-                                  <p className="font-bold text-gray-900">€{option.caution.toLocaleString()}</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">
-                                    {clientType === 'private' ? 'IVA inclusa' : 'IVA esclusa'}
-                                  </p>
-                                </div>
-                              )}
-                              
-                              {/* Mostra le spese di istruttoria se presenti */}
-                              {option.setupFee !== null && option.setupFee !== undefined && (
-                                <div>
-                                  <span className="text-sm text-gray-500">Spese istruttoria</span>
-                                  <p className="font-bold text-gray-900">€{option.setupFee.toLocaleString()}</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">
-                                    {clientType === 'private' ? 'IVA inclusa' : 'IVA esclusa'}
-                                  </p>
-                                </div>
-                              )}
-                              
-                              {/* Mostra il riscatto finale solo per RTB */}
-                              {option.type === 'RTB' && option.finalPayment && (
-                                <div>
-                                  <span className="text-sm text-gray-500">Riscatto finale</span>
-                                  <p className="font-bold text-gray-900">€{option.finalPayment.toLocaleString()}</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">
-                                    {clientType === 'private' ? 'IVA inclusa' : 'IVA esclusa'}
-                                  </p>
-                                </div>
-                              )}
-                              
-                              {/* Mostra il chilometraggio annuo per NLT */}
-                              {option.type === 'NLT' && option.annualMileage && (
-                                <div>
-                                  <span className="text-sm text-gray-500">Km/anno</span>
-                                  <p className="font-bold text-gray-900">{option.annualMileage.toLocaleString()}</p>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* Mostra i servizi inclusi se l'opzione è selezionata */}
-                            {selectedRentalOption === option.id && option.includedServices && (
-                              <div className="mt-4 pt-4 border-t border-gray-200">
+                            {/* Dettagli servizi inclusi */}
+                            {selectedRentalOption === option.id && (
+                              <div className="border-t border-gray-200 p-4 bg-gray-50">
                                 <h4 className="font-medium text-gray-700 mb-2">Inclusi nel canone:</h4>
-                                <ul className="space-y-1">
-                                  {Array.isArray(option.includedServices) && option.includedServices.map((service, idx) => (
-                                    <li key={idx} className="flex items-start text-sm">
-                                      <Shield className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                                      <span>{service}</span>
-                                    </li>
-                                  ))}
-                                </ul>
+                                {Array.isArray(option.includedServices) && option.includedServices.length > 0 ? (
+                                  <p className="text-sm text-gray-600">
+                                    {option.includedServices.join(', ')}
+                                  </p>
+                                ) : (
+                                  <p className="text-sm text-gray-500 italic">Informazioni non disponibili</p>
+                                )}
+                                
+                                {/* Altri dettagli */}
+                                <div className="grid grid-cols-2 gap-3 mt-4">
+                                  {option.caution !== null && option.caution !== undefined && (
+                                    <div>
+                                      <span className="text-xs text-gray-500 block">Deposito cauzionale</span>
+                                      <p className="text-sm font-medium">
+                                        €{(clientType === 'private' 
+                                           ? Math.round(option.caution * vatMultiplier) 
+                                           : option.caution).toLocaleString()}
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {option.setupFee !== null && option.setupFee !== undefined && (
+                                    <div>
+                                      <span className="text-xs text-gray-500 block">Spese istruttoria</span>
+                                      <p className="text-sm font-medium">
+                                        €{(clientType === 'private' 
+                                           ? Math.round(option.setupFee * vatMultiplier) 
+                                           : option.setupFee).toLocaleString()}
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {option.type === 'RTB' && option.finalPayment && (
+                                    <div>
+                                      <span className="text-xs text-gray-500 block">Riscatto finale</span>
+                                      <p className="text-sm font-medium">
+                                        €{(clientType === 'private' 
+                                           ? Math.round(option.finalPayment * vatMultiplier) 
+                                           : option.finalPayment).toLocaleString()}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
                           </div>
