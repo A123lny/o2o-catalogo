@@ -64,6 +64,7 @@ export const rentalOptions = pgTable("rental_options", {
   monthlyPrice: integer("monthly_price").notNull(),
   finalPayment: integer("final_payment"), // for RTB
   isDefault: boolean("is_default").default(false),
+  includedServices: jsonb("included_services"), // Array of services included in the contract
 });
 
 // Information requests table

@@ -13,6 +13,7 @@ import { Vehicle, RentalOption } from "@shared/schema";
 // Estensione del tipo RentalOption per le opzioni raccomandate
 interface EnhancedRentalOption extends RentalOption {
   recommendedForKm?: number;
+  includedServices?: string[];
 }
 
 export default function VehicleDetailPage() {
@@ -53,6 +54,24 @@ export default function VehicleDetailPage() {
     
     // Se esiste un'opzione NLT, ne creiamo altre con durate diverse
     if (originalNlt) {
+      // Aggiungiamo servizi inclusi all'opzione originale
+      const updatedOriginalNlt = {
+        ...originalNlt,
+        includedServices: [
+          "Manutenzione ordinaria e straordinaria",
+          "Assicurazione RCA",
+          "Copertura Kasko e Furto/Incendio",
+          "Assistenza stradale 24/7",
+          "Cambio pneumatici stagionali"
+        ]
+      };
+      
+      // Aggiorniamo il primo elemento corrispondente a originalNlt
+      const index = result.findIndex(o => o.id === originalNlt.id);
+      if (index !== -1) {
+        result[index] = updatedOriginalNlt;
+      }
+      
       // Versione 24 mesi
       result.push({
         ...originalNlt,
@@ -60,7 +79,13 @@ export default function VehicleDetailPage() {
         duration: 24,
         deposit: Math.round(originalNlt.deposit * 0.8),
         monthlyPrice: Math.round(originalNlt.monthlyPrice * 1.15),
-        recommendedForKm: 15000
+        recommendedForKm: 15000,
+        includedServices: [
+          "Manutenzione ordinaria",
+          "Assicurazione RCA",
+          "Copertura Furto/Incendio",
+          "Assistenza stradale"
+        ]
       });
       
       // Versione 48 mesi
@@ -71,12 +96,36 @@ export default function VehicleDetailPage() {
         deposit: Math.round(originalNlt.deposit * 1.2),
         monthlyPrice: Math.round(originalNlt.monthlyPrice * 0.85),
         annualMileage: 20000,
-        recommendedForKm: 20000
+        recommendedForKm: 20000,
+        includedServices: [
+          "Manutenzione ordinaria e straordinaria",
+          "Assicurazione RCA",
+          "Copertura Kasko e Furto/Incendio",
+          "Assistenza stradale 24/7",
+          "Cambio pneumatici stagionali",
+          "Auto sostitutiva"
+        ]
       });
     }
     
     // Se esiste un'opzione RTB, ne creiamo altre con durate diverse
     if (originalRtb) {
+      // Aggiungiamo servizi inclusi all'opzione originale
+      const updatedOriginalRtb = {
+        ...originalRtb,
+        includedServices: [
+          "Manutenzione ordinaria per i primi 12 mesi",
+          "Garanzia estesa per la durata del contratto",
+          "Prima revisione gratuita"
+        ]
+      };
+      
+      // Aggiorniamo il primo elemento corrispondente a originalRtb
+      const index = result.findIndex(o => o.id === originalRtb.id);
+      if (index !== -1) {
+        result[index] = updatedOriginalRtb;
+      }
+      
       // Versione 24 mesi
       result.push({
         ...originalRtb,
@@ -84,7 +133,12 @@ export default function VehicleDetailPage() {
         duration: 24,
         deposit: Math.round(originalRtb.deposit * 0.9),
         monthlyPrice: Math.round(originalRtb.monthlyPrice * 1.2),
-        finalPayment: Math.round((originalRtb.finalPayment || 0) * 1.1)
+        finalPayment: Math.round((originalRtb.finalPayment || 0) * 1.1),
+        includedServices: [
+          "Manutenzione ordinaria per i primi 18 mesi",
+          "Garanzia estesa per la durata del contratto",
+          "Due tagliandi gratuiti"
+        ]
       });
       
       // Versione 60 mesi
@@ -94,7 +148,13 @@ export default function VehicleDetailPage() {
         duration: 60,
         deposit: Math.round(originalRtb.deposit * 1.3),
         monthlyPrice: Math.round(originalRtb.monthlyPrice * 0.75),
-        finalPayment: Math.round((originalRtb.finalPayment || 0) * 0.9)
+        finalPayment: Math.round((originalRtb.finalPayment || 0) * 0.9),
+        includedServices: [
+          "Manutenzione ordinaria per i primi 24 mesi",
+          "Garanzia estesa per la durata del contratto",
+          "Tre tagliandi gratuiti",
+          "Prima immatricolazione inclusa"
+        ]
       });
     }
     
