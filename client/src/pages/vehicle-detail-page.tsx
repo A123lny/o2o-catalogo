@@ -398,24 +398,6 @@ export default function VehicleDetailPage() {
                     <div className="prose max-w-none">
                       <p className="text-gray-700 leading-relaxed">{vehicle.description || 'Nessuna descrizione disponibile per questo veicolo.'}</p>
                     </div>
-                    
-                    {/* Auto Simili nella tab descrizione */}
-                    {relatedVehicles && relatedVehicles.length > 0 && (
-                      <div className="mt-6 border-t pt-6">
-                        <h3 className="text-lg font-semibold mb-3 flex items-center">
-                          <span className="w-1 h-4 bg-blue-500 mr-2"></span>
-                          Auto Simili
-                        </h3>
-                        <p className="text-gray-600 mb-4 text-sm">
-                          Altre vetture che potrebbero interessarti in base alle caratteristiche di questo modello
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {relatedVehicles.map(vehicle => (
-                            <VehicleCard key={vehicle.id} vehicle={vehicle} />
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </TabsContent>
                   
                   <TabsContent value="features" className="pt-2">
@@ -523,6 +505,18 @@ export default function VehicleDetailPage() {
                     </div>
                   </TabsContent>
                 </Tabs>
+                
+                {/* Auto Simili come sezione indipendente */}
+                {relatedVehicles && relatedVehicles.length > 0 && (
+                  <div className="mt-8 pt-6 border-t">
+                    <h2 className="text-2xl font-bold mb-4">Auto simili</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {relatedVehicles.map(vehicle => (
+                        <VehicleCard key={vehicle.id} vehicle={vehicle} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
