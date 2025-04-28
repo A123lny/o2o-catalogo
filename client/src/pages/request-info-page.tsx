@@ -73,6 +73,11 @@ export default function RequestInfoPage() {
   const vehicleId = parseInt(params?.vehicleId || "0");
   const rentalOptionId = params?.rentalOptionId ? parseInt(params.rentalOptionId) : undefined;
   
+  // Debug
+  console.log("URL params:", params);
+  console.log("vehicleId:", vehicleId);
+  console.log("rentalOptionId:", rentalOptionId);
+  
   // Recupera i dati del veicolo
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery({
     queryKey: ["/api/vehicles", vehicleId],
@@ -88,7 +93,27 @@ export default function RequestInfoPage() {
   });
   
   // Trova l'opzione di noleggio selezionata
-  const selectedOption = rentalOptions?.find((option: RentalOption) => option.id === rentalOptionId);
+  // Cerca l'opzione originale nel DB
+  const originalOption = rentalOptions?.find((option: RentalOption) => option.id === rentalOptionId);
+  
+  // Per gestire anche le opzioni fittizie (100, 101, 102, 103) quando selezioniamo nella pagina di dettaglio
+  let selectedOption = originalOption;
+  
+  // Se non troviamo l'opzione esatta ma l'ID è uno di quelli fittizi, cerchiamo un'opzione dello stesso tipo
+  if (!originalOption && rentalOptionId) {
+    console.log("Opzione originale non trovata, cercando opzioni simili per ID:", rentalOptionId);
+    
+    // Gli ID 100, 101 sono NLT; 102, 103 sono RTB
+    const isNLT = rentalOptionId === 100 || rentalOptionId === 101;
+    const matchingOption = rentalOptions?.find((option: RentalOption) => 
+      option.type === (isNLT ? 'NLT' : 'RTB')
+    );
+    
+    if (matchingOption) {
+      console.log("Trovata opzione simile:", matchingOption);
+      selectedOption = matchingOption;
+    }
+  }
   
   // Prepariamo il testo dell'opzione selezionata
   const selectedOptionText = selectedOption 

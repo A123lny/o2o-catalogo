@@ -763,9 +763,19 @@ export default function VehicleDetailPage() {
                       <button 
                         className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center"
                         onClick={() => {
-                          if (selectedRentalOption) {
-                            // Reindirizza alla pagina di richiesta informazioni con l'ID del veicolo e dell'opzione selezionata
-                            navigate(`/request-info/${vehicleId}/${selectedRentalOption}`);
+                          console.log("CLICK - ID opzione selezionata:", selectedRentalOption);
+                          
+                          // Usiamo una variabile temporanea per essere sicuri di avere l'ID corretto
+                          const currentSelectedOptionId = selectedRentalOption;
+                          
+                          if (currentSelectedOptionId) {
+                            console.log(`Navigazione a: /request-info/${vehicleId}/${currentSelectedOptionId}`);
+                            
+                            // Utilizziamo un timeout per essere sicuri che il logging sia completo
+                            setTimeout(() => {
+                              // Reindirizza alla pagina di richiesta informazioni con l'ID del veicolo e dell'opzione selezionata
+                              navigate(`/request-info/${vehicleId}/${currentSelectedOptionId}`);
+                            }, 100);
                           } else {
                             // Mostra un avviso se non è stata selezionata alcuna opzione
                             toast({
