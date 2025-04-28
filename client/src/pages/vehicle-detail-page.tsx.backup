@@ -390,39 +390,113 @@ export default function VehicleDetailPage() {
                       value="details" 
                       className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium"
                     >
-                      Specifiche
+                      Dettagli Tecnici
                     </TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="description" className="text-gray-600 leading-relaxed">
-                    <p className="whitespace-pre-line">{vehicle.description}</p>
-                  </TabsContent>
-                  
-                  <TabsContent value="features">
-                    <div className="flex flex-wrap gap-2">
-                      {Array.isArray(vehicle.features) && 
-                        (vehicle.features as string[]).map((feature, index) => (
-                          <div key={index} className="flex items-center bg-gray-50 rounded-full px-4 py-2">
-                            <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
-                            <span className="text-gray-700">{feature}</span>
-                          </div>
-                        ))}
+                  <TabsContent value="description" className="pt-2">
+                    <div className="prose max-w-none">
+                      <p className="text-gray-700 leading-relaxed">{vehicle.description || 'Nessuna descrizione disponibile per questo veicolo.'}</p>
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="colors">
-                    <div className="space-y-4">
-                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
-                        <span className="text-gray-600">Esterni</span>
-                        <div className="flex items-center">
-                          {vehicle.color && getColorHex(vehicle.color) ? (
-                            <div 
-                              className="w-6 h-6 rounded-full mr-2 border border-gray-300" 
-                              style={{ backgroundColor: getColorHex(vehicle.color) || '#CCCCCC' }}
-                            ></div>
-                          ) : null}
-                          <span className="font-medium">{vehicle.color || '-'}</span>
+                  <TabsContent value="features" className="pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {vehicle.features && (vehicle.features as string[]).length > 0 ? 
+                        (vehicle.features as string[]).map((feature, index) => (
+                          <div key={index} className="flex items-center bg-gray-50 rounded-full px-4 py-2">
+                            <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
+                            <span className="text-gray-700 text-sm">{feature}</span>
+                          </div>
+                        )) : 
+                        <p className="text-gray-500 italic">Nessun equipaggiamento specificato.</p>
+                      }
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="colors" className="pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Colore Esterno</h3>
+                        <div className="flex items-start gap-4">
+                          {vehicle.color && (
+                            <div className="flex flex-col items-center">
+                              <div 
+                                className="w-16 h-16 rounded-full border border-gray-200 shadow-sm"
+                                style={{ 
+                                  backgroundColor: '#e5e5e5',
+                                  backgroundImage: 'linear-gradient(to bottom right, #f5f5f5, #e0e0e0)' 
+                                }}
+                              ></div>
+                              <span className="mt-2 text-sm text-center">{vehicle.color}</span>
+                            </div>
+                          )}
+                          {!vehicle.color && (
+                            <p className="text-gray-500 italic">Nessun colore esterno specificato.</p>
+                          )}
                         </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Colore Interno</h3>
+                        <div className="flex items-start gap-4">
+                          {vehicle.interiorColor && (
+                            <div className="flex flex-col items-center">
+                              <div 
+                                className="w-16 h-16 rounded-full border border-gray-200 shadow-sm"
+                                style={{ 
+                                  backgroundColor: '#e5e5e5',
+                                  backgroundImage: 'linear-gradient(to bottom right, #f5f5f5, #e0e0e0)' 
+                                }}
+                              ></div>
+                              <span className="mt-2 text-sm text-center">{vehicle.interiorColor}</span>
+                            </div>
+                          )}
+                          {!vehicle.interiorColor && (
+                            <p className="text-gray-500 italic">Nessun colore interno specificato.</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="details" className="pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Marca</span>
+                        <span className="font-medium">{vehicle.brandId || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Modello</span>
+                        <span className="font-medium">{vehicle.model || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Anno</span>
+                        <span className="font-medium">{vehicle.year || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Chilometraggio</span>
+                        <span className="font-medium">{vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Alimentazione</span>
+                        <span className="font-medium">{vehicle.fuelType || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Potenza</span>
+                        <span className="font-medium">{vehicle.power ? `${vehicle.power} CV / ${Math.round(vehicle.power * 0.735)} kW` : '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Cambio</span>
+                        <span className="font-medium">{vehicle.transmission || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Condizione</span>
+                        <span className="font-medium">{vehicle.condition || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Colore</span>
+                        <span className="font-medium">{vehicle.color || '-'}</span>
                       </div>
                       <div className="flex justify-between p-3 rounded-lg bg-gray-50">
                         <span className="text-gray-600">Interni</span>
@@ -430,59 +504,24 @@ export default function VehicleDetailPage() {
                       </div>
                     </div>
                   </TabsContent>
-                  
-                  <TabsContent value="details">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-3 rounded-lg bg-gray-50">
-                        <div className="flex items-center mb-1">
-                          <Calendar className="h-5 w-5 text-blue-500 mr-2" />
-                          <span className="font-medium">Anno</span>
-                        </div>
-                        <p className="pl-7 text-gray-600">{vehicle.year}</p>
-                      </div>
-                      
-                      <div className="p-3 rounded-lg bg-gray-50">
-                        <div className="flex items-center mb-1">
-                          <Gauge className="h-5 w-5 text-blue-500 mr-2" />
-                          <span className="font-medium">Kilometraggio</span>
-                        </div>
-                        <p className="pl-7 text-gray-600">{vehicle.mileage.toLocaleString()} km</p>
-                      </div>
-                      
-                      <div className="p-3 rounded-lg bg-gray-50">
-                        <div className="flex items-center mb-1">
-                          <Fuel className="h-5 w-5 text-blue-500 mr-2" />
-                          <span className="font-medium">Alimentazione</span>
-                        </div>
-                        <p className="pl-7 text-gray-600">{vehicle.fuelType}</p>
-                      </div>
-                      
-                      <div className="p-3 rounded-lg bg-gray-50">
-                        <div className="flex items-center mb-1">
-                          <BarChart2 className="h-5 w-5 text-blue-500 mr-2" />
-                          <span className="font-medium">Cambio</span>
-                        </div>
-                        <p className="pl-7 text-gray-600">{vehicle.transmission}</p>
-                      </div>
-                      
-                      <div className="p-3 rounded-lg bg-gray-50">
-                        <div className="flex items-center mb-1">
-                          <Zap className="h-5 w-5 text-blue-500 mr-2" />
-                          <span className="font-medium">Potenza</span>
-                        </div>
-                        <p className="pl-7 text-gray-600">{vehicle.power} CV</p>
-                      </div>
-                      
-                      <div className="p-3 rounded-lg bg-gray-50">
-                        <div className="flex items-center mb-1">
-                          <Activity className="h-5 w-5 text-blue-500 mr-2" />
-                          <span className="font-medium">Condizione</span>
-                        </div>
-                        <p className="pl-7 text-gray-600">{vehicle.condition}</p>
-                      </div>
-                    </div>
-                  </TabsContent>
                 </Tabs>
+              </div>
+            </div>
+          </div>
+          
+          {/* Auto Simili come sezione completamente indipendente */}
+          {relatedVehicles && relatedVehicles.length > 0 && (
+            <div className="mt-16 py-10 border-t border-gray-200">
+              <div className="container mx-auto px-4">
+                <h2 className="text-3xl font-bold mb-6">Auto simili</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {relatedVehicles.map(vehicle => (
+                    <VehicleCard key={vehicle.id} vehicle={vehicle} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
               </div>
             </div>
 
@@ -750,20 +789,6 @@ export default function VehicleDetailPage() {
             </div>
           </div>
         </div>
-        
-        {/* Auto simili come sezione completamente indipendente */}
-        {relatedVehicles && relatedVehicles.length > 0 && (
-          <div className="py-16 mt-12 border-t border-gray-200 bg-gray-50">
-            <div className="container mx-auto px-4">
-              <h2 className="text-3xl font-bold mb-8 text-center">Auto simili</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                {relatedVehicles.map(vehicle => (
-                  <VehicleCard key={vehicle.id} vehicle={vehicle} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </main>
       <Footer />
 
