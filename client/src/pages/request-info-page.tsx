@@ -97,6 +97,13 @@ export default function RequestInfoPage() {
     }
   });
   
+  // Assicuriamoci che il form visualizzi il valore corretto
+  useEffect(() => {
+    if (selectedOption && form) {
+      form.setValue('interestType', selectedOptionText);
+    }
+  }, [selectedOption, selectedOptionText, form]);
+  
   // Mutation per inviare la richiesta
   const requestMutation = useMutation({
     mutationFn: async (data: RequestFormValues) => {
