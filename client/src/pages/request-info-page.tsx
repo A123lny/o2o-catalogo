@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,10 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MailCheck, ChevronLeft, Phone, User, MapPin, Car, Calendar, Gauge, Zap, Fuel, Check, Building2 } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { insertRequestSchema, Vehicle, RentalOption } from "@shared/schema";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 
 // Schema per il form di richiesta informazioni
 const requestFormSchema = z.object({
@@ -66,64 +65,84 @@ const provinces = [
 ];
 
 export default function RequestInfoPage() {
-  const [, params] = useRoute("/request-info/:vehicleId/:rentalOptionId?");
+  const [, params] = useRoute("/request-info/:vehicleId/:rentalOptionId");
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
-  const vehicleId = parseInt(params?.vehicleId || "0");
-  const rentalOptionId = params?.rentalOptionId ? parseInt(params.rentalOptionId) : undefined;
+  // Recupera i parametri dell'URL
+  const vehicleId = params ? parseInt(params.vehicleId) : 0;
+  const rentalOptionId = params && params.rentalOptionId ? parseInt(params.rentalOptionId) : undefined;
   
-  // Debug
-  console.log("URL params:", params);
-  console.log("vehicleId:", vehicleId);
-  console.log("rentalOptionId:", rentalOptionId);
+  console.log("URL Params:", { vehicleId, rentalOptionId });
   
-  // Recupera i dati del veicolo
+  // Query per recuperare il veicolo
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery({
-    queryKey: ["/api/vehicles", vehicleId],
+    queryKey: [`/api/vehicles/${vehicleId}`],
     queryFn: () => apiRequest("GET", `/api/vehicles/${vehicleId}`).then(res => res.json()),
-    enabled: vehicleId > 0
+    enabled: vehicleId > 0,
   });
   
-  // Recupera i dati delle opzioni di noleggio
+  // Query per recuperare le opzioni di noleggio
   const { data: rentalOptions, isLoading: isLoadingOptions } = useQuery({
-    queryKey: ["/api/vehicles", vehicleId, "rental-options"],
+    queryKey: [`/api/vehicles/${vehicleId}/rental-options`],
     queryFn: () => apiRequest("GET", `/api/vehicles/${vehicleId}/rental-options`).then(res => res.json()),
-    enabled: vehicleId > 0
+    enabled: vehicleId > 0,
   });
   
-  // Trova l'opzione di noleggio selezionata
-  // Cerca l'opzione originale nel DB
-  const originalOption = rentalOptions?.find((option: RentalOption) => option.id === rentalOptionId);
+  // Determina l'opzione di noleggio selezionata
+  const [selectedOption, setSelectedOption] = useState<RentalOption | null>(null);
   
-  // Per gestire anche le opzioni fittizie (100, 101, 102, 103) quando selezioniamo nella pagina di dettaglio
-  let selectedOption = originalOption;
-  
-  // Se non troviamo l'opzione esatta ma l'ID è uno di quelli fittizi, cerchiamo un'opzione dello stesso tipo
-  if (!originalOption && rentalOptionId) {
-    console.log("Opzione originale non trovata, cercando opzioni simili per ID:", rentalOptionId);
-    
-    // Gli ID 100, 101 sono NLT; 102, 103 sono RTB
-    const isNLT = rentalOptionId === 100 || rentalOptionId === 101;
-    const matchingOption = rentalOptions?.find((option: RentalOption) => 
-      option.type === (isNLT ? 'NLT' : 'RTB')
-    );
-    
-    if (matchingOption) {
-      console.log("Trovata opzione simile:", matchingOption);
-      selectedOption = matchingOption;
+  // Quando i dati sono disponibili, trova l'opzione corrispondente all'ID
+  useEffect(() => {
+    if (rentalOptions && rentalOptionId) {
+      // Cerca l'opzione normale nel database
+      let option = rentalOptions.find((o: RentalOption) => o.id === rentalOptionId);
+      
+      // Gestisci il caso di ID fittizi generati dalla pagina di dettaglio
+      if (!option && rentalOptionId) {
+        const baseId = rentalOptionId < 1000 ? rentalOptionId : rentalOptionId % 1000;
+        const isNLT = rentalOptionId >= 1000 && rentalOptionId < 3000;
+        const isRTB = rentalOptionId >= 3000;
+        
+        console.log(`Cercando opzione per baseId: ${baseId}, isNLT: ${isNLT}, isRTB: ${isRTB}`);
+        
+        // Prima cerchiamo per ID base
+        let optionByBaseId = rentalOptions.find((o: RentalOption) => o.id === baseId);
+        
+        // Se non troviamo l'ID base, cerchiamo per tipo
+        if (!optionByBaseId) {
+          if (isNLT) {
+            optionByBaseId = rentalOptions.find((o: RentalOption) => o.type === 'NLT');
+          } else if (isRTB) {
+            optionByBaseId = rentalOptions.find((o: RentalOption) => o.type === 'RTB');
+          }
+        }
+        
+        // Se abbiamo trovato un'opzione, utilizziamola
+        if (optionByBaseId) {
+          option = optionByBaseId;
+          console.log("Trovata opzione alternativa:", option);
+        }
+      }
+      
+      if (option) {
+        console.log("Opzione selezionata:", option);
+        setSelectedOption(option);
+      } else {
+        console.log("Nessuna opzione trovata per ID:", rentalOptionId);
+      }
     }
-  }
+  }, [rentalOptions, rentalOptionId]);
   
-  // Prepariamo il testo dell'opzione selezionata
-  const selectedOptionText = selectedOption 
+  // Determiniamo se il cliente è un'azienda in base alla categoria del veicolo (categoria 2 = business)
+  const isCompany = vehicle?.categoryId === 2;
+  
+  // Formatta il testo dell'opzione selezionata
+  const selectedOptionText = selectedOption
     ? `${selectedOption.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'} - ${selectedOption.duration} mesi`
     : '';
-    
-  // Determiniamo se il cliente è un'azienda in base alla categoria del veicolo
-  const isCompany = vehicle?.categoryId === 2;
-    
-  // Form di richiesta informazioni
+  
+  // Setup del form con i valori predefiniti
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestFormSchema),
     defaultValues: {
@@ -135,14 +154,14 @@ export default function RequestInfoPage() {
       isCompany: isCompany,
       companyName: "",
       vatNumber: "",
-      interestType: selectedOptionText || (rentalOptionId ? selectedOption?.type || "NLT" : "NLT"),
+      interestType: selectedOptionText,
       message: "",
       privacyConsent: false,
       termsConsent: false
     }
   });
   
-  // Assicuriamoci che il form visualizzi il valore corretto
+  // Aggiorna il campo del tipo di interesse quando cambia l'opzione selezionata
   useEffect(() => {
     if (selectedOption && form) {
       form.setValue('interestType', selectedOptionText);
@@ -155,16 +174,17 @@ export default function RequestInfoPage() {
       const toSubmit = {
         ...data,
         status: "pending",
-        vehicleId: vehicleId,
       };
+      console.log("Invio richiesta:", toSubmit);
       const res = await apiRequest("POST", "/api/requests", toSubmit);
       return await res.json();
     },
     onSuccess: () => {
       toast({
         title: "Richiesta inviata con successo",
-        description: "Ti contatteremo al più presto.",
+        description: "Ti contatteremo al più presto per discutere la tua soluzione di noleggio.",
       });
+      // Dopo l'invio con successo, torna alla home page
       navigate("/");
     },
     onError: (error: Error) => {
@@ -176,32 +196,48 @@ export default function RequestInfoPage() {
     }
   });
   
-  // Gestione del submit del form
+  // Gestisce l'invio del form
   function onSubmit(data: RequestFormValues) {
     requestMutation.mutate(data);
   }
   
-  // Loading state durante il caricamento dei dati
+  // Mostra il loader mentre si caricano i dati
   if (isLoadingVehicle || isLoadingOptions) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+        <Footer />
       </div>
     );
   }
   
-  // Redirect se il veicolo non esiste
-  if (!vehicle && !isLoadingVehicle) {
+  // Se il veicolo non esiste, reindirizza alla home
+  if (!vehicle) {
     navigate("/");
     return null;
   }
+  
+  // Formatta i dettagli del veicolo
+  const vehicleDetails = {
+    title: vehicle.title,
+    year: vehicle.year,
+    fuelType: vehicle.fuelType,
+    mileage: vehicle.mileage.toLocaleString(),
+    price: vehicle.price.toLocaleString(),
+    discountPrice: vehicle.discountPrice ? vehicle.discountPrice.toLocaleString() : null,
+    image: vehicle.mainImage || (Array.isArray(vehicle.images) && vehicle.images.length > 0 ? vehicle.images[0] : null),
+    color: vehicle.color
+  };
   
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
       <main className="flex-grow py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          {/* Breadcrumb e pulsante indietro */}
+          {/* Breadcrumb e torna indietro */}
           <div className="mb-6">
             <button
               onClick={() => navigate(`/vehicle/${vehicleId}`)}
@@ -215,13 +251,11 @@ export default function RequestInfoPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Richiedi Informazioni</h1>
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Form di contatto - colonna sinistra */}
+            {/* Form di contatto - Colonna sinistra */}
             <div className="lg:col-span-7 bg-white rounded-lg shadow-sm p-6">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                   <h2 className="text-xl font-bold mb-4">I tuoi dati</h2>
-                  
-
                   
                   <FormField
                     control={form.control}
@@ -302,6 +336,7 @@ export default function RequestInfoPage() {
                     )}
                   />
                   
+                  {/* Campi aggiuntivi se cliente è un'azienda */}
                   {isCompany && (
                     <div className="space-y-5">
                       <FormField
@@ -337,6 +372,7 @@ export default function RequestInfoPage() {
                     </div>
                   )}
                   
+                  {/* Campo per la soluzione di interesse */}
                   <FormField
                     control={form.control}
                     name="interestType"
@@ -382,6 +418,7 @@ export default function RequestInfoPage() {
                     )}
                   />
                   
+                  {/* Campo messagio */}
                   <FormField
                     control={form.control}
                     name="message"
@@ -390,9 +427,9 @@ export default function RequestInfoPage() {
                         <FormLabel>Messaggio (opzionale)</FormLabel>
                         <FormControl>
                           <Textarea 
-                            placeholder="Scrivi qui per aggiungere informazioni o richieste specifiche..." 
+                            placeholder="Scrivi qui eventuali domande o richieste specifiche..." 
                             {...field} 
-                            className="resize-none h-24"
+                            className="min-h-[100px]"
                           />
                         </FormControl>
                         <FormMessage />
@@ -400,7 +437,8 @@ export default function RequestInfoPage() {
                     )}
                   />
                   
-                  <div className="space-y-4 pt-4">
+                  {/* Consensi privacy e termini */}
+                  <div className="space-y-3">
                     <FormField
                       control={form.control}
                       name="privacyConsent"
@@ -409,15 +447,12 @@ export default function RequestInfoPage() {
                           <FormControl>
                             <Checkbox 
                               checked={field.value} 
-                              onCheckedChange={field.onChange}
+                              onCheckedChange={field.onChange} 
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
                             <FormLabel className="text-sm font-normal">
-                              Acconsento al trattamento dei miei dati personali come indicato nella{" "}
-                              <a href="/privacy-policy" className="text-blue-600 hover:underline" target="_blank">
-                                Privacy Policy
-                              </a>
+                              Acconsento al trattamento dei miei dati personali in accordo con la <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>
                             </FormLabel>
                             <FormMessage />
                           </div>
@@ -433,16 +468,12 @@ export default function RequestInfoPage() {
                           <FormControl>
                             <Checkbox 
                               checked={field.value} 
-                              onCheckedChange={field.onChange}
+                              onCheckedChange={field.onChange} 
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
                             <FormLabel className="text-sm font-normal">
-                              Accetto i{" "}
-                              <a href="/terms" className="text-blue-600 hover:underline" target="_blank">
-                                Termini e Condizioni
-                              </a>{" "}
-                              del servizio
+                              Accetto i <a href="#" className="text-blue-600 hover:underline">Termini e Condizioni</a> del servizio
                             </FormLabel>
                             <FormMessage />
                           </div>
@@ -451,169 +482,178 @@ export default function RequestInfoPage() {
                     />
                   </div>
                   
+                  {/* Pulsante di invio */}
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    className="w-full py-6 text-base bg-orange-500 hover:bg-orange-600"
                     disabled={requestMutation.isPending}
                   >
                     {requestMutation.isPending ? (
-                      <>
-                        <span className="animate-spin mr-2">⏳</span>
+                      <span className="flex items-center">
+                        <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
                         Invio in corso...
-                      </>
-                    ) : (
-                      "Invia Richiesta"
-                    )}
+                      </span>
+                    ) : "Invia richiesta"}
                   </Button>
                 </form>
               </Form>
             </div>
             
-            {/* Riepilogo veicolo - colonna destra */}
+            {/* Dettagli veicolo e contratto - Colonna destra */}
             <div className="lg:col-span-5">
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="relative h-48 md:h-64">
-                  <img 
-                    src={vehicle?.mainImage || "https://placehold.co/600x400?text=Immagine+non+disponibile"} 
-                    alt={vehicle?.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-6">
-                  <h2 className="text-xl font-bold mb-2">{vehicle?.title}</h2>
+              <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
+                <h2 className="text-xl font-bold mb-4">Dettagli del Veicolo</h2>
+                
+                {/* Dettagli veicolo */}
+                <div className="mb-6">
+                  {vehicleDetails.image && (
+                    <div className="mb-4 h-48 overflow-hidden rounded-lg">
+                      <img 
+                        src={vehicleDetails.image} 
+                        alt={vehicleDetails.title} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   
-                  <div className="flex flex-wrap gap-2 my-4">
-                    <div className="flex items-center px-3 py-1.5 bg-gray-50 rounded-full text-sm">
-                      <Calendar className="h-4 w-4 text-blue-500 mr-2" />
-                      <span>{vehicle?.year}</span>
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">{vehicleDetails.title}</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-600">{vehicleDetails.year}</span>
                     </div>
-                    <div className="flex items-center px-3 py-1.5 bg-gray-50 rounded-full text-sm">
-                      <Gauge className="h-4 w-4 text-blue-500 mr-2" />
-                      <span>{vehicle?.mileage.toLocaleString()} km</span>
+                    <div className="flex items-center">
+                      <Fuel className="h-4 w-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-600">{vehicleDetails.fuelType}</span>
                     </div>
-                    <div className="flex items-center px-3 py-1.5 bg-gray-50 rounded-full text-sm">
-                      <Fuel className="h-4 w-4 text-blue-500 mr-2" />
-                      <span>{vehicle?.fuelType}</span>
+                    <div className="flex items-center">
+                      <Gauge className="h-4 w-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-600">{vehicleDetails.mileage} km</span>
                     </div>
-                    <div className="flex items-center px-3 py-1.5 bg-gray-50 rounded-full text-sm">
-                      <Zap className="h-4 w-4 text-blue-500 mr-2" />
-                      <span>{vehicle?.power} CV</span>
+                    <div className="flex items-center">
+                      <Car className="h-4 w-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-600">{vehicleDetails.color}</span>
                     </div>
                   </div>
                   
-                  {selectedOption && (
-                    <div className={`mt-4 p-4 rounded-lg ${
-                      selectedOption.type === 'NLT' 
-                      ? 'bg-blue-50 border border-blue-100' 
-                      : 'bg-orange-50 border border-orange-100'
-                    }`}>
-                      <div className="flex items-center mb-2">
-                        <span className={`px-2 py-0.5 text-xs font-bold text-white rounded ${
+                  <div className="mt-3">
+                    {vehicleDetails.discountPrice ? (
+                      <div className="flex items-center">
+                        <span className="line-through text-gray-400">€{vehicleDetails.price}</span>
+                        <span className="text-lg font-bold text-blue-600 ml-2">€{vehicleDetails.discountPrice}</span>
+                      </div>
+                    ) : (
+                      <span className="text-lg font-bold text-blue-600">€{vehicleDetails.price}</span>
+                    )}
+                  </div>
+                </div>
+                
+                <hr className="my-6 border-gray-200" />
+                
+                {/* Dettagli soluzione selezionata */}
+                {selectedOption && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4">Dettagli Soluzione</h2>
+                    
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                      <div className="flex items-center mb-3">
+                        <span className={`inline-block w-4 h-4 rounded-full mr-2 ${
                           selectedOption.type === 'NLT' ? 'bg-blue-500' : 'bg-orange-500'
-                        }`}>
+                        }`}></span>
+                        <span className="font-medium text-gray-800">
                           {selectedOption.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'}
                         </span>
-                        
-                        {selectedOption.isDefault && (
-                          <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800 rounded">
-                            Consigliato
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="flex justify-between items-baseline mb-2">
-                        <span className="text-gray-600">Canone mensile:</span>
-                        <span className="text-xl font-bold text-blue-600">
-                          € {selectedOption.monthlyPrice.toLocaleString()}
-                          <span className="text-xs ml-1 text-gray-500 font-normal">
-                            {isCompany ? "(IVA esclusa)" : "(IVA inclusa)"}
-                          </span>
+                        <span className="text-sm bg-gray-200 px-2 py-0.5 rounded ml-auto">
+                          {selectedOption.duration} mesi
                         </span>
                       </div>
                       
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <div className="flex justify-between">
-                          <span>Durata:</span>
-                          <span className="font-medium">{selectedOption.duration} mesi</span>
+                      <div className="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                          <span className="text-sm text-gray-500">Anticipo</span>
+                          <p className="font-bold text-gray-900">€{selectedOption.deposit.toLocaleString()}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {isCompany ? 'IVA esclusa' : 'IVA inclusa'}
+                          </p>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Anticipo:</span>
-                          <span className="font-medium">
-                            € {selectedOption.deposit.toLocaleString()}
-                            <span className="text-xs ml-1 text-gray-500">
-                              {isCompany ? "(IVA esclusa)" : "(IVA inclusa)"}
-                            </span>
-                          </span>
-                        </div>
-                        
-                        {/* Deposito cauzionale */}
-                        <div className="flex justify-between">
-                          <span>Deposito Cauzionale:</span>
-                          <span className="font-medium">
-                            € {selectedOption.caution?.toLocaleString() || '350'} 
-                            <span className="text-xs ml-1 text-gray-500">
-                              {isCompany ? "(IVA esclusa)" : "(IVA inclusa)"}
-                            </span>
-                          </span>
+                        <div>
+                          <span className="text-sm text-gray-500">Canone mensile</span>
+                          <p className="font-bold text-gray-900">€{selectedOption.monthlyPrice.toLocaleString()}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {isCompany ? 'IVA esclusa' : 'IVA inclusa'}
+                          </p>
                         </div>
                         
-                        {/* Spese di istruttoria */}
-                        <div className="flex justify-between">
-                          <span>Spese Istruttoria:</span>
-                          <span className="font-medium">
-                            € {selectedOption.setupFee?.toLocaleString() || '350'} 
-                            <span className="text-xs ml-1 text-gray-500">
-                              {isCompany ? "(IVA esclusa)" : "(IVA inclusa)"}
-                            </span>
-                          </span>
-                        </div>
-                        
-                        {selectedOption.annualMileage && (
-                          <div className="flex justify-between">
-                            <span>Km annui:</span>
-                            <span className="font-medium">{selectedOption.annualMileage.toLocaleString()} km</span>
+                        {/* Mostra il deposito cauzionale (se presente) */}
+                        {selectedOption.caution && (
+                          <div>
+                            <span className="text-sm text-gray-500">Deposito cauzionale</span>
+                            <p className="font-bold text-gray-900">€{selectedOption.caution.toLocaleString()}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {isCompany ? 'IVA esclusa' : 'IVA inclusa'}
+                            </p>
                           </div>
                         )}
                         
-                        {selectedOption.finalPayment && (
-                          <div className="flex justify-between">
-                            <span>Riscatto finale:</span>
-                            <span className="font-medium">
-                              € {selectedOption.finalPayment.toLocaleString()}
-                              <span className="text-xs ml-1 text-gray-500">
-                                {isCompany ? "(IVA esclusa)" : "(IVA inclusa)"}
-                              </span>
-                            </span>
+                        {/* Mostra le spese di istruttoria (se presente) */}
+                        {selectedOption.setupFee && (
+                          <div>
+                            <span className="text-sm text-gray-500">Spese di istruttoria</span>
+                            <p className="font-bold text-gray-900">€{selectedOption.setupFee.toLocaleString()}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {isCompany ? 'IVA esclusa' : 'IVA inclusa'}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Mostra il riscatto finale (solo per RTB) */}
+                        {selectedOption.type === 'RTB' && selectedOption.finalPayment && (
+                          <div>
+                            <span className="text-sm text-gray-500">Riscatto finale</span>
+                            <p className="font-bold text-gray-900">€{selectedOption.finalPayment.toLocaleString()}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {isCompany ? 'IVA esclusa' : 'IVA inclusa'}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Mostra il chilometraggio annuo (se presente) */}
+                        {selectedOption.annualMileage && (
+                          <div>
+                            <span className="text-sm text-gray-500">Km/anno</span>
+                            <p className="font-bold text-gray-900">{selectedOption.annualMileage.toLocaleString()}</p>
                           </div>
                         )}
                       </div>
                       
+                      {/* Lista dei servizi inclusi (se presenti) */}
                       {selectedOption.includedServices && Array.isArray(selectedOption.includedServices) && (
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <p className="text-sm font-medium mb-2">Inclusi nel canone:</p>
-                          <div className="grid grid-cols-1 gap-1">
-                            {(selectedOption.includedServices as string[]).map((service, idx) => (
-                              <div key={idx} className="flex items-center text-sm">
-                                <Check className="h-4 w-4 text-green-500 mr-2" />
-                                <span>{service}</span>
-                              </div>
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Servizi inclusi:</h4>
+                          <ul className="space-y-1">
+                            {(selectedOption.includedServices as string[]).map((service, index) => (
+                              <li key={index} className="flex items-start text-sm">
+                                <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                <span className="text-gray-600">{service}</span>
+                              </li>
                             ))}
-                          </div>
+                          </ul>
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="mt-6 bg-blue-50 rounded-lg p-5 border border-blue-100">
-                <h3 className="font-medium mb-2 flex items-center text-blue-800">
-                  <MailCheck className="h-5 w-5 mr-2 text-blue-600" />
-                  Cosa succede dopo?
-                </h3>
-                <p className="text-sm text-blue-800">
-                  Dopo l'invio della richiesta, il nostro team ti contatterà entro 24 ore per discutere i dettagli dell'offerta, rispondere alle tue domande e guidarti verso la soluzione più adatta alle tue esigenze.
-                </p>
+                    
+                    {/* Informazioni aggiuntive */}
+                    <div className="text-sm text-gray-500">
+                      <p className="mb-2">
+                        Tutti i prezzi sono da intendersi {isCompany ? 'IVA esclusa' : 'IVA inclusa'}.
+                      </p>
+                      <p>
+                        Inviando questa richiesta, il nostro team ti contatterà per fornirti tutti i dettagli sulla soluzione selezionata e personalizzare l'offerta in base alle tue esigenze.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
