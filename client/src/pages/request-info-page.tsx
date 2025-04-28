@@ -260,13 +260,15 @@ export default function RequestInfoPage() {
                               <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
                                 selectedOption.type === 'NLT' ? 'bg-blue-500' : 'bg-orange-500'
                               }`}></span>
-                              <input
-                                type="text"
-                                className="bg-transparent flex-grow focus:outline-none text-gray-700 disabled:cursor-not-allowed"
-                                value={field.value}
-                                disabled
-                                readOnly
-                              />
+                              <div className="flex items-center">
+                                <input
+                                  type="text"
+                                  className="bg-transparent flex-grow focus:outline-none text-gray-700 disabled:cursor-not-allowed"
+                                  value={`${selectedOption.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'} - ${selectedOption.duration} mesi`}
+                                  disabled
+                                  readOnly
+                                />
+                              </div>
                             </div>
                           </FormControl>
                         ) : (
