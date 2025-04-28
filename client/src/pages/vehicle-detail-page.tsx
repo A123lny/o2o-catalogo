@@ -632,26 +632,14 @@ export default function VehicleDetailPage() {
                   </div>
                 )}
 
-                {/* Pulsanti CTA */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <a 
-                    href="#request-info" 
-                    className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-center transition-colors w-full"
-                  >
-                    Richiedi Informazioni
-                  </a>
-                </div>
+
               </div>
 
 
             </div>
           </div>
 
-          {/* Form Richiesta */}
-          <div id="request-info" className="mt-12 bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Richiedi Informazioni</h2>
-            <RequestForm vehicleId={vehicle.id} selectedRentalType={selectedOption?.type || 'NLT'} />
-          </div>
+
           
           {/* Veicoli Simili */}
           {relatedVehicles && relatedVehicles.length > 0 && (
