@@ -8,6 +8,7 @@ import {
 } from "@shared/schema";
 import createMemoryStore from "memorystore";
 import session from "express-session";
+import { Store as SessionStore } from "express-session";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -61,7 +62,7 @@ export interface IStorage {
   getStats(): Promise<any>;
   
   // Session
-  sessionStore: session.SessionStore;
+  sessionStore: SessionStore;
 }
 
 export class MemStorage implements IStorage {
@@ -78,7 +79,7 @@ export class MemStorage implements IStorage {
   currentVehicleId: number;
   currentRentalOptionId: number;
   currentRequestId: number;
-  sessionStore: session.SessionStore;
+  sessionStore: SessionStore;
 
   constructor() {
     this.users = new Map();
@@ -123,10 +124,12 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
     const timestamp = new Date();
+    // Ensure role is always present with default "user" if not specified
     const user: User = { 
       ...insertUser, 
       id,
-      createdAt: timestamp
+      createdAt: timestamp,
+      role: insertUser.role || "user"
     };
     this.users.set(id, user);
     return user;

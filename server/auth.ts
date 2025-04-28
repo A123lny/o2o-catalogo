@@ -7,9 +7,20 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User } from "@shared/schema";
 
+import type * as SchemaTypes from '@shared/schema';
+
 declare global {
   namespace Express {
-    interface User extends User {}
+    // Use type instead of interface extension to avoid errors
+    interface User {
+      id: number;
+      username: string;
+      password: string;
+      email: string;
+      fullName: string;
+      role: string;
+      createdAt: Date;
+    }
   }
 }
 
