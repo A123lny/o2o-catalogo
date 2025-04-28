@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Vehicle, RentalOption } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
 // Estensione del tipo RentalOption per le opzioni raccomandate
 interface EnhancedRentalOption extends RentalOption {
@@ -87,6 +88,8 @@ export default function VehicleDetailPage() {
   const [clientType, setClientType] = useState<'privato' | 'azienda'>('privato');
   const [activeContractType, setActiveContractType] = useState<'NLT' | 'RTB'>('NLT');
 
+  const { toast } = useToast();
+  
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery<Vehicle>({
     queryKey: [`/api/vehicles/${vehicleId}`],
     enabled: !!vehicleId,
@@ -751,8 +754,17 @@ export default function VehicleDetailPage() {
                       <button 
                         className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center"
                         onClick={() => {
-                          // Reindirizza alla pagina di richiesta informazioni con l'ID del veicolo e dell'opzione selezionata
-                          navigate(`/request-info/${vehicleId}/${selectedRentalOption}`);
+                          if (selectedRentalOption) {
+                            // Reindirizza alla pagina di richiesta informazioni con l'ID del veicolo e dell'opzione selezionata
+                            navigate(`/request-info/${vehicleId}/${selectedRentalOption}`);
+                          } else {
+                            // Mostra un avviso se non è stata selezionata alcuna opzione
+                            toast({
+                              title: "Seleziona un'opzione",
+                              description: "Per procedere, seleziona prima una delle opzioni di contratto disponibili.",
+                              variant: "destructive",
+                            });
+                          }
                         }}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
