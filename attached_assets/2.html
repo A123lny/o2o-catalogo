@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiat 500e - Dettaglio Veicolo | o2o Mobility</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Swiper CSS for image gallery -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
+    <style>
+        :root {
+            --primary: #0b3954;
+            --secondary: #0093d0;
+            --accent: #fd7e14;
+            --rtb-color: #e67e22;
+            --light-gray: #f6f8fa;
+            --dark-gray: #343a40;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .logo-text {
+            font-weight: bold;
+            font-size: 24px;
+            color: #0093d0;
+        }
+        
+        .breadcrumb {
+            background-color: transparent;
+            padding: 10px 0;
+        }
+        
+        .breadcrumb-item a {
+            color: var(--secondary);
+            text-decoration: none;
+        }
+        
+        .breadcrumb-item.active {
+            color: #666;
+        }
+        
+        .car-badge {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .badge-nlt {
+            background-color: var(--secondary);
+        }
+        
+        .badge-rtb {
+            background-color: var(--rtb-color);
+        }
+        
+        .image-gallery {
+            position: relative;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .swiper {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .swiper-slide {
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .gallery-main {
+            height: 400px;
+        }
+        
+        .gallery-thumbs {
+            height: 100px;
+            box-sizing: border-box;
+            padding: 10px 0;
+        }
+        
+        .gallery-thumbs .swiper-slide {
+            width: 25%;
+            height: 100%;
+            opacity: 0.5;
+            cursor: pointer;
+        }
+        
+        .gallery-thumbs .swiper-slide-thumb-active {
+            opacity: 1;
+        }
+        
+        .swiper-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .car-description {
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .car-price-tag {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+        
+        .car-price-tag span {
+            font-size: 1rem;
+            font-weight: normal;
+            color: #777;
+        }
+        
+        .car-specs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .car-specs span {
+            display: flex;
+            align-items: center;
+            padding: 8px 15px;
+            background-color: var(--light-gray);
+            border-radius: 30px;
+            font-size: 0.9rem;
+        }
+        
+        .car-specs i {
+            margin-right: 8px;
+            color: var(--secondary);
+        }
+        
+        .card-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        
+        .contract-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .contract-nlt {
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .contract-rtb {
+            border-left: 4px solid var(--rtb-color);
+        }
+        
+        .contract-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+        
+        .rtb-price {
+            color: var(--rtb-color);
+        }
+        
+        .contract-price span {
+            font-size: 1rem;
+            font-weight: normal;
+            color: #777;
+        }
+        
+        .contract-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .contract-details span {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .contract-details i {
+            margin-right: 5px;
+            color: #777;
+        }
+        
+        .feature-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 15px;
+            background-color: var(--light-gray);
+            border-radius: 30px;
+            font-size: 0.9rem;
+        }
+        
+        .feature-item i {
+            margin-right: 8px;
+            color: var(--success);
+        }
+        
+        .color-option {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border: 2px solid #eee;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        
+        .color-option:hover, .color-option.active {
+            transform: scale(1.1);
+            border-color: var(--secondary);
+        }
+        
+        .tab-pane {
+            padding: 20px 0;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #0077a9;
+            border-color: #0077a9;
+        }
+        
+        .btn-outline-primary {
+            color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .btn-rtb {
+            background-color: var(--rtb-color);
+            border-color: var(--rtb-color);
+            color: white;
+        }
+        
+        .btn-rtb:hover {
+            background-color: #d35400;
+            border-color: #d35400;
+            color: white;
+        }
+        
+        .btn-outline-rtb {
+            color: var(--rtb-color);
+            border-color: var(--rtb-color);
+        }
+        
+        .btn-outline-rtb:hover {
+            background-color: var(--rtb-color);
+            border-color: var(--rtb-color);
+            color: white;
+        }
+        
+        .btn-cta {
+            padding: 12px 30px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .features-list .feature-group {
+            margin-bottom: 30px;
+        }
+        
+        .features-list h4 {
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .features-list ul {
+            list-style: none;
+            padding-left: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+        }
+        
+        .features-list li {
+            display: flex;
+            align-items: center;
+        }
+        
+        .features-list li i {
+            margin-right: 10px;
+            color: var(--success);
+        }
+        
+        .similar-cars-title {
+            font-weight: 700;
+            margin: 40px 0 20px;
+        }
+        
+        .similar-car-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: 100%;
+            transition: transform 0.3s;
+        }
+        
+        .similar-car-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .similar-car-image {
+            height: 180px;
+            position: relative;
+        }
+        
+        .similar-car-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* Badge multipli per le auto simili */
+        .similar-car-badges {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+        
+        .similar-car-badge {
+            background-color: var(--secondary);
+            color: white;
+            padding: 5px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+        
+        /* Badge per promozioni */
+        .badge-promo {
+            background-color: #e74c3c;
+        }
+        
+        .badge-top {
+            background-color: #f39c12;
+        }
+        
+        /* Badge per tipo di contratto */
+        .badge-nlt {
+            background-color: #3498db;
+        }
+        
+        .badge-rtb {
+            background-color: #9b59b6;
+        }
+        
+        /* Badge per condizione veicolo */
+        .badge-2life {
+            background-color: #27ae60;
+        }
+        
+        .badge-new {
+            background-color: #1abc9c;
+        }
+        
+        .similar-car-details {
+            padding: 15px;
+        }
+        
+        .similar-car-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+        
+        .similar-car-price {
+            font-weight: 700;
+            color: var(--secondary);
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+        
+        .contact-box {
+            background-color: var(--primary);
+            color: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .contact-box h4 {
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .contact-box p {
+            margin-bottom: 20px;
+        }
+        
+        .contact-box .btn {
+            background-color: white;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .sticky-top {
+            top: 20px;
+        }
+        
+        footer {
+            background-color: var(--dark-gray);
+            color: #aaa;
+            padding: 40px 0 20px;
+            font-size: 0.9rem;
+            margin-top: 50px;
+        }
+        
+        footer h5 {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        footer ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        footer ul li {
+            margin-bottom: 10px;
+        }
+        
+        footer ul li a {
+            color: #aaa;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        footer ul li a:hover {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .copyright {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .custom-select {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            margin-bottom: 15px;
+        }
+        
+        .contract-tabs {
+            margin-bottom: 20px;
+        }
+        
+        .contract-tabs .nav-link {
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        
+        .contract-tabs .nav-link.active[data-type="nlt"] {
+            color: var(--secondary);
+            border-bottom: 3px solid var(--secondary);
+        }
+        
+        .contract-tabs .nav-link.active[data-type="rtb"] {
+            color: var(--rtb-color);
+            border-bottom: 3px solid var(--rtb-color);
+        }
+        
+        /* Stile per il banner di richiesta informazioni */
+        .external-link-banner {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin: 40px 0;
+            border: 1px solid #e5e5e5;
+        }
+        
+        .external-link-banner h3 {
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .btn-external-link {
+            background-color: var(--accent);
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 5px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-external-link:hover {
+            background-color: #e67e22;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .btn-external-link i {
+            margin-left: 10px;
+        }
+        
+        @media (max-width: 991px) {
+            .sticky-sidebar {
+                position: static !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <span class="logo-text">o2o Mobility</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Catalogo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://o2omobility.com/contatti/">Contatti</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Breadcrumb -->
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="#">Home</a></li>
+                <li class="breadcrumb-item"><a href="#">Catalogo</a></li>
+                <li class="breadcrumb-item"><a href="#">Elettriche</a></li>
+                <li class="breadcrumb-item active">Fiat 500e</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mb-5">
+        <div class="row">
+            <!-- Car Details Column -->
+            <div class="col-lg-8">
+                <!-- Car Title and Badges -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h1 class="mb-2">Fiat 500e Icon</h1>
+                        <div>
+                            <span class="car-badge badge-nlt">NLT</span>
+                            <span class="car-badge badge-rtb">RTB</span>
+                            <span class="car-badge bg-success">100% Elettrica</span>
+                            <span class="car-badge bg-info">Nuova</span>
+                        </div>
+                    </div>
+                    <div class="d-none d-md-block">
+                        <button class="btn btn-outline-primary me-2">
+                            <i class="far fa-heart me-1"></i> Salva
+                        </button>
+                        <button class="btn btn-outline-secondary">
+                            <i class="fas fa-share-alt me-1"></i> Condividi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Image Gallery -->
+                <div class="image-gallery">
+                    <!-- Main Gallery -->
+                    <div class="swiper gallery-main">
+                        <div class="swiper-wrapper">
+                            <div class="swiper-slide">
+                                <img src="img/500/501.jpg" alt="Fiat 500e Blu">
+                            </div>
+                            <div class="swiper-slide">
+                                <img src="img/500/5002.jpg" alt="Fiat 500e Laterale">
+                            </div>
+                            <div class="swiper-slide">
+                                <img src="img/500/5003.jpg" alt="Fiat 500e Posteriore">
+                            </div>
+                            <div class="swiper-slide">
+                                <img src="img/500/5004.jpg" alt="Fiat 500e Interni">
+                            </div>
+                            <div class="swiper-slide">
+                                <img src="img/500/5005.jpg" alt="Fiat 500e Dashboard">
+                            </div>
+                        </div>
+                        <!-- Add Navigation -->
+                        <div class="swiper-button-next"></div>
+                        <div class="swiper-button-prev"></div>
+                    </div>
+                    <!-- Thumbnails -->
+                    <div class="swiper gallery-thumbs">
+                        <div class="swiper-wrapper">
+                            <div class="swiper-slide">
+                                <img src="img/500/501.jpg" alt="Thumbnail 1">
+                            </div>
+                            <div class="swiper-slide">
+                                <img src="img/500/5002.jpg" alt="Thumbnail 2">
+                            </div>
+                            <div class="swiper-slide">
+                                <img src="img/500/5003.jpg" alt="Thumbnail 3">
+                            </div>
+                            <div class="swiper-slide">
+                                <img src="img/500/5004.jpg" alt="Thumbnail 4">
+                            </div>
+                            <div class="swiper-slide">
+                                <img src="img/500/5005.jpg" alt="Thumbnail 5">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Car Specs -->
+                <div class="car-description">
+                    <div class="car-specs">
+                        <span><i class="fas fa-charging-station"></i> Elettrica</span>
+                        <span><i class="fas fa-bolt"></i> 87 kW (118 CV)</span>
+                        <span><i class="fas fa-cog"></i> Automatica</span>
+                        <span><i class="fas fa-car-battery"></i> 42 kWh</span>
+                        <span><i class="fas fa-road"></i> 320 km autonomia WLTP</span>
+                        <span><i class="fas fa-tachometer-alt"></i> 150 km/h max</span>
+                    </div>
+                </div>
+
+                <!-- Tabs for Details -->
+                <ul class="nav nav-tabs" id="carDetailsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button">Descrizione</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="features-tab" data-bs-toggle="tab" data-bs-target="#features" type="button">Dotazioni</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="colors-tab" data-bs-toggle="tab" data-bs-target="#colors" type="button">Colori</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="technical-tab" data-bs-toggle="tab" data-bs-target="#technical" type="button">Dati Tecnici</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="carDetailsTabsContent">
+                    <!-- Description Tab -->
+                    <div class="tab-pane fade show active" id="description" role="tabpanel">
+                        <h3 class="card-title">La piccola city car elettrica più iconica</h3>
+                        <p>La nuova Fiat 500e rappresenta l'evoluzione elettrica della storica city car italiana. Con un design che mantiene il DNA del modello originale, la 500e si presenta con linee moderne e dettagli curati che ne esaltano l'eleganza e la personalità.</p>
+                        
+                        <p>La versione Icon è dotata di interni raffinati con materiali di alta qualità e un'ampia dotazione tecnologica, tra cui il sistema di infotainment con display da 10,25" compatibile con Apple CarPlay e Android Auto, il cruscotto digitale TFT da 7" e i sistemi di assistenza alla guida di Livello 2.</p>
+                        
+                        <p>La motorizzazione elettrica offre una potenza di 87 kW (118 CV) con una coppia di 220 Nm, garantendo accelerazioni brillanti e un'autonomia fino a 320 km nel ciclo WLTP. La batteria da 42 kWh può essere ricaricata fino all'80% in appena 35 minuti con la ricarica rapida in corrente continua.</p>
+                        
+                        <p>Con il noleggio a lungo termine potrai guidare questa splendida auto elettrica senza preoccuparti della manutenzione, dell'assicurazione e del deprezzamento. Scegli tra le diverse soluzioni di noleggio quella più adatta alle tue esigenze e godi del piacere di guida a zero emissioni.</p>
+                        
+                        <p>La formula <strong>Rent to Buy</strong> ti offre la flessibilità di un noleggio con l'opzione di acquisto del veicolo al termine del periodo. Un'opportunità ideale per chi desidera provare l'esperienza della guida elettrica prima di decidere se passare definitivamente alla mobilità a zero emissioni.</p>
+                        
+                        <div class="external-link-banner">
+                            <h3>MAGGIORI INFORMAZIONI</h3>
+                            <a href="contattacifiat.html" class="btn-external-link">
+                                Contattaci <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Features Tab -->
+                    <div class="tab-pane fade" id="features" role="tabpanel">
+                        <div class="features-list">
+                            <div class="feature-group">
+                                <h4>Comfort</h4>
+                                <ul>
+                                    <li><i class="fas fa-check"></i> Climatizzatore automatico</li>
+                                    <li><i class="fas fa-check"></i> Sedili anteriori riscaldati</li>
+                                    <li><i class="fas fa-check"></i> Sensori di parcheggio posteriori</li>
+                                    <li><i class="fas fa-check"></i> Telecamera posteriore</li>
+                                    <li><i class="fas fa-check"></i> Cruise control adattivo</li>
+                                    <li><i class="fas fa-check"></i> Keyless Entry&Go</li>
+                                    <li><i class="fas fa-check"></i> Volante in pelle multifunzione</li>
+                                    <li><i class="fas fa-check"></i> Sedile guidatore regolabile in altezza</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="feature-group">
+                                <h4>Tecnologia</h4>
+                                <ul>
+                                    <li><i class="fas fa-check"></i> Display touchscreen 10,25"</li>
+                                    <li><i class="fas fa-check"></i> Navigatore satellitare</li>
+                                    <li><i class="fas fa-check"></i> Apple CarPlay / Android Auto wireless</li>
+                                    <li><i class="fas fa-check"></i> Bluetooth con streaming audio</li>
+                                    <li><i class="fas fa-check"></i> Sistema audio premium con 6 altoparlanti</li>
+                                    <li><i class="fas fa-check"></i> Quadro strumenti digitale TFT 7"</li>
+                                    <li><i class="fas fa-check"></i> Ricarica wireless per smartphone</li>
+                                    <li><i class="fas fa-check"></i> Prese USB anteriori e posteriori</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="feature-group">
+                                <h4>Sicurezza</h4>
+                                <ul>
+                                    <li><i class="fas fa-check"></i> 6 Airbag</li>
+                                    <li><i class="fas fa-check"></i> Frenata automatica di emergenza</li>
+                                    <li><i class="fas fa-check"></i> Lane Keeping Assist</li>
+                                    <li><i class="fas fa-check"></i> Traffic Sign Recognition</li>
+                                    <li><i class="fas fa-check"></i> Blind Spot Detection</li>
+                                    <li><i class="fas fa-check"></i> Attention Assist</li>
+                                    <li><i class="fas fa-check"></i> Sistema ISOFIX</li>
+                                    <li><i class="fas fa-check"></i> Sensore pressione pneumatici</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="feature-group">
+                                <h4>Esterni</h4>
+                                <ul>
+                                    <li><i class="fas fa-check"></i> Cerchi in lega da 17"</li>
+                                    <li><i class="fas fa-check"></i> Fari full LED</li>
+                                    <li><i class="fas fa-check"></i> Luci diurne a LED</li>
+                                    <li><i class="fas fa-check"></i> Specchietti esterni elettrici e riscaldati</li>
+                                    <li><i class="fas fa-check"></i> Vetri posteriori oscurati</li>
+                                    <li><i class="fas fa-check"></i> Tetto panoramico in vetro</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="feature-group">
+                                <h4>Optional disponibili</h4>
+                                <ul>
+                                    <li><i class="fas fa-check"></i> Ricarica rapida da 85 kW</li>
+                                    <li><i class="fas fa-check"></i> Winter Pack</li>
+                                    <li><i class="fas fa-check"></i> Sistema audio premium JBL</li>
+                                    <li><i class="fas fa-check"></i> Vernice metallizzata</li>
+                                    <li><i class="fas fa-check"></i> Tetto a contrasto</li>
+                                    <li><i class="fas fa-check"></i> Cerchi in lega da 18"</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Colors Tab -->
+                    <div class="tab-pane fade" id="colors" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4 class="card-title">Colori Esterni</h4>
+                                <div>
+                                    <div class="color-option active" style="background-color: #034EA2;" data-color="Blu Oceano" title="Blu Oceano"></div>
+                                    <div class="color-option" style="background-color: #F9F9F9;" data-color="Bianco Gelato" title="Bianco Gelato"></div>
+                                    <div class="color-option" style="background-color: #505050;" data-color="Grigio Minerale" title="Grigio Minerale"></div>
+                                    <div class="color-option" style="background-color: #BF0D33;" data-color="Rosso Passione" title="Rosso Passione"></div>
+                                    <div class="color-option" style="background-color: #000000;" data-color="Nero Vesuvio" title="Nero Vesuvio"></div>
+                                    <div class="color-option" style="background-color: #82C341;" data-color="Verde Rugiada" title="Verde Rugiada"></div>
+                                </div>
+                                <p class="mt-3"><strong>Colore selezionato:</strong> <span id="exteriorColorText">Blu Oceano</span></p>
+                                
+                                <div class="mt-4">
+                                    <h5>Tetto a contrasto (optional)</h5>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="contrastRoof">
+                                        <label class="form-check-label" for="contrastRoof">
+                                            Tetto nero a contrasto (+€400)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h4 class="card-title">Colori Interni</h4>
+                                <div>
+                                    <div class="color-option active" style="background-color: #202020;" data-color="Nero" title="Nero"></div>
+                                    <div class="color-option" style="background-color: #D0CFCF;" data-color="Grigio" title="Grigio"></div>
+                                    <div class="color-option" style="background-color: #6E4D36;" data-color="Marrone" title="Marrone"></div>
+                                </div>
+                                <p class="mt-3"><strong>Colore selezionato:</strong> <span id="interiorColorText">Nero</span></p>
+                                
+                                <div class="mt-4">
+                                    <h5>Materiali</h5>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="material" id="material1" checked>
+                                        <label class="form-check-label" for="material1">
+                                            Tessuto standard
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="material" id="material2">
+                                        <label class="form-check-label" for="material2">
+                                            Tessuto/Ecopelle (+€600)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="material" id="material3">
+                                        <label class="form-check-label" for="material3">
+                                            Ecopelle Premium (+€1.200)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Technical Tab -->
+                    <div class="tab-pane fade" id="technical" role="tabpanel">
+                        <h3 class="card-title">Dati Tecnici</h3>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Motore e Prestazioni</h5>
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <td>Potenza massima</td>
+                                            <td>87 kW (118 CV)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Coppia massima</td>
+                                            <td>220 Nm</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Velocità massima</td>
+                                            <td>150 km/h</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Accelerazione 0-100 km/h</td>
+                                            <td>9,0 secondi</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Trazione</td>
+                                            <td>Anteriore</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Cambio</td>
+                                            <td>Automatico (monomarcia)</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5>Batteria e Ricarica</h5>
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <td>Capacità batteria</td>
+                                            <td>42 kWh</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Autonomia WLTP</td>
+                                            <td>320 km</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Potenza ricarica AC</td>
+                                            <td>11 kW (0-100% in 4h 15min)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Potenza ricarica DC</td>
+                                            <td>85 kW (0-80% in 35min)</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Consumo energetico</td>
+                                            <td>14,0 kWh/100 km</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Emissioni CO₂</td>
+                                            <td>0 g/km</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h5>Dimensioni e Pesi</h5>
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <td>Lunghezza</td>
+                                            <td>3.632 mm</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Larghezza</td>
+                                            <td>1.683 mm</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Altezza</td>
+                                            <td>1.527 mm</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Passo</td>
+                                            <td>2.322 mm</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Peso a vuoto</td>
+                                            <td>1.365 kg</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Capacità bagagliaio</td>
+                                            <td>185 litri</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5>Caratteristiche di Guida</h5>
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <td>Modalità di guida</td>
+                                            <td>Normal, Range, Sherpa</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Sistema frenata rigenerativa</td>
+                                            <td>Sì, regolabile</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Guida assistita</td>
+                                            <td>Livello 2</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Diametro di sterzata</td>
+                                            <td>9,7 m</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Cerchi</td>
+                                            <td>In lega da 17" (optional 18")</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Pneumatici</td>
+                                            <td>205/45 R17</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Similar Cars -->
+                <h3 class="similar-cars-title">Auto simili</h3>
+                <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+                    <!-- Similar Car 1 -->
+                    <div class="col">
+                        <div class="similar-car-card">
+                            <div class="similar-car-image">
+                                <img src="img/500/mini.jpg" alt="Mini Cooper SE">
+                                <div class="similar-car-badges">
+                                    <div class="similar-car-badge badge-nlt">NLT</div>
+                                    <div class="similar-car-badge badge-new">NEW</div>
+                                    <div class="similar-car-badge badge-promo">PROMO</div>
+                                </div>
+                            </div>
+                            <div class="similar-car-details">
+                                <h5 class="similar-car-title">Mini Cooper SE</h5>
+                                <div class="small text-muted">Elettrica - 135 kW - 234 km</div>
+                                <div class="similar-car-price">€349<span>/mese</span></div>
+                                <a href="#" class="btn btn-sm btn-outline-primary mt-2">Dettagli</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Similar Car 2 -->
+                    <div class="col">
+                        <div class="similar-car-card">
+                            <div class="similar-car-image">
+                                <img src="img/500/renault.jpg" alt="Renault Zoe">
+                                <div class="similar-car-badges">
+                                    <div class="similar-car-badge badge-nlt">NLT</div>
+                                    <div class="similar-car-badge badge-2life">2 LIFE</div>
+                                </div>
+                            </div>
+                            <div class="similar-car-details">
+                                <h5 class="similar-car-title">Renault Zoe</h5>
+                                <div class="small text-muted">Elettrica - 100 kW - 395 km</div>
+                                <div class="similar-car-price">€299<span>/mese</span></div>
+                                <a href="#" class="btn btn-sm btn-outline-primary mt-2">Dettagli</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Similar Car 3 -->
+                    <div class="col">
+                        <div class="similar-car-card">
+                            <div class="similar-car-image">
+                                <img src="img/500/peaugeot.jpg" alt="Peugeot e-208">
+                                <div class="similar-car-badges">
+                                    <div class="similar-car-badge badge-rtb">RTB</div>
+                                    <div class="similar-car-badge badge-top">TOP</div>
+                                </div>
+                            </div>
+                            <div class="similar-car-details">
+                                <h5 class="similar-car-title">Peugeot e-208</h5>
+                                <div class="small text-muted">Elettrica - 100 kW - 362 km</div>
+                                <div class="similar-car-price">€319<span>/mese</span></div>
+                                <a href="#" class="btn btn-sm btn-outline-primary mt-2">Dettagli</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Column -->
+            <div class="col-lg-4">
+                <div class="sticky-sidebar sticky-top">
+                    <!-- Contract Type Tabs -->
+                    <ul class="nav nav-tabs contract-tabs" id="contractTypeTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="nlt-tab" data-bs-toggle="tab" data-bs-target="#nlt" type="button" data-type="nlt">
+                                Noleggio a Lungo Termine
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="rtb-tab" data-bs-toggle="tab" data-bs-target="#rtb" type="button" data-type="rtb">
+                                Rent to Buy
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <!-- Contract Tabs Content -->
+                    <div class="tab-content" id="contractTypeTabContent">
+                        <!-- NLT Tab Content -->
+                        <div class="tab-pane fade show active" id="nlt" role="tabpanel">
+                            <!-- Contract Selector -->
+                            <label for="nltContractType" class="form-label">Seleziona la soluzione:</label>
+                            <select class="custom-select" id="nltContractType">
+                                <option value="private" selected>Clienti Privati</option>
+                                <option value="business">Aziende/P.IVA</option>
+                            </select>
+                            
+                            <!-- Private contracts container -->
+                            <div id="nlt-private-contracts">
+                                <!-- NLT Contract 1 -->
+                                <div class="contract-card contract-nlt">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h4 class="mb-0">Smart 24</h4>
+                                        <span class="badge bg-primary">Popolare</span>
+                                    </div>
+                                    <div class="contract-price">€279<span>/mese (IVA incl.)</span></div>
+                                    <div class="contract-details">
+                                        <span><i class="fas fa-calendar"></i> Durata: 24 mesi</span>
+                                        <span><i class="fas fa-road"></i> 10.000 km/anno</span>
+                                        <span><i class="fas fa-euro-sign"></i> Anticipo: €3.500</span>
+                                    </div>
+                                    <hr>
+                                    <div class="small text-muted mb-3">
+                                        <p><strong>Inclusi nel canone:</strong> Manutenzione ordinaria e straordinaria, Assicurazione RCA, Furto e incendio, Kasko, Assistenza stradale 24/7, Tassa di proprietà</p>
+                                    </div>
+                                    <a href="contattacifiat.html" class="btn btn-primary w-100 btn-cta">Richiedi preventivo</a>
+                                </div>
+                                
+                                <!-- NLT Contract 2 -->
+                                <div class="contract-card contract-nlt mt-3">
+                                    <h4 class="mb-3">Flex 36</h4>
+                                    <div class="contract-price">€249<span>/mese (IVA incl.)</span></div>
+                                    <div class="contract-details">
+                                        <span><i class="fas fa-calendar"></i> Durata: 36 mesi</span>
+                                        <span><i class="fas fa-road"></i> 10.000 km/anno</span>
+                                        <span><i class="fas fa-euro-sign"></i> Anticipo: €3.500</span>
+                                    </div>
+                                    <hr>
+                                    <div class="small text-muted mb-3">
+                                        <p><strong>Inclusi nel canone:</strong> Manutenzione ordinaria e straordinaria, Assicurazione RCA, Furto e incendio, Kasko, Assistenza stradale 24/7, Tassa di proprietà</p>
+                                    </div>
+                                    <a href="contattacifiat.html" class="btn btn-outline-primary w-100">Richiedi preventivo</a>
+                                </div>
+                                
+                                <!-- NLT Contract 3 -->
+                                <div class="contract-card contract-nlt mt-3">
+                                    <h4 class="mb-3">Long 48</h4>
+                                    <div class="contract-price">€229<span>/mese (IVA incl.)</span></div>
+                                    <div class="contract-details">
+                                        <span><i class="fas fa-calendar"></i> Durata: 48 mesi</span>
+                                        <span><i class="fas fa-road"></i> 10.000 km/anno</span>
+                                        <span><i class="fas fa-euro-sign"></i> Anticipo: €3.500</span>
+                                    </div>
+                                    <hr>
+                                    <div class="small text-muted mb-3">
+                                        <p><strong>Inclusi nel canone:</strong> Manutenzione ordinaria e straordinaria, Assicurazione RCA, Furto e incendio, Kasko, Assistenza stradale 24/7, Tassa di proprietà</p>
+                                    </div>
+                                    <a href="contattacifiat.html" class="btn btn-outline-primary w-100">Richiedi preventivo</a>
+                                </div>
+                            </div>
+                            
+                            <!-- Business contracts container (hidden by default) -->
+                            <div id="nlt-business-contracts" style="display: none;">
+                                <!-- NLT Business Contract 1 -->
+                                <div class="contract-card contract-nlt">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h4 class="mb-0">Business 36+</h4>
+                                        <span class="badge bg-primary">Consigliato</span>
+                                    </div>
+                                    <div class="contract-price">€219<span>/mese (IVA escl.)</span></div>
+                                    <div class="contract-details">
+                                        <span><i class="fas fa-calendar"></i> Durata: 36 mesi</span>
+                                        <span><i class="fas fa-road"></i> 15.000 km/anno</span>
+                                        <span><i class="fas fa-euro-sign"></i> Anticipo: €4.000</span>
+                                    </div>
+                                    <hr>
+                                    <div class="small text-muted mb-3">
+                                        <p><strong>Inclusi nel canone:</strong> Manutenzione ordinaria e straordinaria, Assicurazione RCA, Furto e incendio, Kasko, Assistenza stradale 24/7, Tassa di proprietà</p>
+                                        <p><strong>Deducibilità fiscale</strong>: 100% del canone per veicoli strumentali all'attività</p>
+                                    </div>
+                                    <a href="contattacifiat.html" class="btn btn-primary w-100 btn-cta">Richiedi preventivo</a>
+                                </div>
+                                
+                                <!-- NLT Business Contract 2 -->
+                                <div class="contract-card contract-nlt mt-3">
+                                    <h4 class="mb-3">Executive 48</h4>
+                                    <div class="contract-price">€199<span>/mese (IVA escl.)</span></div>
+                                    <div class="contract-details">
+                                        <span><i class="fas fa-calendar"></i> Durata: 48 mesi</span>
+                                        <span><i class="fas fa-road"></i> 15.000 km/anno</span>
+                                        <span><i class="fas fa-euro-sign"></i> Anticipo: €4.000</span>
+                                    </div>
+                                    <hr>
+                                    <div class="small text-muted mb-3">
+                                        <p><strong>Inclusi nel canone:</strong> Manutenzione ordinaria e straordinaria, Assicurazione RCA, Furto e incendio, Kasko, Assistenza stradale 24/7, Tassa di proprietà</p>
+                                        <p><strong>Deducibilità fiscale</strong>: 100% del canone per veicoli strumentali all'attività</p>
+                                    </div>
+                                    <a href="contattacifiat.html" class="btn btn-outline-primary w-100">Richiedi preventivo</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- RTB Tab Content -->
+                        <div class="tab-pane fade" id="rtb" role="tabpanel">
+                            <!-- Contract Selector per RTB -->
+                            <label for="rtbContractType" class="form-label">Seleziona la soluzione:</label>
+                            <select class="custom-select" id="rtbContractType">
+                                <option value="private" selected>Clienti Privati</option>
+                                <option value="business">Aziende/P.IVA</option>
+                            </select>
+                            
+                            <!-- RTB Contracts for Privati -->
+                            <div id="rtb-private-contracts">
+                                <!-- RTB Contract 1 -->
+                                <div class="contract-card contract-rtb">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h4 class="mb-0">RTB Smart 36</h4>
+                                        <span class="badge bg-warning text-dark">Consigliato</span>
+                                    </div>
+                                    <div class="contract-price rtb-price">€299<span>/mese (IVA incl.)</span></div>
+                                    <div class="contract-details">
+                                        <span><i class="fas fa-calendar"></i> Durata: 36 mesi</span>
+                                        <span><i class="fas fa-road"></i> 15.000 km/anno</span>
+                                        <span><i class="fas fa-euro-sign"></i> Anticipo: €2.500</span>
+                                    </div>
+                                    <hr>
+                                    <div class="small text-muted mb-3">
+                                        <p><strong>Inclusi nel canone:</strong> Manutenzione ordinaria e straordinaria, Assicurazione RCA, Furto e incendio, Kasko, Assistenza stradale 24/7, Tassa di proprietà</p>
+                                        <p><strong>Al termine:</strong> Puoi acquistare il veicolo al valore finale o restituirlo senza ulteriori costi</p>
+                                    </div>
+                                    <a href="contattacifiat.html" class="btn btn-rtb w-100 btn-cta">Richiedi preventivo</a>
+                                </div>
+                                
+                                <!-- RTB Contract 2 -->
+                                <div class="contract-card contract-rtb mt-3">
+                                    <h4 class="mb-3">RTB Flex 48</h4>
+                                    <div class="contract-price rtb-price">€279<span>/mese (IVA incl.)</span></div>
+                                    <div class="contract-details">
+                                        <span><i class="fas fa-calendar"></i> Durata: 48 mesi</span>
+                                        <span><i class="fas fa-road"></i> 15.000 km/anno</span>
+                                        <span><i class="fas fa-euro-sign"></i> Anticipo: €2.500</span>
+                                    </div>
+                                    <hr>
+                                    <div class="small text-muted mb-3">
+                                        <p><strong>Inclusi nel canone:</strong> Manutenzione ordinaria e straordinaria, Assicurazione RCA, Furto e incendio, Kasko, Assistenza stradale 24/7, Tassa di proprietà</p>
+                                        <p><strong>Al termine:</strong> Puoi acquistare il veicolo al valore finale o restituirlo senza ulteriori costi</p>
+                                    </div>
+                                    <a href="contattacifiat.html" class="btn btn-outline-rtb w-100">Richiedi preventivo</a>
+                                </div>
+                            </div>
+                            
+                            <!-- RTB Contracts for Business (inizialmente nascosto) -->
+                            <div id="rtb-business-contracts" style="display: none;">
+                                <!-- RTB Business Contract 1 -->
+                                <div class="contract-card contract-rtb">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h4 class="mb-0">RTB Business 36</h4>
+                                        <span class="badge bg-warning text-dark">Consigliato</span>
+                                    </div>
+                                    <div class="contract-price rtb-price">€249<span>/mese (IVA escl.)</span></div>
+                                    <div class="contract-details">
+                                        <span><i class="fas fa-calendar"></i> Durata: 36 mesi</span>
+                                        <span><i class="fas fa-road"></i> 20.000 km/anno</span>
+                                        <span><i class="fas fa-euro-sign"></i> Anticipo: €3.000</span>
+                                    </div>
+                                    <hr>
+                                    <div class="small text-muted mb-3">
+                                        <p><strong>Inclusi nel canone:</strong> Manutenzione ordinaria e straordinaria, Assicurazione RCA, Furto e incendio, Kasko, Assistenza stradale 24/7, Tassa di proprietà</p>
+                                        <p><strong>Al termine:</strong> Puoi acquistare il veicolo al valore finale o restituirlo senza ulteriori costi</p>
+                                        <p><strong>Vantaggi fiscali:</strong> Deducibilità del canone e ammortamento del valore in caso di acquisto</p>
+                                    </div>
+                                    <a href="contattacifiat.html" class="btn btn-rtb w-100 btn-cta">Richiedi preventivo</a>
+                                </div>
+                                
+                                <!-- RTB Business Contract 2 -->
+                                <div class="contract-card contract-rtb mt-3">
+                                    <h4 class="mb-3">RTB Executive 48</h4>
+                                    <div class="contract-price rtb-price">€229<span>/mese (IVA escl.)</span></div>
+                                    <div class="contract-details">
+                                        <span><i class="fas fa-calendar"></i> Durata: 48 mesi</span>
+                                        <span><i class="fas fa-road"></i> 20.000 km/anno</span>
+                                        <span><i class="fas fa-euro-sign"></i> Anticipo: €3.000</span>
+                                    </div>
+                                    <hr>
+                                    <div class="small text-muted mb-3">
+                                        <p><strong>Inclusi nel canone:</strong> Manutenzione ordinaria e straordinaria, Assicurazione RCA, Furto e incendio, Kasko, Assistenza stradale 24/7, Tassa di proprietà</p>
+                                        <p><strong>Al termine:</strong> Puoi acquistare il veicolo al valore finale o restituirlo senza ulteriori costi</p>
+                                        <p><strong>Vantaggi fiscali:</strong> Deducibilità del canone e ammortamento del valore in caso di acquisto</p>
+                                    </div>
+                                    <a href="contattacifiat.html" class="btn btn-outline-rtb w-100">Richiedi preventivo</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Box -->
+                    <div class="contact-box mt-4">
+                        <h4>Hai bisogno di aiuto?</h4>
+                        <p>I nostri consulenti sono a tua disposizione per guidarti nella scelta dell'auto e della soluzione di mobilità più adatta alle tue esigenze.</p>
+                        <a href="contattacifiat.html" class="btn w-100 mb-3">
+                            <i class="fas fa-phone me-2"></i> Chiama ora
+                        </a>
+                        <a href="contattacifiat.html" class="btn w-100">
+                            <i class="fas fa-comment me-2"></i> Live Chat
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="copyright text-center">
+                <p>&copy; 2025 o2o Mobility. Tutti i diritti riservati.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Swiper for main gallery
+            var galleryThumbs = new Swiper('.gallery-thumbs', {
+                spaceBetween: 10,
+                slidesPerView: 4,
+                freeMode: true,
+                watchSlidesProgress: true,
+            });
+            
+            var galleryMain = new Swiper('.gallery-main', {
+                spaceBetween: 10,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                thumbs: {
+                    swiper: galleryThumbs
+                }
+            });
+            
+            // Color selection
+            const exteriorColors = document.querySelectorAll('#colors .col-md-6:first-child .color-option');
+            const interiorColors = document.querySelectorAll('#colors .col-md-6:last-child .color-option');
+            const exteriorColorText = document.getElementById('exteriorColorText');
+            const interiorColorText = document.getElementById('interiorColorText');
+            
+            exteriorColors.forEach(color => {
+                color.addEventListener('click', function() {
+                    exteriorColors.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    exteriorColorText.textContent = this.getAttribute('data-color');
+                });
+            });
+            
+            interiorColors.forEach(color => {
+                color.addEventListener('click', function() {
+                    interiorColors.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    interiorColorText.textContent = this.getAttribute('data-color');
+                });
+            });
+            
+            // Styling for contract tabs
+            const contractTabs = document.querySelectorAll('#contractTypeTab .nav-link');
+            contractTabs.forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function() {
+                    // Rimuovi la classe "active" da tutti i tabs
+                    contractTabs.forEach(t => t.classList.remove('active-nlt', 'active-rtb'));
+                    
+                    // Aggiungi la classe "active" in base al tipo di contratto
+                    if (this.getAttribute('data-type') === 'nlt') {
+                        this.classList.add('active-nlt');
+                    } else if (this.getAttribute('data-type') === 'rtb') {
+                        this.classList.add('active-rtb');
+                    }
+                });
+            });
+            
+            // Contract type selector for NLT
+            const nltContractType = document.getElementById('nltContractType');
+            const nltPrivateContracts = document.getElementById('nlt-private-contracts');
+            const nltBusinessContracts = document.getElementById('nlt-business-contracts');
+            
+            nltContractType.addEventListener('change', function() {
+                if (this.value === 'business') {
+                    nltPrivateContracts.style.display = 'none';
+                    nltBusinessContracts.style.display = 'block';
+                } else {
+                    nltPrivateContracts.style.display = 'block';
+                    nltBusinessContracts.style.display = 'none';
+                }
+            });
+            
+            // Contract type selector for RTB
+            const rtbContractType = document.getElementById('rtbContractType');
+            const rtbPrivateContracts = document.getElementById('rtb-private-contracts');
+            const rtbBusinessContracts = document.getElementById('rtb-business-contracts');
+            
+            rtbContractType.addEventListener('change', function() {
+                if (this.value === 'business') {
+                    rtbPrivateContracts.style.display = 'none';
+                    rtbBusinessContracts.style.display = 'block';
+                } else {
+                    rtbPrivateContracts.style.display = 'block';
+                    rtbBusinessContracts.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

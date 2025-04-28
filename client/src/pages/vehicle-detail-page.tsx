@@ -114,41 +114,54 @@ export default function VehicleDetailPage() {
                 )}
               </div>
               
-              <div className="bg-neutral-100 p-4 rounded-lg mb-6">
-                <h3 className="text-lg font-semibold mb-3">Specifiche Tecniche</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-neutral-500">Anno</p>
-                    <p className="font-medium">{vehicle.year}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-neutral-500">Chilometraggio</p>
-                    <p className="font-medium">{vehicle.mileage.toLocaleString()} km</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-neutral-500">Alimentazione</p>
-                    <p className="font-medium">{vehicle.fuelType}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-neutral-500">Potenza</p>
-                    <p className="font-medium">{vehicle.power} CV / {Math.round(vehicle.power * 0.735)} kW</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-neutral-500">Cambio</p>
-                    <p className="font-medium">{vehicle.transmission}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-neutral-500">Condizione</p>
-                    <p className="font-medium">{vehicle.condition}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-neutral-500">Colore</p>
-                    <p className="font-medium">{vehicle.color}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-neutral-500">Interni</p>
-                    <p className="font-medium">{vehicle.interiorColor}</p>
-                  </div>
+              <div className="car-specs mb-6">
+                <div className="car-specs-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                  </svg>
+                  <span>{vehicle.year}</span>
+                </div>
+                <div className="car-specs-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                  </svg>
+                  <span>{vehicle.mileage.toLocaleString()} km</span>
+                </div>
+                <div className="car-specs-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                  </svg>
+                  <span>{vehicle.power} CV / {Math.round(vehicle.power * 0.735)} kW</span>
+                </div>
+                <div className="car-specs-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clipRule="evenodd" />
+                  </svg>
+                  <span>{vehicle.fuelType}</span>
+                </div>
+                <div className="car-specs-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
+                  </svg>
+                  <span>{vehicle.transmission}</span>
+                </div>
+                <div className="car-specs-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <span>{vehicle.condition}</span>
+                </div>
+                <div className="car-specs-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
+                  </svg>
+                  <span>{vehicle.color}</span>
+                </div>
+                <div className="car-specs-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                  </svg>
+                  <span>{vehicle.interiorColor}</span>
                 </div>
               </div>
               
@@ -159,21 +172,42 @@ export default function VehicleDetailPage() {
                     {rentalOptions.map((option) => (
                       <div 
                         key={option.id}
-                        className={`border p-4 rounded-lg hover:border-primary transition-colors cursor-pointer ${selectedRentalOption === option.id ? 'border-primary' : 'border-neutral-200'}`}
+                        className={`contract-card ${option.type === 'NLT' ? 'contract-nlt' : 'contract-rtb'} cursor-pointer ${selectedRentalOption === option.id ? 'ring-1 ring-offset-2 ring-primary' : ''}`}
                         onClick={() => setSelectedRentalOption(option.id)}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium">{option.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'}</h4>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="inline-block text-xs font-semibold text-white px-2 py-1 rounded-md bg-blue-500">
+                            {option.type}
+                          </span>
                           <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedRentalOption === option.id ? 'border-primary' : 'border-neutral-300'}`}>
                             {selectedRentalOption === option.id && <div className="w-3 h-3 rounded-full bg-primary"></div>}
                           </div>
                         </div>
-                        <p className="text-sm text-neutral-600 mb-2">
-                          {option.duration} mesi{option.annualMileage ? ` / ${option.annualMileage.toLocaleString()} km` : ''}
-                        </p>
-                        <p className="text-xl font-bold text-primary">
-                          € {option.monthlyPrice}<span className="text-sm font-normal text-neutral-500">/mese</span>
-                        </p>
+                        <h4 className="text-lg font-bold mb-1">
+                          {option.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'}
+                        </h4>
+                        <div className="text-sm text-neutral-600 mb-3">
+                          {option.duration} mesi{option.annualMileage ? ` • ${option.annualMileage.toLocaleString()} km/anno` : ''}
+                        </div>
+                        
+                        <div className="flex justify-between items-center mb-2 text-sm">
+                          <span className="text-neutral-600">Anticipo</span>
+                          <span className="font-medium">€ {option.deposit.toLocaleString()}</span>
+                        </div>
+                        
+                        {option.finalPayment && (
+                          <div className="flex justify-between items-center mb-2 text-sm">
+                            <span className="text-neutral-600">Maxirata finale</span>
+                            <span className="font-medium">€ {option.finalPayment.toLocaleString()}</span>
+                          </div>
+                        )}
+                        
+                        <div className="mt-4 pt-3 border-t border-neutral-100">
+                          <div className="flex items-baseline">
+                            <span className="text-2xl font-bold text-primary mr-1">€ {option.monthlyPrice.toLocaleString()}</span>
+                            <span className="text-sm text-neutral-500">/mese</span>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>

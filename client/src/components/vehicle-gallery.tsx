@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize } from "lucide-react";
 
 interface VehicleGalleryProps {
   mainImage?: string;
@@ -41,43 +41,73 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
     setLightboxIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
   };
 
-  return (
-    <>
-      <div className="bg-neutral-100 rounded-lg overflow-hidden mb-4">
-        <img 
-          src={currentImage || defaultImage} 
-          alt={title} 
-          className="w-full h-[400px] object-cover cursor-pointer"
-          onClick={() => openLightbox(selectedIndex)}
-        />
-      </div>
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!lightboxOpen) return;
       
-      {allImages.length > 0 && (
-        <div className="grid grid-cols-5 gap-2">
-          {allImages.map((image, index) => (
-            <div 
-              key={index}
-              className={`cursor-pointer hover:opacity-75 transition-opacity rounded overflow-hidden ${
-                index === selectedIndex ? 'ring-2 ring-primary' : ''
-              }`}
-              onClick={() => handleThumbnailClick(image, index)}
-            >
-              <img 
-                src={image} 
-                alt={`${title} - Image ${index + 1}`} 
-                className="w-full h-20 object-cover"
-              />
-            </div>
-          ))}
+      if (e.key === "ArrowLeft") {
+        goToPrevious();
+      } else if (e.key === "ArrowRight") {
+        goToNext();
+      } else if (e.key === "Escape") {
+        setLightboxOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxOpen]);
+
+  return (
+    <div className="image-gallery">
+      <div className="relative bg-white rounded-lg overflow-hidden shadow-md">
+        <div className="relative">
+          <img 
+            src={currentImage || defaultImage} 
+            alt={title} 
+            className="w-full h-[450px] object-cover cursor-pointer"
+            onClick={() => openLightbox(selectedIndex)}
+          />
+          <button 
+            onClick={() => openLightbox(selectedIndex)}
+            className="absolute bottom-4 right-4 bg-white/80 hover:bg-white p-2 rounded-full text-primary transition-colors"
+            title="Visualizza a schermo intero"
+          >
+            <Maximize size={20} />
+          </button>
         </div>
-      )}
+        
+        {allImages.length > 0 && (
+          <div className="bg-neutral-50 p-3 border-t border-neutral-100">
+            <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-thin scrollbar-thumb-neutral-300">
+              {allImages.map((image, index) => (
+                <div 
+                  key={index}
+                  className={`flex-shrink-0 cursor-pointer hover:opacity-75 transition-opacity rounded overflow-hidden ${
+                    index === selectedIndex ? 'ring-2 ring-primary border-2 border-white' : 'opacity-70'
+                  }`}
+                  onClick={() => handleThumbnailClick(image, index)}
+                  style={{ width: '100px' }}
+                >
+                  <img 
+                    src={image} 
+                    alt={`${title} - Image ${index + 1}`} 
+                    className="w-full h-16 object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-6xl p-0 bg-transparent border-none">
           <div className="relative bg-black rounded-lg flex items-center justify-center h-[80vh]">
             <Button 
-              className="absolute left-2 z-10 rounded-full" 
+              className="absolute left-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white" 
               variant="ghost"
               size="icon"
               onClick={(e) => {
@@ -85,7 +115,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                 goToPrevious();
               }}
             >
-              <ChevronLeft className="h-8 w-8 text-white" />
+              <ChevronLeft className="h-8 w-8" />
             </Button>
 
             <img 
@@ -95,7 +125,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
             />
 
             <Button 
-              className="absolute right-2 z-10 rounded-full" 
+              className="absolute right-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white" 
               variant="ghost"
               size="icon"
               onClick={(e) => {
@@ -103,7 +133,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                 goToNext();
               }}
             >
-              <ChevronRight className="h-8 w-8 text-white" />
+              <ChevronRight className="h-8 w-8" />
             </Button>
 
             <div className="absolute bottom-4 left-0 right-0 flex justify-center">
@@ -114,6 +144,6 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
