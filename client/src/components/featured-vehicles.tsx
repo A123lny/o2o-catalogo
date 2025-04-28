@@ -18,46 +18,46 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
   return (
     <section className="py-12 bg-neutral-100">
       <div className="container mx-auto px-4">
-        <div className="flex flex-wrap items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold">I Nostri Veicoli</h2>
+        <div className="flex flex-col w-full mb-8">
+          <h2 className="text-3xl font-bold mb-6">I Nostri Veicoli</h2>
           
-          <div className="flex space-x-2 md:space-x-4 overflow-x-auto py-2 md:py-0">
+          <div className="flex border-b border-neutral-200">
             <button 
               onClick={() => setActiveTab("featured")}
-              className={`px-3 py-2 md:px-4 md:py-2 text-sm md:text-base rounded-md transition-colors duration-300 whitespace-nowrap ${
+              className={`px-4 py-2 text-base font-medium transition-colors duration-300 ${
                 activeTab === "featured" 
-                  ? "bg-primary text-white" 
-                  : "bg-white hover:bg-neutral-200 text-neutral-700"
+                  ? "text-primary border-b-2 border-primary" 
+                  : "text-neutral-600 hover:text-primary"
               }`}
             >
-              In evidenza
+              In Evidenza
             </button>
             <button 
               onClick={() => setActiveTab("nlt")}
-              className={`px-3 py-2 md:px-4 md:py-2 text-sm md:text-base rounded-md transition-colors duration-300 whitespace-nowrap ${
+              className={`px-4 py-2 text-base font-medium transition-colors duration-300 ${
                 activeTab === "nlt" 
-                  ? "bg-primary text-white" 
-                  : "bg-white hover:bg-neutral-200 text-neutral-700"
+                  ? "text-primary border-b-2 border-primary" 
+                  : "text-neutral-600 hover:text-primary"
               }`}
             >
               NLT
             </button>
             <button 
               onClick={() => setActiveTab("rtb")}
-              className={`px-3 py-2 md:px-4 md:py-2 text-sm md:text-base rounded-md transition-colors duration-300 whitespace-nowrap ${
+              className={`px-4 py-2 text-base font-medium transition-colors duration-300 ${
                 activeTab === "rtb" 
-                  ? "bg-primary text-white" 
-                  : "bg-white hover:bg-neutral-200 text-neutral-700"
+                  ? "text-primary border-b-2 border-primary" 
+                  : "text-neutral-600 hover:text-primary"
               }`}
             >
               RTB
             </button>
             <button 
               onClick={() => setActiveTab("2life")}
-              className={`px-3 py-2 md:px-4 md:py-2 text-sm md:text-base rounded-md transition-colors duration-300 whitespace-nowrap ${
+              className={`px-4 py-2 text-base font-medium transition-colors duration-300 ${
                 activeTab === "2life" 
-                  ? "bg-primary text-white" 
-                  : "bg-white hover:bg-neutral-200 text-neutral-700"
+                  ? "text-primary border-b-2 border-primary" 
+                  : "text-neutral-600 hover:text-primary"
               }`}
             >
               2 Life
