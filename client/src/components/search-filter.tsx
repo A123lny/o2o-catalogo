@@ -20,6 +20,7 @@ interface SearchFilterProps {
     maxPrice: string;
     year: string;
     fuelType: string;
+    condition: string;
   };
   onFilterChange: (filters: any) => void;
 }
@@ -34,6 +35,13 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
     { value: "Diesel", label: "Diesel" },
     { value: "Ibrida", label: "Ibrida" },
     { value: "Elettrica", label: "Elettrica" },
+  ];
+  
+  // Condition options
+  const conditions = [
+    { value: "", label: "Tutte le condizioni" },
+    { value: "Nuovo", label: "Nuovo" },
+    { value: "2Life", label: "2Life (Usato)" },
   ];
   
   // Year options (current year down to 10 years ago)
@@ -186,6 +194,25 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
                 <div key={type.value} className="flex items-center space-x-2">
                   <RadioGroupItem value={type.value} id={`fuel-${type.value || 'any'}`} />
                   <Label htmlFor={`fuel-${type.value || 'any'}`} className="text-sm">{type.label}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </AccordionContent>
+        </AccordionItem>
+        
+        {/* Condition Filter (Nuovo/2Life) */}
+        <AccordionItem value="condition">
+          <AccordionTrigger className="text-sm font-medium">Condizione</AccordionTrigger>
+          <AccordionContent>
+            <RadioGroup 
+              value={filters.condition} 
+              onValueChange={(value) => onFilterChange({ condition: value })}
+              className="space-y-2"
+            >
+              {conditions.map(condition => (
+                <div key={condition.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={condition.value} id={`condition-${condition.value || 'any'}`} />
+                  <Label htmlFor={`condition-${condition.value || 'any'}`} className="text-sm">{condition.label}</Label>
                 </div>
               ))}
             </RadioGroup>

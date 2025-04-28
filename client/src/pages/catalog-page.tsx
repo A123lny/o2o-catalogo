@@ -15,6 +15,7 @@ export default function CatalogPage() {
     maxPrice: "",
     year: "",
     fuelType: "",
+    condition: "",
   });
   
   const { data: vehicles, isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
