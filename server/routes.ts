@@ -156,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/vehicles/:id", upload.single("mainImage"), async (req, res) => {
+  app.put("/api/admin/vehicles/:id", isAdmin, upload.single("mainImage"), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const vehicleData = JSON.parse(req.body.data);
@@ -174,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/vehicles/:id", async (req, res) => {
+  app.delete("/api/admin/vehicles/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteVehicle(id);
@@ -185,7 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload additional vehicle images
-  app.post("/api/admin/vehicles/:id/images", upload.array("images", 10), async (req, res) => {
+  app.post("/api/admin/vehicles/:id/images", isAdmin, upload.array("images", 10), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const files = req.files as Express.Multer.File[];
@@ -204,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CRUD operations for brands
-  app.get("/api/admin/brands", async (req, res) => {
+  app.get("/api/admin/brands", isAdmin, async (req, res) => {
     try {
       const brands = await storage.getBrands();
       res.json(brands);
@@ -213,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/brands", upload.single("logo"), async (req, res) => {
+  app.post("/api/admin/brands", isAdmin, upload.single("logo"), async (req, res) => {
     try {
       const brandData = JSON.parse(req.body.data);
       const validatedData = insertBrandSchema.parse(brandData);
@@ -229,7 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/brands/:id", upload.single("logo"), async (req, res) => {
+  app.put("/api/admin/brands/:id", isAdmin, upload.single("logo"), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const brandData = JSON.parse(req.body.data);
@@ -246,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/brands/:id", async (req, res) => {
+  app.delete("/api/admin/brands/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteBrand(id);
@@ -257,7 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CRUD operations for categories
-  app.get("/api/admin/categories", async (req, res) => {
+  app.get("/api/admin/categories", isAdmin, async (req, res) => {
     try {
       const categories = await storage.getCategories();
       res.json(categories);
@@ -266,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/categories", upload.single("image"), async (req, res) => {
+  app.post("/api/admin/categories", isAdmin, upload.single("image"), async (req, res) => {
     try {
       const categoryData = JSON.parse(req.body.data);
       const validatedData = insertCategorySchema.parse(categoryData);
@@ -282,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/categories/:id", upload.single("image"), async (req, res) => {
+  app.put("/api/admin/categories/:id", isAdmin, upload.single("image"), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const categoryData = JSON.parse(req.body.data);
