@@ -460,11 +460,13 @@ export class MemStorage implements IStorage {
     // Create admin user
     const adminUser: InsertUser = {
       username: "admin",
-      password: "2eb74e4eef9153ee4b6ef3a0f3b8a1cefd8dca44b4aa4b6c4c7d1dd3a43da8537fe6148ca1ac1ce54c5be5e99cb6fd39ceeff451662d4c1aee23cc7f3b5c018e.6a0d5b4ee8985c0c", // "admin123"
+      password: "admin123", // Sarà hashata nel registro/login
       email: "admin@autoprestige.it",
       fullName: "Admin User",
       role: "admin"
     };
+    // Usiamo una password già hashata per l'account admin
+    adminUser.password = "2eb74e4eef9153ee4b6ef3a0f3b8a1cefd8dca44b4aa4b6c4c7d1dd3a43da8537fe6148ca1ac1ce54c5be5e99cb6fd39ceeff451662d4c1aee23cc7f3b5c018e.6a0d5b4ee8985c0c"; // corrisponde a "admin123"
     this.createUser(adminUser);
     
     // Create brands

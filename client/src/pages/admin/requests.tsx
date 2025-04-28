@@ -155,8 +155,8 @@ export default function RequestsPage() {
   };
 
   // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateInput: Date | string) => {
+    const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
     return new Intl.DateTimeFormat('it-IT', {
       year: 'numeric',
       month: 'short',
@@ -216,7 +216,7 @@ export default function RequestsPage() {
                 />
               </div>
               
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter || "all"} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filtra per stato" />
                 </SelectTrigger>
@@ -274,7 +274,7 @@ export default function RequestsPage() {
                           </TableCell>
                           <TableCell>
                             <Select
-                              value={request.status}
+                              value={request.status || "new"}
                               onValueChange={(value) => handleStatusChange(request.id, value)}
                             >
                               <SelectTrigger className="h-8 w-[120px]">
@@ -430,7 +430,7 @@ export default function RequestsPage() {
               <div className="pt-4 border-t border-neutral-200">
                 <h4 className="text-sm font-medium mb-2">Cambia stato</h4>
                 <Select
-                  value={selectedRequest.status}
+                  value={selectedRequest.status || "new"}
                   onValueChange={(value) => {
                     handleStatusChange(selectedRequest.id, value);
                     setSelectedRequest({

@@ -163,7 +163,7 @@ export default function VehiclesPage() {
                 />
               </div>
               
-              <Select value={filterBrand} onValueChange={setFilterBrand}>
+              <Select value={filterBrand || "all"} onValueChange={setFilterBrand}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filtra per marca" />
                 </SelectTrigger>
@@ -177,7 +177,7 @@ export default function VehiclesPage() {
                 </SelectContent>
               </Select>
               
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <Select value={filterCategory || "all"} onValueChange={setFilterCategory}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filtra per categoria" />
                 </SelectTrigger>

@@ -454,8 +454,8 @@ export default function VehicleEditPage() {
                             <FormItem>
                               <FormLabel>Categoria*</FormLabel>
                               <Select
-                                value={field.value ? field.value.toString() : ""}
-                                onValueChange={(value) => field.onChange(parseInt(value))}
+                                value={field.value ? field.value.toString() : "all"}
+                                onValueChange={(value) => field.onChange(value === "all" ? null : parseInt(value))}
                               >
                                 <FormControl>
                                   <SelectTrigger>
@@ -669,7 +669,7 @@ export default function VehicleEditPage() {
                             <FormItem>
                               <FormLabel>Alimentazione*</FormLabel>
                               <Select
-                                value={field.value}
+                                value={field.value || "none"}
                                 onValueChange={field.onChange}
                               >
                                 <FormControl>

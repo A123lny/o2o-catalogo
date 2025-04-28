@@ -87,7 +87,7 @@ export default function HeroSection() {
               <div>
                 <label className="block text-sm font-medium text-neutral-600 mb-1">Marca</label>
                 <Select
-                  value={filters.brandId}
+                  value={filters.brandId || "all"}
                   onValueChange={(value) => handleFilterChange('brandId', value)}
                 >
                   <SelectTrigger>
@@ -106,7 +106,7 @@ export default function HeroSection() {
               <div>
                 <label className="block text-sm font-medium text-neutral-600 mb-1">Modello</label>
                 <Select
-                  value={filters.modelId}
+                  value={filters.modelId || "all"}
                   onValueChange={(value) => handleFilterChange('modelId', value)}
                   disabled={!filters.brandId}
                 >
@@ -122,7 +122,7 @@ export default function HeroSection() {
               <div>
                 <label className="block text-sm font-medium text-neutral-600 mb-1">Categoria</label>
                 <Select
-                  value={filters.categoryId}
+                  value={filters.categoryId || "all"}
                   onValueChange={(value) => handleFilterChange('categoryId', value)}
                 >
                   <SelectTrigger>
@@ -143,7 +143,7 @@ export default function HeroSection() {
               <div>
                 <label className="block text-sm font-medium text-neutral-600 mb-1">Prezzo Massimo</label>
                 <Select
-                  value={filters.maxPrice}
+                  value={filters.maxPrice || ""}
                   onValueChange={(value) => handleFilterChange('maxPrice', value)}
                 >
                   <SelectTrigger>
@@ -151,7 +151,7 @@ export default function HeroSection() {
                   </SelectTrigger>
                   <SelectContent>
                     {priceOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
+                      <SelectItem key={option.value || "default-price"} value={option.value || "default-price"}>
                         {option.label}
                       </SelectItem>
                     ))}
@@ -161,7 +161,7 @@ export default function HeroSection() {
               <div>
                 <label className="block text-sm font-medium text-neutral-600 mb-1">Anno</label>
                 <Select
-                  value={filters.year}
+                  value={filters.year || ""}
                   onValueChange={(value) => handleFilterChange('year', value)}
                 >
                   <SelectTrigger>
@@ -169,7 +169,7 @@ export default function HeroSection() {
                   </SelectTrigger>
                   <SelectContent>
                     {yearOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
+                      <SelectItem key={option.value || "default-year"} value={option.value || "default-year"}>
                         {option.label}
                       </SelectItem>
                     ))}
