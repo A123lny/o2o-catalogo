@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { CheckIcon, Loader2 } from "lucide-react";
+import { CheckIcon, ChevronRight, MapPin, Calendar, Gauge, Zap, Fuel, BarChart2, Activity, Package2 } from "lucide-react";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import VehicleGallery from "@/components/vehicle-gallery";
 import RequestForm from "@/components/request-form";
 import VehicleCard from "@/components/vehicle-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +16,8 @@ export default function VehicleDetailPage() {
   const vehicleId = params?.id ? parseInt(params.id) : null;
   const [activeTab, setActiveTab] = useState("description");
   const [selectedRentalOption, setSelectedRentalOption] = useState<number | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery<Vehicle>({
     queryKey: [`/api/vehicles/${vehicleId}`],
@@ -51,7 +52,7 @@ export default function VehicleDetailPage() {
       <div className="flex flex-col min-h-screen">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
         <Footer />
       </div>
@@ -75,282 +76,364 @@ export default function VehicleDetailPage() {
   }
 
   const selectedOption = rentalOptions?.find(option => option.id === selectedRentalOption);
+  const allImages = vehicle.mainImage 
+    ? [vehicle.mainImage, ...(vehicle.images as string[] || [])] 
+    : (vehicle.images as string[] || []);
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
+  };
+
+  const openLightbox = (index: number) => {
+    setCurrentImageIndex(index);
+    setLightboxOpen(true);
+  };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
-      <main className="flex-1 py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Gallery Section */}
-            <div className="lg:w-7/12">
-              <VehicleGallery
-                mainImage={vehicle.mainImage}
-                images={vehicle.images as string[]}
-                title={vehicle.title}
-              />
-            </div>
-            
-            {/* Vehicle Info Section */}
-            <div className="lg:w-5/12">
-              <div className="flex items-center mb-2">
-                {vehicle.badges && (vehicle.badges as string[]).map((badge, index) => (
-                  <span key={index} className={`vehicle-card-badge ${badge}`}>
-                    {badge === 'promo' ? 'PROMO' : badge === 'new' ? 'NUOVO' : badge.toUpperCase()}
-                  </span>
-                ))}
-              </div>
-              <h1 className="text-3xl font-bold mb-2">{vehicle.title}</h1>
-              <p className="text-neutral-600 mb-4">{vehicle.model}</p>
-              
-              <div className="flex items-end mb-6">
-                {vehicle.discountPrice ? (
-                  <>
-                    <div className="text-lg text-neutral-500 line-through mr-3">€ {vehicle.price.toLocaleString()}</div>
-                    <div className="text-3xl font-bold text-primary">€ {vehicle.discountPrice.toLocaleString()}</div>
-                  </>
-                ) : (
-                  <div className="text-3xl font-bold text-primary">€ {vehicle.price.toLocaleString()}</div>
+      <main className="flex-grow">
+        <div className="container mx-auto px-4 py-8">
+          {/* Breadcrumb */}
+          <nav className="flex mb-4 text-sm">
+            <a href="/" className="text-blue-500 hover:text-blue-700">Home</a>
+            <ChevronRight className="mx-2 h-4 w-4 text-gray-400" />
+            <a href="/catalog" className="text-blue-500 hover:text-blue-700">Catalogo</a>
+            <ChevronRight className="mx-2 h-4 w-4 text-gray-400" />
+            <span className="text-gray-600">{vehicle.title}</span>
+          </nav>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Left Column - Gallery */}
+            <div className="lg:col-span-7">
+              <div className="image-gallery bg-white rounded-lg overflow-hidden shadow-sm mb-6">
+                <div className="relative">
+                  <img 
+                    src={allImages[currentImageIndex] || "https://placehold.co/600x400?text=Immagine+non+disponibile"} 
+                    alt={vehicle.title} 
+                    className="w-full h-[400px] object-cover" 
+                  />
+                  <button 
+                    onClick={() => openLightbox(currentImageIndex)}
+                    className="absolute bottom-4 right-4 bg-white/80 hover:bg-white p-2 rounded-full shadow-md text-blue-500"
+                    aria-label="Visualizza a schermo intero"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 011.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 011.414-1.414L15 13.586V12a1 1 0 011-1z" />
+                    </svg>
+                  </button>
+                  {allImages.length > 1 && (
+                    <>
+                      <button 
+                        onClick={handlePrevImage}
+                        className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md text-blue-500"
+                        aria-label="Immagine precedente"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      <button 
+                        onClick={handleNextImage}
+                        className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md text-blue-500"
+                        aria-label="Immagine successiva"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {allImages.length > 0 && (
+                  <div className="bg-gray-50 p-3 border-t border-gray-100">
+                    <div className="flex space-x-2 overflow-x-auto">
+                      {allImages.map((image, index) => (
+                        <div 
+                          key={index}
+                          className={`flex-shrink-0 cursor-pointer transition-opacity ${
+                            index === currentImageIndex ? 'ring-2 ring-blue-500 opacity-100' : 'opacity-60 hover:opacity-100'
+                          }`}
+                          onClick={() => setCurrentImageIndex(index)}
+                          style={{ width: '80px', height: '60px' }}
+                        >
+                          <img 
+                            src={image} 
+                            alt={`${vehicle.title} - Vista ${index + 1}`} 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
-              
-              <div className="car-specs mb-6">
-                <div className="car-specs-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                  </svg>
-                  <span>{vehicle.year}</span>
-                </div>
-                <div className="car-specs-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
-                  </svg>
-                  <span>{vehicle.mileage.toLocaleString()} km</span>
-                </div>
-                <div className="car-specs-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                  </svg>
-                  <span>{vehicle.power} CV / {Math.round(vehicle.power * 0.735)} kW</span>
-                </div>
-                <div className="car-specs-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clipRule="evenodd" />
-                  </svg>
-                  <span>{vehicle.fuelType}</span>
-                </div>
-                <div className="car-specs-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
-                  </svg>
-                  <span>{vehicle.transmission}</span>
-                </div>
-                <div className="car-specs-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  <span>{vehicle.condition}</span>
-                </div>
-                <div className="car-specs-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
-                  </svg>
-                  <span>{vehicle.color}</span>
-                </div>
-                <div className="car-specs-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="car-specs-icon h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
-                  </svg>
-                  <span>{vehicle.interiorColor}</span>
-                </div>
-              </div>
-              
-              {rentalOptions && rentalOptions.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3">Opzioni di Acquisto</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {rentalOptions.map((option) => (
-                      <div 
-                        key={option.id}
-                        className={`contract-card ${option.type === 'NLT' ? 'contract-nlt' : 'contract-rtb'} cursor-pointer ${selectedRentalOption === option.id ? 'ring-1 ring-offset-2 ring-primary' : ''}`}
-                        onClick={() => setSelectedRentalOption(option.id)}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="inline-block text-xs font-semibold text-white px-2 py-1 rounded-md bg-blue-500">
-                            {option.type}
-                          </span>
-                          <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedRentalOption === option.id ? 'border-primary' : 'border-neutral-300'}`}>
-                            {selectedRentalOption === option.id && <div className="w-3 h-3 rounded-full bg-primary"></div>}
+
+              {/* Dettagli veicolo in tabs */}
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="border-b border-gray-200 w-full justify-start bg-transparent mb-6">
+                    <TabsTrigger 
+                      value="description" 
+                      className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium"
+                    >
+                      Descrizione
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="features" 
+                      className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium"
+                    >
+                      Equipaggiamenti
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="details" 
+                      className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium"
+                    >
+                      Dettagli Tecnici
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="description" className="pt-2">
+                    <div className="prose max-w-none">
+                      <p className="text-gray-700 leading-relaxed">{vehicle.description || 'Nessuna descrizione disponibile per questo veicolo.'}</p>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="features" className="pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {vehicle.features && (vehicle.features as string[]).length > 0 ? 
+                        (vehicle.features as string[]).map((feature, index) => (
+                          <div key={index} className="flex items-center bg-gray-50 rounded-full px-4 py-2">
+                            <CheckIcon className="h-5 w-5 text-green-500 mr-2" />
+                            <span className="text-gray-700 text-sm">{feature}</span>
                           </div>
-                        </div>
-                        <h4 className="text-lg font-bold mb-1">
-                          {option.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'}
-                        </h4>
-                        <div className="text-sm text-neutral-600 mb-3">
-                          {option.duration} mesi{option.annualMileage ? ` • ${option.annualMileage.toLocaleString()} km/anno` : ''}
-                        </div>
-                        
-                        <div className="flex justify-between items-center mb-2 text-sm">
-                          <span className="text-neutral-600">Anticipo</span>
-                          <span className="font-medium">€ {option.deposit.toLocaleString()}</span>
-                        </div>
-                        
-                        {option.finalPayment && (
-                          <div className="flex justify-between items-center mb-2 text-sm">
-                            <span className="text-neutral-600">Maxirata finale</span>
-                            <span className="font-medium">€ {option.finalPayment.toLocaleString()}</span>
-                          </div>
-                        )}
-                        
-                        <div className="mt-4 pt-3 border-t border-neutral-100">
-                          <div className="flex items-baseline">
-                            <span className="text-2xl font-bold text-primary mr-1">€ {option.monthlyPrice.toLocaleString()}</span>
-                            <span className="text-sm text-neutral-500">/mese</span>
-                          </div>
-                        </div>
+                        )) : 
+                        <p className="text-gray-500 italic">Nessun equipaggiamento specificato.</p>
+                      }
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="details" className="pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Marca</span>
+                        <span className="font-medium">{vehicle.brandId || '-'}</span>
                       </div>
-                    ))}
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Modello</span>
+                        <span className="font-medium">{vehicle.model || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Anno</span>
+                        <span className="font-medium">{vehicle.year || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Chilometraggio</span>
+                        <span className="font-medium">{vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Alimentazione</span>
+                        <span className="font-medium">{vehicle.fuelType || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Potenza</span>
+                        <span className="font-medium">{vehicle.power ? `${vehicle.power} CV / ${Math.round(vehicle.power * 0.735)} kW` : '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Cambio</span>
+                        <span className="font-medium">{vehicle.transmission || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Condizione</span>
+                        <span className="font-medium">{vehicle.condition || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Colore</span>
+                        <span className="font-medium">{vehicle.color || '-'}</span>
+                      </div>
+                      <div className="flex justify-between p-3 rounded-lg bg-gray-50">
+                        <span className="text-gray-600">Interni</span>
+                        <span className="font-medium">{vehicle.interiorColor || '-'}</span>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </div>
+
+            {/* Right Column - Info & Opzioni */}
+            <div className="lg:col-span-5">
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                {/* Badge */}
+                <div className="flex flex-wrap mb-2">
+                  {vehicle.badges && (vehicle.badges as string[]).map((badge, index) => (
+                    <span key={index} className={`car-badge badge-${badge}`}>
+                      {badge === 'promo' ? 'PROMO' : 
+                      badge === 'new' ? 'NUOVO' : 
+                      badge === 'nlt' ? 'NLT' : 
+                      badge === 'rtb' ? 'RTB' : 
+                      badge === '2life' ? '2LIFE' : 
+                      badge.toUpperCase()}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Titolo */}
+                <h1 className="text-2xl font-bold text-gray-800 mb-1">{vehicle.title}</h1>
+                <p className="text-gray-600 mb-4">{vehicle.model}</p>
+                
+                {/* Prezzo */}
+                <div className="mb-6">
+                  {vehicle.discountPrice ? (
+                    <div className="flex items-baseline gap-2">
+                      <span className="line-through text-gray-500 text-lg">€ {vehicle.price.toLocaleString()}</span>
+                      <span className="text-3xl font-bold text-blue-600">€ {vehicle.discountPrice.toLocaleString()}</span>
+                    </div>
+                  ) : (
+                    <span className="text-3xl font-bold text-blue-600">€ {vehicle.price.toLocaleString()}</span>
+                  )}
+                </div>
+
+                {/* Specifiche in pills */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <div className="flex items-center px-3 py-2 bg-gray-50 rounded-full text-sm">
+                    <Calendar className="h-4 w-4 text-blue-500 mr-2" />
+                    <span>{vehicle.year}</span>
+                  </div>
+                  <div className="flex items-center px-3 py-2 bg-gray-50 rounded-full text-sm">
+                    <Gauge className="h-4 w-4 text-blue-500 mr-2" />
+                    <span>{vehicle.mileage.toLocaleString()} km</span>
+                  </div>
+                  <div className="flex items-center px-3 py-2 bg-gray-50 rounded-full text-sm">
+                    <Fuel className="h-4 w-4 text-blue-500 mr-2" />
+                    <span>{vehicle.fuelType}</span>
+                  </div>
+                  <div className="flex items-center px-3 py-2 bg-gray-50 rounded-full text-sm">
+                    <Zap className="h-4 w-4 text-blue-500 mr-2" />
+                    <span>{vehicle.power} CV</span>
+                  </div>
+                  <div className="flex items-center px-3 py-2 bg-gray-50 rounded-full text-sm">
+                    <BarChart2 className="h-4 w-4 text-blue-500 mr-2" />
+                    <span>{vehicle.transmission}</span>
                   </div>
                 </div>
-              )}
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <a href="#request-info" className="flex-1 bg-primary hover:bg-primary/90 text-white text-center font-medium py-3 px-6 rounded-md transition duration-300">
-                  Richiedi Informazioni
-                </a>
-                <a href="tel:+390123456789" className="flex-1 bg-white border border-primary text-primary hover:bg-primary/5 text-center font-medium py-3 px-6 rounded-md transition duration-300">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="inline-block h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+                {/* Opzioni di Noleggio */}
+                {rentalOptions && rentalOptions.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-3 text-gray-800">Opzioni di Acquisto</h3>
+                    <div className="space-y-4">
+                      {rentalOptions.map((option) => (
+                        <div 
+                          key={option.id}
+                          className={`contract-card ${option.type === 'NLT' ? 'contract-nlt' : 'contract-rtb'} cursor-pointer ${selectedRentalOption === option.id ? 'ring-1 ring-blue-500' : ''}`}
+                          onClick={() => setSelectedRentalOption(option.id)}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="inline-block text-xs font-semibold text-white px-2 py-1 rounded mb-2 bg-blue-500">
+                                {option.type}
+                              </span>
+                              <h4 className="text-lg font-bold">
+                                {option.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'}
+                              </h4>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {option.duration} mesi {option.annualMileage ? `• ${option.annualMileage.toLocaleString()} km/anno` : ''}
+                              </p>
+                            </div>
+                            <div className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${selectedRentalOption === option.id ? 'border-blue-500' : 'border-gray-300'}`}>
+                              {selectedRentalOption === option.id && <div className="w-3 h-3 rounded-full bg-blue-500"></div>}
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4 space-y-2">
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-gray-600">Anticipo</span>
+                              <span className="font-medium">€ {option.deposit.toLocaleString()}</span>
+                            </div>
+                            
+                            {option.finalPayment && (
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-600">Maxirata finale</span>
+                                <span className="font-medium">€ {option.finalPayment.toLocaleString()}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="mt-4 pt-3 border-t border-gray-100">
+                            <div className="flex items-baseline">
+                              <span className={`text-2xl font-bold ${option.type === 'NLT' ? 'text-blue-600' : 'text-orange-500'}`}>
+                                € {option.monthlyPrice.toLocaleString()}
+                              </span>
+                              <span className="text-sm text-gray-500 ml-1">/mese</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pulsanti CTA */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <a 
+                    href="#request-info" 
+                    className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-center transition-colors"
+                  >
+                    Richiedi Informazioni
+                  </a>
+                  <a 
+                    href="tel:+390123456789" 
+                    className="px-5 py-3 bg-white border border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold rounded-lg text-center flex items-center justify-center transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    Chiama Ora
+                  </a>
+                </div>
+              </div>
+
+              {/* Box Contatti */}
+              <div className="contact-box bg-blue-900 rounded-lg shadow-sm p-6 text-white">
+                <h4 className="text-xl font-bold mb-3">Hai domande su questo veicolo?</h4>
+                <p className="mb-4">I nostri consulenti sono a tua disposizione per aiutarti a trovare la soluzione più adatta alle tue esigenze.</p>
+                <div className="flex items-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  Chiama Ora
+                  <span>+39 0123 456789</span>
+                </div>
+                <div className="flex items-center mb-4">
+                  <MapPin className="h-5 w-5 mr-2 text-blue-300" />
+                  <span>Via Roma, 123 - Milano</span>
+                </div>
+                <a 
+                  href="mailto:info@o2omobility.it" 
+                  className="px-5 py-3 bg-white text-blue-900 hover:bg-blue-50 font-semibold rounded-lg text-center inline-block transition-colors"
+                >
+                  Scrivici
                 </a>
               </div>
             </div>
           </div>
-          
-          {/* Description Section */}
-          <div className="mt-12">
-            <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="border-b border-neutral-200 w-full justify-start">
-                <TabsTrigger value="description" className="tab-button">Descrizione</TabsTrigger>
-                <TabsTrigger value="features" className="tab-button">Equipaggiamenti</TabsTrigger>
-                <TabsTrigger value="options" className="tab-button">Opzioni Finanziarie</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="description" className="pt-6">
-                <div className="prose max-w-none">
-                  <p className="text-neutral-700 mb-4">{vehicle.description}</p>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="features" className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {vehicle.features && (vehicle.features as string[]).map((feature, index) => (
-                    <div key={index} className="feature-item">
-                      <CheckIcon className="feature-icon h-5 w-5" />
-                      <span>{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="options" className="pt-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {rentalOptions?.map((option) => (
-                    <div key={option.id} className="border border-neutral-200 rounded-lg p-6">
-                      <h3 className="text-xl font-bold mb-4">
-                        {option.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'}
-                      </h3>
-                      <p className="text-neutral-700 mb-4">
-                        {option.type === 'NLT'
-                          ? 'La soluzione ideale per chi desidera un\'auto nuova senza pensieri, con un canone mensile fisso che include:'
-                          : 'La formula flessibile che ti permette di decidere al termine del periodo di noleggio se acquistare il veicolo, restituirlo o sostituirlo.'}
-                      </p>
-                      <ul className="space-y-2 mb-4">
-                        {option.type === 'NLT' ? (
-                          <>
-                            <li className="feature-item">
-                              <CheckIcon className="feature-icon h-5 w-5" />
-                              <span>Manutenzione ordinaria e straordinaria</span>
-                            </li>
-                            <li className="feature-item">
-                              <CheckIcon className="feature-icon h-5 w-5" />
-                              <span>Assicurazione RCA, Kasko, Furto e Incendio</span>
-                            </li>
-                            <li className="feature-item">
-                              <CheckIcon className="feature-icon h-5 w-5" />
-                              <span>Assistenza stradale 24/7</span>
-                            </li>
-                            <li className="feature-item">
-                              <CheckIcon className="feature-icon h-5 w-5" />
-                              <span>Auto sostitutiva in caso di guasto</span>
-                            </li>
-                          </>
-                        ) : (
-                          <>
-                            <li className="feature-item">
-                              <CheckIcon className="feature-icon h-5 w-5" />
-                              <span>Canoni mensili più contenuti rispetto al NLT</span>
-                            </li>
-                            <li className="feature-item">
-                              <CheckIcon className="feature-icon h-5 w-5" />
-                              <span>Manutenzione ordinaria inclusa</span>
-                            </li>
-                            <li className="feature-item">
-                              <CheckIcon className="feature-icon h-5 w-5" />
-                              <span>Assicurazione RCA e assistenza stradale</span>
-                            </li>
-                            <li className="feature-item">
-                              <CheckIcon className="feature-icon h-5 w-5" />
-                              <span>Opzione di acquisto a fine contratto</span>
-                            </li>
-                          </>
-                        )}
-                      </ul>
-                      <div className="pt-4 border-t border-neutral-200">
-                        <div className="flex justify-between mb-2">
-                          <span className="text-neutral-700">Anticipo</span>
-                          <span className="font-medium">€ {option.deposit.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-neutral-700">Durata</span>
-                          <span className="font-medium">{option.duration} mesi</span>
-                        </div>
-                        {option.annualMileage && (
-                          <div className="flex justify-between mb-2">
-                            <span className="text-neutral-700">Chilometraggio</span>
-                            <span className="font-medium">{option.annualMileage.toLocaleString()} km/anno</span>
-                          </div>
-                        )}
-                        {option.finalPayment && (
-                          <div className="flex justify-between mb-2">
-                            <span className="text-neutral-700">Rata finale</span>
-                            <span className="font-medium">€ {option.finalPayment.toLocaleString()}</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between text-xl font-bold text-primary mt-3">
-                          <span>Canone mensile</span>
-                          <span>€ {option.monthlyPrice.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-          
-          {/* Request Info Form */}
-          <div id="request-info" className="mt-12 bg-neutral-100 p-6 rounded-lg">
-            <h2 className="text-2xl font-bold mb-6">Richiedi Informazioni</h2>
+
+          {/* Form Richiesta */}
+          <div id="request-info" className="mt-12 bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">Richiedi Informazioni</h2>
             <RequestForm vehicleId={vehicle.id} selectedRentalType={selectedOption?.type || 'NLT'} />
           </div>
           
-          {/* Related Vehicles */}
+          {/* Veicoli Simili */}
           {relatedVehicles && relatedVehicles.length > 0 && (
             <div className="mt-12">
-              <h2 className="text-2xl font-bold mb-6">Veicoli Simili</h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <h2 className="text-2xl font-bold mb-6 text-gray-800">Veicoli Simili</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {relatedVehicles.map(vehicle => (
                   <VehicleCard key={vehicle.id} vehicle={vehicle} />
                 ))}
@@ -360,6 +443,64 @@ export default function VehicleDetailPage() {
         </div>
       </main>
       <Footer />
+
+      {/* Lightbox per la galleria immagini */}
+      {lightboxOpen && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center" 
+          onClick={() => setLightboxOpen(false)}
+        >
+          <div className="relative w-full max-w-4xl p-4">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevImage();
+              }}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 p-2 rounded-full text-white z-10"
+              aria-label="Immagine precedente"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            
+            <img 
+              src={allImages[currentImageIndex]} 
+              alt={`${vehicle.title} - Vista estesa ${currentImageIndex + 1}`}
+              className="max-h-[80vh] max-w-full mx-auto object-contain"
+            />
+            
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNextImage();
+              }}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 p-2 rounded-full text-white z-10"
+              aria-label="Immagine successiva"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            
+            <div className="absolute bottom-4 left-0 right-0 text-center">
+              <div className="inline-block bg-black/50 text-white px-4 py-2 rounded-full text-sm">
+                {currentImageIndex + 1} / {allImages.length}
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => setLightboxOpen(false)}
+              className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 p-2 rounded-full text-white"
+              aria-label="Chiudi galleria"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

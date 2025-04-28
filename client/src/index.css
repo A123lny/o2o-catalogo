@@ -121,7 +121,8 @@
   @apply bg-yellow-500;
 }
 
-.vehicle-card-badge.\32life {
+.vehicle-card-badge.\32life,
+.car-badge.badge-2life {
   @apply bg-green-500;
 }
 
@@ -147,6 +148,31 @@
 
 .tab-button.inactive {
   @apply border-transparent hover:text-primary;
+}
+
+/* Car badge */
+.car-badge {
+  @apply inline-block px-3 py-1 text-xs font-semibold text-white rounded-md mr-2 mb-2;
+}
+
+.car-badge.badge-nlt {
+  @apply bg-blue-500;
+}
+
+.car-badge.badge-rtb {
+  @apply bg-orange-500;
+}
+
+.car-badge.badge-promo {
+  @apply bg-red-500;
+}
+
+.car-badge.badge-top {
+  @apply bg-yellow-500;
+}
+
+.car-badge.badge-new {
+  @apply bg-teal-500;
 }
 
 /* Galleria immagini */
