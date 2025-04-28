@@ -42,7 +42,7 @@ export const vehicles = pgTable("vehicles", {
   power: integer("power").notNull(),
   categoryId: integer("category_id").notNull(),
   color: text("color").notNull(),
-  interiorColor: text("interior_color").notNull(),
+  interiorColor: text("interior_color"),
   description: text("description").notNull(),
   condition: text("condition").notNull(),
   features: jsonb("features"),
