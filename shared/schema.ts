@@ -49,6 +49,7 @@ export const vehicles = pgTable("vehicles", {
   badges: jsonb("badges"),
   mainImage: text("main_image"),
   images: jsonb("images"),
+  featured: boolean("featured").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

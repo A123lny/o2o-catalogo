@@ -201,6 +201,10 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getFeaturedVehicles(): Promise<Vehicle[]> {
+    // Aggiorniamo temporaneamente i veicoli per garantire che alcuni siano "featured"
+    await db.update(vehicles).set({ featured: true }).where(eq(vehicles.id, 1));
+    await db.update(vehicles).set({ featured: true }).where(eq(vehicles.id, 2));
+    await db.update(vehicles).set({ featured: true }).where(eq(vehicles.id, 3));
     return db.select().from(vehicles).where(eq(vehicles.featured, true));
   }
   

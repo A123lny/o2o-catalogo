@@ -1,272 +1,261 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
-import AdminSidebar from "@/components/admin/sidebar";
-import AdminHeader from "@/components/admin/header";
-import StatCard from "@/components/admin/stat-card";
+import AdminLayout from "@/components/admin/layout";
+import { 
+  Car, 
+  Users, 
+  FileText, 
+  ShoppingCart, 
+  TrendingUp, 
+  TrendingDown, 
+  MinusIcon 
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
-import { useAuth } from "@/hooks/use-auth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "wouter";
+import { Vehicle, Request } from "@shared/schema";
+import { formatDistance } from "date-fns";
+import { it } from "date-fns/locale";
 
-const COLORS = ['#1a4f8c', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6'];
+// Componente per una carta statistica del pannello
+function StatCard({
+  title,
+  value,
+  icon,
+  trend = "none",
+  trendValue,
+  trendText,
+  color = "blue",
+}) {
+  // Determina il colore della carta in base al parametro
+  const colorClasses = {
+    blue: "bg-blue-50 text-blue-700 border-blue-200",
+    green: "bg-green-50 text-green-700 border-green-200",
+    indigo: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    yellow: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    red: "bg-red-50 text-red-700 border-red-200",
+  };
 
-export default function DashboardPage() {
-  const { user } = useAuth();
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['/api/admin/stats'],
-  });
-
-  const { data: brands } = useQuery({
-    queryKey: ['/api/brands'],
-  });
-
-  const { data: categories } = useQuery({
-    queryKey: ['/api/categories'],
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen">
-        <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      </div>
+  // Determina l'icona e il colore del trend
+  const trendIcon =
+    trend === "up" ? (
+      <TrendingUp className="h-4 w-4 text-green-700" />
+    ) : trend === "down" ? (
+      <TrendingDown className="h-4 w-4 text-red-700" />
+    ) : (
+      <MinusIcon className="h-4 w-4 text-gray-500" />
     );
-  }
 
-  // Prepare data for charts
-  const categoryChartData = stats?.vehiclesByCategory 
-    ? Object.entries(stats.vehiclesByCategory).map(([categoryId, count]) => {
-        const category = categories?.find(c => c.id === parseInt(categoryId));
-        return {
-          name: category?.name || `Category ${categoryId}`,
-          value: count,
-        };
-      })
-    : [];
-
-  const brandChartData = stats?.vehiclesByBrand
-    ? Object.entries(stats.vehiclesByBrand).map(([brandId, count]) => {
-        const brand = brands?.find(b => b.id === parseInt(brandId));
-        return {
-          name: brand?.name || `Brand ${brandId}`,
-          value: count,
-        };
-      })
-    : [];
+  const trendColor =
+    trend === "up"
+      ? "text-green-700"
+      : trend === "down"
+      ? "text-red-700"
+      : "text-gray-500";
 
   return (
-    <div className="flex h-screen bg-neutral-100">
-      <AdminSidebar />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminHeader user={user} />
-        
-        <main className="flex-1 overflow-y-auto p-4">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-neutral-800">Dashboard</h1>
-            <p className="text-neutral-500">Panoramica delle statistiche e delle attività recenti</p>
+    <Card className={`${colorClasses[color]} border`}>
+      <CardHeader className="p-4 pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg font-medium">{title}</CardTitle>
+          <div className="p-2 rounded-full bg-white/80">{icon}</div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 pt-0">
+        <div className="text-2xl font-bold">{value}</div>
+        {trendValue && (
+          <div className={`flex items-center gap-1 text-sm ${trendColor}`}>
+            {trendIcon}
+            <span>
+              {trendValue} {trendText}
+            </span>
           </div>
-          
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function AdminDashboard() {
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["/api/admin/stats"],
+    retry: false,
+  });
+
+  return (
+    <AdminLayout title="Dashboard">
+      {isLoading ? (
+        <div className="space-y-6">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-[130px] w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-[350px] w-full" />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Statistiche principali */}
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
-              title="Veicoli in catalogo"
-              value={stats?.totalVehicles}
-              icon="car"
-              trend="up"
-              trendValue="12%"
-              trendText="rispetto al mese scorso"
+              title="Totale Veicoli"
+              value={stats.vehicles}
+              icon={<Car className="h-5 w-5" />}
               color="blue"
             />
-            
             <StatCard
-              title="Richieste ricevute"
-              value={stats?.totalRequests}
-              icon="envelope"
-              trend="up"
-              trendValue="8%"
-              trendText="rispetto al mese scorso"
+              title="Utenti"
+              value={stats.users}
+              icon={<Users className="h-5 w-5" />}
               color="indigo"
             />
-            
             <StatCard
-              title="Visite sito"
-              value="2,845"
-              icon="users"
-              trend="up"
-              trendValue="24%"
-              trendText="rispetto al mese scorso"
+              title="Richieste"
+              value={stats.requests}
+              trend={stats.pendingRequests > 0 ? "up" : "none"}
+              trendValue={stats.pendingRequests > 0 ? stats.pendingRequests : null}
+              trendText="in attesa"
+              icon={<FileText className="h-5 w-5" />}
               color="green"
             />
-            
             <StatCard
-              title="Contratti finalizzati"
-              value="18"
-              icon="file-signature"
-              trend="down"
-              trendValue="5%"
-              trendText="rispetto al mese scorso"
+              title="Richieste Completate"
+              value={stats.completedRequests}
+              icon={<ShoppingCart className="h-5 w-5" />}
               color="yellow"
             />
           </div>
-          
-          {/* Recent Activity and Stats Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="bg-white rounded-lg shadow p-4 lg:col-span-2">
-              <h2 className="font-bold mb-4 flex items-center justify-between">
-                <span>Statistiche di visita</span>
-                <div className="text-sm font-normal text-neutral-500">
-                  <select className="border-none text-sm text-neutral-500 focus:ring-0">
-                    <option>Ultimi 30 giorni</option>
-                    <option>Ultimi 90 giorni</option>
-                    <option>Quest'anno</option>
-                  </select>
-                </div>
-              </h2>
-              
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={[
-                      { name: '1 Giu', visits: 105, newUsers: 42 },
-                      { name: '8 Giu', visits: 152, newUsers: 67 },
-                      { name: '15 Giu', visits: 189, newUsers: 78 },
-                      { name: '22 Giu', visits: 201, newUsers: 85 },
-                      { name: '29 Giu', visits: 176, newUsers: 73 },
-                      { name: '5 Lug', visits: 220, newUsers: 94 },
-                      { name: '12 Lug', visits: 245, newUsers: 102 },
-                    ]}
-                    margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-                  >
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="visits" name="Visite totali" fill="#1a4f8c" />
-                    <Bar dataKey="newUsers" name="Nuovi utenti" fill="#ef4444" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="font-bold mb-4">Attività Recenti</h2>
-              <div className="space-y-4">
-                {stats?.recentRequests?.map((request: any, index: number) => (
-                  <div key={index} className="border-l-2 border-blue-500 pl-3">
-                    <div className="text-sm">
-                      <span className="font-medium">Richiesta informazioni</span>
-                      <span className="text-neutral-500 block">
-                        {request.fullName} - ID Veicolo: {request.vehicleId}
-                      </span>
-                    </div>
-                    <p className="text-xs text-neutral-500 mt-1">
-                      {new Date(request.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                ))}
-                
-                {(!stats?.recentRequests || stats.recentRequests.length === 0) && (
-                  <p className="text-neutral-500 text-sm">Nessuna attività recente</p>
-                )}
-              </div>
-              <a href="/admin/requests" className="text-primary hover:text-primary-dark text-sm font-medium mt-4 inline-block">
-                Vedi tutte le attività
-              </a>
-            </div>
-          </div>
-          
-          {/* Vehicle Types and Requests Overview */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="font-bold mb-4">Tipologie Veicoli</h2>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryChartData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {categoryChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value, name) => [`${value} veicoli`, name]} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="font-bold mb-4 flex items-center justify-between">
-                <span>Ultime Richieste</span>
-                <a href="/admin/requests" className="text-primary hover:text-primary-dark text-sm font-medium">
-                  Vedi tutte
-                </a>
-              </h2>
-              
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-neutral-200">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Cliente</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Veicolo</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Data</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Stato</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-neutral-200">
-                    {stats?.recentRequests?.map((request: any, index: number) => (
-                      <tr key={index}>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-sm font-medium">{request.fullName}</div>
-                          <div className="text-xs text-neutral-500">{request.email}</div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">ID: {request.vehicleId}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-neutral-500">
-                          {new Date(request.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            request.status === 'new' 
-                              ? 'bg-yellow-100 text-yellow-800' 
-                              : request.status === 'in_progress'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {request.status === 'new' 
-                              ? 'Nuova' 
-                              : request.status === 'in_progress'
-                              ? 'In gestione'
-                              : 'Completata'
-                            }
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                    
-                    {(!stats?.recentRequests || stats.recentRequests.length === 0) && (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-8 text-center text-sm text-neutral-500">
-                          Nessuna richiesta recente
-                        </td>
-                      </tr>
+
+          {/* Tab per contenuti recenti */}
+          <Tabs defaultValue="vehicles" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="vehicles">Veicoli Recenti</TabsTrigger>
+              <TabsTrigger value="requests">Richieste Recenti</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="vehicles" className="mt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ultimi Veicoli Aggiunti</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="divide-y">
+                    {stats.recentVehicles && stats.recentVehicles.length > 0 ? (
+                      stats.recentVehicles.map((vehicle: Vehicle) => (
+                        <div
+                          key={vehicle.id}
+                          className="py-3 flex items-center justify-between"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-12 h-12 bg-cover bg-center rounded" 
+                              style={{
+                                backgroundImage: vehicle.mainImage 
+                                  ? `url(${vehicle.mainImage})`
+                                  : "url(https://placehold.co/100x100/gray/white?text=Auto)"
+                              }}
+                            />
+                            <div>
+                              <div className="font-medium">{vehicle.title}</div>
+                              <div className="text-sm text-gray-500">
+                                {vehicle.price.toLocaleString('it-IT')} € - {vehicle.condition}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Link
+                              href={`/admin/vehicles/${vehicle.id}`}
+                              className="text-blue-600 hover:underline text-sm"
+                            >
+                              Modifica
+                            </Link>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-4 text-center text-gray-500">
+                        Nessun veicolo trovato
+                      </div>
                     )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="requests" className="mt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ultime Richieste</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="divide-y">
+                    {stats.recentRequests && stats.recentRequests.length > 0 ? (
+                      stats.recentRequests.map((request: Request) => (
+                        <div
+                          key={request.id}
+                          className="py-3 flex items-center justify-between"
+                        >
+                          <div>
+                            <div className="font-medium">
+                              {request.fullName} 
+                              {request.isCompany && request.companyName ? 
+                                ` - ${request.companyName}` : 
+                                ''}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {request.email} - {request.phone}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              {formatDistance(
+                                new Date(request.createdAt),
+                                new Date(),
+                                { 
+                                  addSuffix: true,
+                                  locale: it
+                                }
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 items-center">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              request.status === "new" 
+                                ? "bg-blue-100 text-blue-800" 
+                                : request.status === "in_progress" 
+                                ? "bg-yellow-100 text-yellow-800" 
+                                : request.status === "completed" 
+                                ? "bg-green-100 text-green-800" 
+                                : "bg-gray-100 text-gray-800"
+                            }`}>
+                              {request.status === "new" 
+                                ? "Nuova" 
+                                : request.status === "in_progress" 
+                                ? "In lavorazione" 
+                                : request.status === "completed" 
+                                ? "Completata" 
+                                : request.status}
+                            </span>
+                            <Link
+                              href={`/admin/requests/${request.id}`}
+                              className="text-blue-600 hover:underline text-sm"
+                            >
+                              Dettagli
+                            </Link>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-4 text-center text-gray-500">
+                        Nessuna richiesta trovata
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      )}
+    </AdminLayout>
   );
 }
