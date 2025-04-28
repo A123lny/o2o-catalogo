@@ -39,8 +39,8 @@ export default function HomePage() {
       <Header />
       <main className="flex-1">
         <HeroSection />
-        <CategoriesSection categories={categories || []} />
         <BrandsSection brands={brands || []} />
+        <CategoriesSection categories={categories || []} />
         <FeaturedVehicles vehicles={featuredVehicles || []} />
       </main>
       <Footer />
