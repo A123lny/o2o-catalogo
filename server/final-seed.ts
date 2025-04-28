@@ -110,7 +110,7 @@ async function seedDatabase() {
       console.log('✅ Veicoli e opzioni di noleggio esistenti rimossi');
     }
     
-    // Lista di 20 veicoli diversi (nuovi e 2Life)
+    // Lista di 20 veicoli diversi (nuovi e 2Life) senza riferimenti a price/discountPrice
     const vehiclesList = [
       // Auto Nuove
       {
@@ -158,8 +158,6 @@ async function seedDatabase() {
         interiorColor: "Pelle Beige",
         description: "La BMW Serie 5 è l'emblema dell'eleganza sportiva. Con il suo design raffinato e le prestazioni eccezionali, questa berlina di lusso offre il massimo in termini di comfort e tecnologia.",
         mileage: 0,
-        price: 75000,
-        discountPrice: null,
         power: 320,
         transmission: "Automatico",
         condition: "Nuovo",
@@ -193,8 +191,6 @@ async function seedDatabase() {
         interiorColor: "Pelle Nera",
         description: "Il Mercedes-Benz GLE Coupé unisce l'eleganza di una coupé con la robustezza di un SUV. Con interni lussuosi e tecnologie all'avanguardia, offre un'esperienza di guida impareggiabile.",
         mileage: 0,
-        price: 95000,
-        discountPrice: 92000,
         power: 380,
         transmission: "Automatico",
         condition: "Nuovo",
@@ -228,8 +224,6 @@ async function seedDatabase() {
         interiorColor: "Grigio",
         description: "Il Volkswagen ID.4 è un SUV completamente elettrico che combina tecnologia all'avanguardia, spaziosità e autonomia elettrica impressionante. Perfetto per chi cerca una mobilità sostenibile senza compromessi.",
         mileage: 0,
-        price: 55000,
-        discountPrice: 52000,
         power: 204,
         transmission: "Automatico",
         condition: "Nuovo",
@@ -263,8 +257,6 @@ async function seedDatabase() {
         interiorColor: "Pelle Nera",
         description: "L'iconica Porsche 911 Carrera rappresenta l'apice dell'ingegneria automobilistica tedesca. Con prestazioni straordinarie e un design senza tempo, continua a stabilire lo standard per le auto sportive di lusso.",
         mileage: 0,
-        price: 150000,
-        discountPrice: 145000,
         power: 450,
         transmission: "PDK",
         condition: "Nuovo",
@@ -297,8 +289,6 @@ async function seedDatabase() {
         interiorColor: "Tessuto Nero/Rosso",
         description: "La Volkswagen Golf GTI combina prestazioni sportive con praticità quotidiana. L'ultima generazione offre tecnologia avanzata, design distintivo e l'inconfondibile piacere di guida GTI.",
         mileage: 0,
-        price: 45000,
-        discountPrice: null,
         power: 245,
         transmission: "DSG",
         condition: "Nuovo",
@@ -332,8 +322,6 @@ async function seedDatabase() {
         interiorColor: "Tessuto Nero",
         description: "Il Toyota RAV4 è un SUV versatile e affidabile con tecnologia ibrida avanzata. Offre un'ottima economia di carburante, spazio interno generoso e caratteristiche di sicurezza all'avanguardia.",
         mileage: 0,
-        price: 42000,
-        discountPrice: 39500,
         power: 222,
         transmission: "Automatico",
         condition: "Nuovo",
@@ -366,8 +354,6 @@ async function seedDatabase() {
         interiorColor: "Tessuto Grigio",
         description: "La Ford Kuga è un SUV moderno con opzioni di motorizzazione ibrida plug-in. Offre un'eccellente combinazione di efficienza, spazio e tecnologia.",
         mileage: 0,
-        price: 38000,
-        discountPrice: 36000,
         power: 225,
         transmission: "Automatico",
         condition: "Nuovo",
@@ -399,8 +385,6 @@ async function seedDatabase() {
         interiorColor: "Pelle Beige",
         description: "Il Volvo XC60 è un SUV di lusso che combina eleganza scandinava, sicurezza avanzata e motorizzazioni ibride efficienti. Un'auto premium per chi non vuole rinunciare a comfort, tecnologia e sostenibilità.",
         mileage: 0,
-        price: 62000,
-        discountPrice: 59000,
         power: 340,
         transmission: "Automatico",
         condition: "Nuovo",
@@ -433,8 +417,6 @@ async function seedDatabase() {
         interiorColor: "Tessuto Eco",
         description: "La Fiat 500e è una city car completamente elettrica che combina lo stile iconico della 500 con una tecnologia a zero emissioni. Perfetta per la mobilità urbana sostenibile.",
         mileage: 0,
-        price: 35000,
-        discountPrice: 33500,
         power: 118,
         transmission: "Automatico",
         condition: "Nuovo",
@@ -468,8 +450,6 @@ async function seedDatabase() {
         interiorColor: "Pelle Nera",
         description: "Audi Q5 in eccellenti condizioni, con storico manutenzioni completo. Questo SUV di lusso offre un perfetto equilibrio tra comfort, prestazioni e praticità. Completamente controllato e garantito.",
         mileage: 25000,
-        price: 46000,
-        discountPrice: 44000,
         power: 286,
         transmission: "Automatico",
         condition: "2Life",
@@ -502,8 +482,6 @@ async function seedDatabase() {
         interiorColor: "Pelle Marrone",
         description: "BMW X3 in perfette condizioni, con chilometraggio certificato. Questo SUV di lusso offre prestazioni sportive, tecnologia avanzata e ampio spazio interno. Completamente revisionato e con garanzia estesa.",
         mileage: 32000,
-        price: 43000,
-        discountPrice: 41000,
         power: 265,
         transmission: "Automatico",
         condition: "2Life",
@@ -536,8 +514,6 @@ async function seedDatabase() {
         interiorColor: "Pelle Nera",
         description: "Mercedes-Benz Classe C in ottime condizioni, con un solo proprietario e manutenzione presso rete ufficiale. Elegante berlina che combina comfort, tecnologia e prestazioni. Certificata e garantita.",
         mileage: 40000,
-        price: 39000,
-        discountPrice: 36500,
         power: 220,
         transmission: "Automatico",
         condition: "2Life",
@@ -570,8 +546,6 @@ async function seedDatabase() {
         interiorColor: "Tessuto Nero",
         description: "Volkswagen Golf in eccellenti condizioni, con pacchetto tecnologico completo. Questa compatta offre un perfetto equilibrio tra comfort di guida, tecnologia e praticità. Revisionata e garantita.",
         mileage: 22000,
-        price: 28000,
-        discountPrice: 27000,
         power: 150,
         transmission: "DSG",
         condition: "2Life",
@@ -604,8 +578,6 @@ async function seedDatabase() {
         interiorColor: "Tessuto Nero",
         description: "Fiat 500X in ottime condizioni, perfetta come prima auto o per la famiglia. Questo crossover compatto combina stile italiano, praticità e bassi costi di gestione. Completamente controllata e garantita.",
         mileage: 28000,
-        price: 20000,
-        discountPrice: 18500,
         power: 120,
         transmission: "Manuale",
         condition: "2Life",
@@ -637,8 +609,6 @@ async function seedDatabase() {
         interiorColor: "Tessuto Grigio",
         description: "Toyota Yaris Hybrid in perfette condizioni, ideale per la città grazie alla sua efficienza eccezionale. Una city car ibrida che combina bassi consumi, affidabilità Toyota e facilità di parcheggio. Controllata e garantita.",
         mileage: 18000,
-        price: 20000,
-        discountPrice: 19000,
         power: 116,
         transmission: "Automatico",
         condition: "2Life",
@@ -670,8 +640,6 @@ async function seedDatabase() {
         interiorColor: "Tessuto Nero",
         description: "Ford Focus Station Wagon in eccellenti condizioni, perfetta per famiglie che cercano spazio e versatilità. Questa station wagon offre guida sportiva, ampio bagagliaio e tecnologia avanzata. Revisionata e garantita.",
         mileage: 35000,
-        price: 22000,
-        discountPrice: 20500,
         power: 150,
         transmission: "Manuale",
         condition: "2Life",
@@ -703,8 +671,6 @@ async function seedDatabase() {
         interiorColor: "Tessuto Grigio",
         description: "Renault Captur in ottime condizioni, un crossover urbano versatile e stiloso. Offre un abitacolo modulare, tecnologia intuitiva e consumi contenuti. Controllata e garantita.",
         mileage: 30000,
-        price: 19000,
-        discountPrice: 17500,
         power: 130,
         transmission: "Automatico",
         condition: "2Life",
@@ -736,8 +702,6 @@ async function seedDatabase() {
         interiorColor: "Pelle Beige",
         description: "Volvo V60 in eccellenti condizioni, una station wagon premium con il massimo della sicurezza. Combina eleganza scandinava, tecnologia avanzata e generoso spazio di carico. Certificata e garantita.",
         mileage: 35000,
-        price: 34000,
-        discountPrice: 32000,
         power: 190,
         transmission: "Automatico",
         condition: "2Life",
@@ -770,8 +734,6 @@ async function seedDatabase() {
         interiorColor: "Pelle Nera",
         description: "Ford Mustang in condizioni impeccabili, un'icona americana di potenza e stile. Questa muscle car offre prestazioni entusiasmanti, sound inconfondibile e presenza scenica. Completamente revisionata e garantita.",
         mileage: 40000,
-        price: 45000,
-        discountPrice: 42000,
         power: 450,
         transmission: "Automatico",
         condition: "2Life",
@@ -803,8 +765,6 @@ async function seedDatabase() {
         interiorColor: "Pelle Nera",
         description: "Porsche Macan in eccellenti condizioni, un SUV sportivo che offre il DNA Porsche in un formato versatile. Combina prestazioni entusiasmanti, maneggevolezza da auto sportiva e praticità quotidiana. Certificata e garantita Porsche Approved.",
         mileage: 28000,
-        price: 65000,
-        discountPrice: 62000,
         power: 354,
         transmission: "PDK",
         condition: "2Life",
@@ -829,11 +789,40 @@ async function seedDatabase() {
       }
     ];
     
+    // Valore base per le opzioni di noleggio basato sulla condizione del veicolo e sul modello
+    const getBaseMonthlyPrice = (vehicle: any) => {
+      // Fattori di base per il calcolo
+      const powerFactor = vehicle.power * 1.5;
+      const yearFactor = (2024 - vehicle.year) * 50;
+      const mileageFactor = vehicle.mileage / 1000;
+      const conditionFactor = vehicle.condition === "Nuovo" ? 1 : 0.8;
+      
+      // Fattore premium per marchi di lusso
+      let brandFactor = 1;
+      if (["Porsche", "Mercedes-Benz", "BMW", "Audi"].includes(vehicle.brandId)) {
+        brandFactor = 1.3;
+      }
+      
+      // Calcolo del prezzo base mensile
+      let basePrice = (powerFactor + 400 - yearFactor - mileageFactor) * conditionFactor * brandFactor;
+      
+      // Aggiustamenti per categoria
+      if (vehicle.categoryId === categoryMap.get('SUV')) {
+        basePrice *= 1.2;
+      } else if (vehicle.categoryId === categoryMap.get('Coupé')) {
+        basePrice *= 1.15;
+      }
+      
+      return Math.round(basePrice);
+    };
+    
     // Aggiungiamo i veicoli
     for (const vehicle of vehiclesList) {
       const [newVehicle] = await db.insert(vehicles).values(vehicle).returning({ id: vehicles.id });
       
       if (newVehicle) {
+        const baseMonthlyPrice = getBaseMonthlyPrice(vehicle);
+        
         // Per ogni veicolo, aggiungiamo opzioni di noleggio NLT e/o RTB appropriate
         // Auto nuove - più opzioni e prezzi più alti
         if (vehicle.condition === "Nuovo") {
@@ -842,10 +831,10 @@ async function seedDatabase() {
             vehicleId: newVehicle.id,
             type: "NLT",
             duration: 36,
-            deposit: Math.round(vehicle.price * 0.1),
-            caution: Math.round(vehicle.price * 0.02),
+            deposit: Math.round(baseMonthlyPrice * 3),
+            caution: Math.round(baseMonthlyPrice * 0.5),
             setupFee: 350,
-            monthlyPrice: Math.round(vehicle.price / 70),
+            monthlyPrice: baseMonthlyPrice,
             annualMileage: 15000,
             finalPayment: null,
             isDefault: true,
@@ -862,10 +851,10 @@ async function seedDatabase() {
             vehicleId: newVehicle.id,
             type: "NLT",
             duration: 48,
-            deposit: Math.round(vehicle.price * 0.09),
-            caution: Math.round(vehicle.price * 0.02),
+            deposit: Math.round(baseMonthlyPrice * 2.5),
+            caution: Math.round(baseMonthlyPrice * 0.5),
             setupFee: 350,
-            monthlyPrice: Math.round(vehicle.price / 80),
+            monthlyPrice: Math.round(baseMonthlyPrice * 0.9), // Prezzo più basso per durata più lunga
             annualMileage: 15000,
             finalPayment: null,
             isDefault: false,
@@ -884,12 +873,12 @@ async function seedDatabase() {
               vehicleId: newVehicle.id,
               type: "RTB",
               duration: 36,
-              deposit: Math.round(vehicle.price * 0.12),
-              caution: Math.round(vehicle.price * 0.03),
+              deposit: Math.round(baseMonthlyPrice * 3.5),
+              caution: Math.round(baseMonthlyPrice * 0.7),
               setupFee: 350,
-              monthlyPrice: Math.round(vehicle.price / 55),
+              monthlyPrice: Math.round(baseMonthlyPrice * 1.2), // RTB costo mensile più alto
               annualMileage: 20000,
-              finalPayment: Math.round(vehicle.price * 0.45),
+              finalPayment: Math.round(baseMonthlyPrice * 24), // Valore di riscatto finale
               isDefault: false,
               includedServices: [
                 "Manutenzione ordinaria",
@@ -908,10 +897,10 @@ async function seedDatabase() {
               vehicleId: newVehicle.id,
               type: "NLT",
               duration: 24,
-              deposit: Math.round(vehicle.price * 0.08),
-              caution: Math.round(vehicle.price * 0.02),
+              deposit: Math.round(baseMonthlyPrice * 2),
+              caution: Math.round(baseMonthlyPrice * 0.5),
               setupFee: 250,
-              monthlyPrice: Math.round(vehicle.price / 55),
+              monthlyPrice: baseMonthlyPrice,
               annualMileage: 15000,
               finalPayment: null,
               isDefault: true,
@@ -929,12 +918,12 @@ async function seedDatabase() {
             vehicleId: newVehicle.id,
             type: "RTB",
             duration: 24,
-            deposit: Math.round(vehicle.price * 0.1),
-            caution: Math.round(vehicle.price * 0.02),
+            deposit: Math.round(baseMonthlyPrice * 2.5),
+            caution: Math.round(baseMonthlyPrice * 0.5),
             setupFee: 250,
-            monthlyPrice: Math.round(vehicle.price / 45),
+            monthlyPrice: Math.round(baseMonthlyPrice * 1.1),
             annualMileage: 15000,
-            finalPayment: Math.round(vehicle.price * 0.35),
+            finalPayment: Math.round(baseMonthlyPrice * 12), // Valore di riscatto finale
             isDefault: vehicle.mileage >= 30000,
             includedServices: [
               "Manutenzione ordinaria",

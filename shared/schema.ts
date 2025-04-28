@@ -35,8 +35,6 @@ export const vehicles = pgTable("vehicles", {
   model: text("model").notNull(),
   year: integer("year").notNull(),
   mileage: integer("mileage").notNull(),
-  price: integer("price").notNull(),
-  discountPrice: integer("discount_price"),
   fuelType: text("fuel_type").notNull(),
   transmission: text("transmission").notNull(),
   power: integer("power").notNull(),
