@@ -445,6 +445,28 @@ export default function RequestInfoPage() {
                           <span className="font-medium">€ {selectedOption.deposit.toLocaleString()}</span>
                         </div>
                         
+                        {/* Deposito cauzionale */}
+                        <div className="flex justify-between">
+                          <span>Deposito Cauzionale:</span>
+                          <span className="font-medium">
+                            € {selectedOption.caution?.toLocaleString() || '350'} 
+                            <span className="text-xs ml-1 text-gray-500">
+                              {vehicle?.categoryId === 2 ? "(IVA esclusa)" : "(IVA inclusa)"}
+                            </span>
+                          </span>
+                        </div>
+                        
+                        {/* Spese di istruttoria */}
+                        <div className="flex justify-between">
+                          <span>Spese Istruttoria:</span>
+                          <span className="font-medium">
+                            € {selectedOption.setupFee?.toLocaleString() || '350'} 
+                            <span className="text-xs ml-1 text-gray-500">
+                              {vehicle?.categoryId === 2 ? "(IVA esclusa)" : "(IVA inclusa)"}
+                            </span>
+                          </span>
+                        </div>
+                        
                         {selectedOption.annualMileage && (
                           <div className="flex justify-between">
                             <span>Km annui:</span>

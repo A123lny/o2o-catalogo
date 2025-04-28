@@ -59,6 +59,8 @@ export const rentalOptions = pgTable("rental_options", {
   vehicleId: integer("vehicle_id").notNull(),
   type: text("type").notNull(), // NLT or RTB
   deposit: integer("deposit").notNull(),
+  caution: integer("caution"), // Deposito cauzionale
+  setupFee: integer("setup_fee"), // Spese di istruttoria
   duration: integer("duration").notNull(), // in months
   annualMileage: integer("annual_mileage"),
   monthlyPrice: integer("monthly_price").notNull(),

@@ -724,26 +724,45 @@ export class MemStorage implements IStorage {
         vehicleId: 1, // Audi A7
         type: "NLT", // Noleggio a Lungo Termine
         deposit: 7500,
+        caution: 1500, // Deposito cauzionale
+        setupFee: 350, // Spese di istruttoria
         duration: 48, // months
         annualMileage: 20000,
         monthlyPrice: 850,
         finalPayment: null,
-        isDefault: true
+        isDefault: true,
+        includedServices: [
+          "Manutenzione ordinaria e straordinaria",
+          "Assicurazione Kasko",
+          "Soccorso stradale 24/7",
+          "Assistenza clienti dedicata",
+          "App di gestione contratto"
+        ]
       },
       {
         vehicleId: 1, // Audi A7
         type: "RTB", // Rent to Buy
         deposit: 9000,
+        caution: 1800, // Deposito cauzionale
+        setupFee: 350, // Spese di istruttoria
         duration: 36, // months
         annualMileage: 15000,
         monthlyPrice: 920,
         finalPayment: 37500,
-        isDefault: false
+        isDefault: false,
+        includedServices: [
+          "Manutenzione ordinaria",
+          "Assicurazione RCA",
+          "Assistenza clienti dedicata",
+          "Possibilità di riscatto finale"
+        ]
       },
       {
         vehicleId: 2, // BMW X5
         type: "RTB", // Rent to Buy
         deposit: 12000,
+        caution: 2000, // Deposito cauzionale
+        setupFee: 350, // Spese di istruttoria
         duration: 36, // months
         annualMileage: 15000,
         monthlyPrice: 1050,
@@ -754,11 +773,20 @@ export class MemStorage implements IStorage {
         vehicleId: 3, // Porsche 911
         type: "NLT", // Noleggio a Lungo Termine
         deposit: 18000,
+        caution: 2500, // Deposito cauzionale
+        setupFee: 350, // Spese di istruttoria
         duration: 48, // months
         annualMileage: 10000,
         monthlyPrice: 1950,
         finalPayment: null,
-        isDefault: true
+        isDefault: true,
+        includedServices: [
+          "Manutenzione ordinaria e straordinaria",
+          "Assicurazione Kasko",
+          "Vettura sostitutiva",
+          "Soccorso stradale 24/7",
+          "Assistenza clienti dedicata"
+        ]
       }
     ];
     
