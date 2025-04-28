@@ -5,6 +5,7 @@ import { Vehicle, RentalOption } from "@shared/schema";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import VehicleGallery from "@/components/vehicle-gallery";
+import VehicleCard from "@/components/vehicle-card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -482,39 +483,7 @@ export default function VehicleDetailPage() {
                   <h2 className="text-2xl font-bold mb-6">Auto simili</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {relatedVehicles.map(relatedVehicle => (
-                      <div 
-                        key={relatedVehicle.id} 
-                        className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => navigate(`/vehicle/${relatedVehicle.id}`)}
-                      >
-                        {/* Immagine */}
-                        <div className="h-48 overflow-hidden">
-                          <img 
-                            src={relatedVehicle.mainImage || "https://placehold.co/600x400?text=Immagine+non+disponibile"} 
-                            alt={relatedVehicle.title} 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        
-                        {/* Dettagli */}
-                        <div className="p-4">
-                          <h3 className="text-lg font-bold text-gray-800 mb-1">{relatedVehicle.title}</h3>
-                          <div className="flex items-center text-sm text-gray-500 mb-2">
-                            <span>{relatedVehicle.year}</span>
-                            <span className="mx-1">•</span>
-                            <span>{relatedVehicle.fuelType}</span>
-                            <span className="mx-1">•</span>
-                            <span>{relatedVehicle.mileage.toLocaleString()} km</span>
-                          </div>
-                          <div className="flex justify-between items-center mt-3">
-                            {/* Ottiene le opzioni di noleggio per questo veicolo correlato */}
-                            <div>
-                              <span className="text-lg font-bold text-blue-600">Scopri le opzioni</span>
-                            </div>
-                            <Button variant="outline" size="sm">Dettagli</Button>
-                          </div>
-                        </div>
-                      </div>
+                      <VehicleCard key={relatedVehicle.id} vehicle={relatedVehicle} />
                     ))}
                   </div>
                 </div>
