@@ -570,7 +570,7 @@ export default function RequestInfoPage() {
                           <span className="font-medium">
                             € {selectedOption.caution?.toLocaleString() || '350'} 
                             <span className="text-xs ml-1 text-gray-500">
-                              {vehicle?.categoryId === 2 ? "(IVA esclusa)" : "(IVA inclusa)"}
+                              {isCompany ? "(IVA esclusa)" : "(IVA inclusa)"}
                             </span>
                           </span>
                         </div>
@@ -581,7 +581,7 @@ export default function RequestInfoPage() {
                           <span className="font-medium">
                             € {selectedOption.setupFee?.toLocaleString() || '350'} 
                             <span className="text-xs ml-1 text-gray-500">
-                              {vehicle?.categoryId === 2 ? "(IVA esclusa)" : "(IVA inclusa)"}
+                              {isCompany ? "(IVA esclusa)" : "(IVA inclusa)"}
                             </span>
                           </span>
                         </div>
@@ -599,7 +599,7 @@ export default function RequestInfoPage() {
                             <span className="font-medium">
                               € {selectedOption.finalPayment.toLocaleString()}
                               <span className="text-xs ml-1 text-gray-500">
-                                {vehicle?.categoryId === 2 ? "(IVA esclusa)" : "(IVA inclusa)"}
+                                {isCompany ? "(IVA esclusa)" : "(IVA inclusa)"}
                               </span>
                             </span>
                           </div>
