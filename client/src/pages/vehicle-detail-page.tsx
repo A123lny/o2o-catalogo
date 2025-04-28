@@ -414,7 +414,7 @@ export default function VehicleDetailPage() {
                 {/* Opzioni di Noleggio */}
                 {enhancedRentalOptions && enhancedRentalOptions.length > 0 && (
                   <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-800">Opzioni di Acquisto</h3>
+                    <h3 className="text-lg font-semibold mb-3 text-gray-800">Le nostre Soluzioni</h3>
                     
                     {/* Filtro per tipo di contratto */}
                     <div className="flex border border-gray-200 rounded-lg mb-4 overflow-hidden">
