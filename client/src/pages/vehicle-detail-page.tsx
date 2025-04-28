@@ -153,7 +153,7 @@ export default function VehicleDetailPage() {
           setupFee: baseOption.setupFee || 350,
           finalPayment: baseOption.finalPayment 
             ? Math.round(baseOption.finalPayment * (factor < 1 ? 1.1 : 0.9))
-            : Math.round(vehicle?.price || 0) * 0.3,
+            : 0,
           includedServices: baseOption.includedServices || [
             "Manutenzione ordinaria per i primi 12 mesi",
             "Garanzia estesa",
@@ -165,8 +165,8 @@ export default function VehicleDetailPage() {
     
     // Se non abbiamo opzioni nel database, creiamo opzioni fittizie
     if (result.length === 0) {
-      // Opzioni NLT base
-      const basePrice = vehicle?.price || 30000;
+      // Opzioni NLT base con valore di riferimento
+      const basePrice = 30000;
       
       // Aggiungi le opzioni NLT
       for (const duration of requiredDurations) {
@@ -507,15 +507,9 @@ export default function VehicleDetailPage() {
                             <span>{relatedVehicle.mileage.toLocaleString()} km</span>
                           </div>
                           <div className="flex justify-between items-center mt-3">
+                            {/* Ottiene le opzioni di noleggio per questo veicolo correlato */}
                             <div>
-                              {relatedVehicle.discountPrice ? (
-                                <>
-                                  <span className="line-through text-gray-400">€{relatedVehicle.price.toLocaleString()}</span>
-                                  <span className="text-lg font-bold text-blue-600 ml-2">€{relatedVehicle.discountPrice.toLocaleString()}</span>
-                                </>
-                              ) : (
-                                <span className="text-lg font-bold text-blue-600">€{relatedVehicle.price.toLocaleString()}</span>
-                              )}
+                              <span className="text-lg font-bold text-blue-600">Scopri le opzioni</span>
                             </div>
                             <Button variant="outline" size="sm">Dettagli</Button>
                           </div>
@@ -540,14 +534,14 @@ export default function VehicleDetailPage() {
                   <span>{vehicle.mileage.toLocaleString()} km</span>
                 </div>
                 
+                {/* Il blocco dei prezzi di vendita è stato rimosso, dato che mostriamo solo le opzioni di noleggio */}
                 <div className="mb-6">
-                  {vehicle.discountPrice ? (
+                  {enhancedRentalOptions.length > 0 && (
                     <div className="flex items-center">
-                      <span className="line-through text-gray-400 text-lg">€{vehicle.price.toLocaleString()}</span>
-                      <span className="text-2xl font-bold text-blue-600 ml-3">€{vehicle.discountPrice.toLocaleString()}</span>
+                      <span className="text-2xl font-bold text-blue-600">
+                        A partire da €{Math.min(...enhancedRentalOptions.map(o => o.monthlyPrice))}/mese
+                      </span>
                     </div>
-                  ) : (
-                    <span className="text-2xl font-bold text-blue-600">€{vehicle.price.toLocaleString()}</span>
                   )}
                 </div>
                 
