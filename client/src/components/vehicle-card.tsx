@@ -30,19 +30,14 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           </div>
         )}
         
-        {/* Title and price overlay */}
+        {/* Title overlay */}
         <div className="vehicle-image-overlay">
           <div className="flex justify-between items-end">
             <h3 className="font-bold text-xl">{vehicle.title}</h3>
             <div className="text-right">
-              {vehicle.discountPrice ? (
-                <>
-                  <div className="text-sm line-through">€ {vehicle.price.toLocaleString()}</div>
-                  <div className="font-bold text-xl">€ {vehicle.discountPrice.toLocaleString()}</div>
-                </>
-              ) : (
-                <div className="font-bold text-xl">€ {vehicle.price.toLocaleString()}</div>
-              )}
+              <div className="font-medium text-base bg-blue-500 text-white px-2 py-1 rounded-full">
+                {vehicle.condition === "Nuovo" ? "Nuovo" : "2Life"}
+              </div>
             </div>
           </div>
         </div>
