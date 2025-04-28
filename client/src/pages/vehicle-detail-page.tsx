@@ -686,73 +686,54 @@ export default function VehicleDetailPage() {
             </div>
           </div>
           
-          {/* Auto simili + Contratti a destra come div separato */}
-          {relatedVehicles && relatedVehicles.length > 0 && (
-            <div className="mt-12 pt-10 border-t border-gray-200">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Colonna Sinistra - Auto Simili */}
-                <div className="lg:col-span-7">
-                  <h2 className="text-2xl font-bold mb-6">Auto simili</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {relatedVehicles.map(vehicle => (
-                      <VehicleCard key={vehicle.id} vehicle={vehicle} />
-                    ))}
+          {/* Sezione contatti - senza Auto simili */}
+          <div className="mt-12 pt-10 border-t border-gray-200">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-2xl font-bold mb-4">Hai delle domande?</h2>
+              <p className="text-gray-600 mb-6">
+                Contattaci per ricevere maggiori informazioni su questo veicolo o sulle opzioni di noleggio e finanziamento disponibili.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-800">Telefono</h3>
+                    <p className="text-gray-600">+39 02 1234 5678</p>
                   </div>
                 </div>
-
-                {/* Colonna Destra - Informazioni e richiesta */}
-                <div className="lg:col-span-5">
-                  <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h2 className="text-2xl font-bold mb-4">Hai delle domande?</h2>
-                    <p className="text-gray-600 mb-6">
-                      Contattaci per ricevere maggiori informazioni su questo veicolo o sulle opzioni di noleggio e finanziamento disponibili.
-                    </p>
-                    
-                    <div className="space-y-6">
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-800">Telefono</h3>
-                          <p className="text-gray-600">+39 02 1234 5678</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-800">Email</h3>
-                          <p className="text-gray-600">info@o2omobility.it</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-8">
-                      <button 
-                        className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center"
-                        onClick={() => {
-                          // Apri un form di richiesta informazioni
-                          alert(`Richiesta informazioni per ${vehicle.title}`);
-                        }}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                        Richiedi informazioni
-                      </button>
-                    </div>
+                
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-800">Email</h3>
+                    <p className="text-gray-600">info@o2omobility.it</p>
                   </div>
                 </div>
               </div>
+              
+              <button 
+                className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center"
+                onClick={() => {
+                  // Apri un form di richiesta informazioni
+                  alert(`Richiesta informazioni per ${vehicle.title}`);
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                Richiedi informazioni
+              </button>
             </div>
-          )}
+          </div>
         </div>
       </main>
       <Footer />
