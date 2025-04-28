@@ -755,19 +755,34 @@ export default function VehicleDetailPage() {
                         );
                       })}
                     </div>
+                    
+                    {/* Pulsante "Richiedi informazioni" */}
+                    <div className="mt-6">
+                      <button 
+                        className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center"
+                        onClick={() => {
+                          // Imposta l'opzione di noleggio selezionata per il form
+                          const selectedOption = enhancedRentalOptions?.find(o => o.id === selectedRentalOption);
+                          if (selectedOption) {
+                            // Qui puoi implementare la logica per aprire il form di richiesta
+                            // Per ora mostriamo solo un messaggio
+                            alert(`Richiesta informazioni per ${vehicle.title} - ${selectedOption.type} ${selectedOption.duration} mesi`);
+                          } else {
+                            alert(`Richiesta informazioni per ${vehicle.title}`);
+                          }
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        Richiedi informazioni
+                      </button>
+                    </div>
                   </div>
                 )}
-
-
               </div>
-
-
             </div>
           </div>
-
-
-          
-
         </div>
       </main>
       <Footer />
