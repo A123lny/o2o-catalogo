@@ -1,0 +1,538 @@
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import AdminSidebar from "@/components/admin/sidebar";
+import AdminHeader from "@/components/admin/header";
+import { useAuth } from "@/hooks/use-auth";
+import { User, insertUserSchema } from "@shared/schema";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Loader2,
+  Plus,
+  MoreHorizontal,
+  UserPlus,
+  Edit,
+  Trash2,
+  ShieldCheck,
+  User as UserIcon,
+  Search,
+} from "lucide-react";
+
+// Extended user form schema with password confirmation
+const userFormSchema = insertUserSchema.extend({
+  password: z.string().min(8, "La password deve essere di almeno 8 caratteri"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Le password non corrispondono",
+  path: ["confirmPassword"],
+});
+
+// Form values type
+type UserFormValues = z.infer<typeof userFormSchema>;
+
+export default function UsersPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Form
+  const form = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      fullName: "",
+      role: "user",
+    },
+  });
+
+  // Fetch users
+  const { data: users, isLoading: isLoadingUsers } = useQuery<User[]>({
+    queryKey: ['/api/admin/users'],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/users");
+      return await res.json();
+    },
+  });
+
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: async (values: UserFormValues) => {
+      const { confirmPassword, ...userData } = values;
+      return await apiRequest("POST", "/api/register", userData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({
+        title: "Utente creato",
+        description: "Il nuovo utente è stato creato con successo.",
+      });
+      setIsAddUserOpen(false);
+      form.reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Si è verificato un errore durante la creazione dell'utente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest("DELETE", `/api/admin/users/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({
+        title: "Utente eliminato",
+        description: "L'utente è stato eliminato con successo.",
+      });
+      setShowDeleteDialog(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Si è verificato un errore durante l'eliminazione dell'utente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Filter users
+  const filteredUsers = users?.filter(user => {
+    const matchesSearch = searchTerm === "" ||
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+      
+    const matchesRole = roleFilter === "" || user.role === roleFilter;
+    
+    return matchesSearch && matchesRole;
+  });
+
+  // Form submission
+  const onSubmit = (values: UserFormValues) => {
+    createUserMutation.mutate(values);
+  };
+
+  // Handle delete
+  const handleDelete = (id: number) => {
+    setUserToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  // Confirm delete
+  const confirmDelete = () => {
+    if (userToDelete) {
+      deleteUserMutation.mutate(userToDelete);
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-neutral-100">
+      <AdminSidebar />
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <AdminHeader user={user} />
+        
+        <main className="flex-1 overflow-y-auto p-4">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-neutral-800">Utenti & Permessi</h1>
+              <p className="text-neutral-500">Gestisci gli utenti e i loro ruoli nel sistema</p>
+            </div>
+            
+            <Button onClick={() => {
+              form.reset();
+              setIsAddUserOpen(true);
+            }}>
+              <UserPlus className="h-4 w-4 mr-2" /> Nuovo Utente
+            </Button>
+          </div>
+          
+          {/* Filters */}
+          <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="relative">
+                <Search className="absolute top-3 left-3 h-4 w-4 text-neutral-400" />
+                <Input
+                  placeholder="Cerca utenti..."
+                  className="pl-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtra per ruolo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Tutti i ruoli</SelectItem>
+                  <SelectItem value="admin">Amministratori</SelectItem>
+                  <SelectItem value="user">Utenti</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {/* Users Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Utenti</CardTitle>
+              <CardDescription>
+                Elenco degli utenti registrati nel sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingUsers ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : filteredUsers && filteredUsers.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[80px]">ID</TableHead>
+                        <TableHead>Utente</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Username</TableHead>
+                        <TableHead>Ruolo</TableHead>
+                        <TableHead className="text-right">Azioni</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">{user.id}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center mr-2">
+                                <span className="text-xs font-medium">
+                                  {user.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                </span>
+                              </div>
+                              <span>{user.fullName}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>{user.username}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              {user.role === "admin" ? (
+                                <div className="flex items-center text-blue-700 bg-blue-50 px-2 py-1 rounded text-xs font-medium">
+                                  <ShieldCheck className="h-3 w-3 mr-1" /> Amministratore
+                                </div>
+                              ) : (
+                                <div className="flex items-center text-neutral-700 bg-neutral-100 px-2 py-1 rounded text-xs font-medium">
+                                  <UserIcon className="h-3 w-3 mr-1" /> Utente
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Azioni</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                  <Edit className="h-4 w-4 mr-2" /> Modifica
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleDelete(user.id)}
+                                  className="text-destructive focus:text-destructive"
+                                  disabled={user.id === 1} // Prevent deletion of the default admin
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" /> Elimina
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <UserIcon className="h-12 w-12 text-neutral-300 mb-4" />
+                  <h3 className="text-lg font-medium text-neutral-800 mb-1">Nessun utente trovato</h3>
+                  <p className="text-neutral-500 mb-4">
+                    {searchTerm || roleFilter 
+                      ? 'Nessun utente corrisponde ai criteri di ricerca' 
+                      : 'Aggiungi il primo utente per iniziare'}
+                  </p>
+                  <Button onClick={() => {
+                    form.reset();
+                    setIsAddUserOpen(true);
+                  }}>
+                    <UserPlus className="h-4 w-4 mr-2" /> Nuovo Utente
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+      
+      {/* Add User Dialog */}
+      <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Aggiungi Utente</DialogTitle>
+            <DialogDescription>
+              Inserisci i dettagli per creare un nuovo utente
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome Completo*</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Es. Mario Rossi" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username*</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Es. mario.rossi" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email*</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="email" 
+                          placeholder="Es. mario.rossi@email.it" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ruolo*</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleziona un ruolo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="admin">Amministratore</SelectItem>
+                        <SelectItem value="user">Utente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Gli amministratori hanno accesso completo al pannello di controllo
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password*</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="Inserisci password" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Conferma Password*</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="Conferma password" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsAddUserOpen(false)}
+                >
+                  Annulla
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={createUserMutation.isPending}
+                >
+                  {createUserMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creazione...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" /> Crea Utente
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete User Confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sei sicuro di voler eliminare questo utente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Questa azione non può essere annullata. L'utente verrà rimosso definitivamente dal sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Eliminazione...
+                </>
+              ) : (
+                'Elimina'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

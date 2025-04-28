@@ -1,0 +1,106 @@
+import { useState } from "react";
+import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Menu, X, User, Settings } from "lucide-react";
+
+export default function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [location] = useLocation();
+  const { user } = useAuth();
+
+  const isActive = (path: string) => {
+    return location === path;
+  };
+
+  return (
+    <header className="bg-white shadow-md relative z-10">
+      <div className="container mx-auto px-4 py-4 flex flex-wrap items-center justify-between">
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center">
+            <span className="text-primary font-bold text-2xl">AUTO<span className="text-secondary">PRESTIGE</span></span>
+          </Link>
+        </div>
+
+        {/* Mobile menu button */}
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden rounded-md p-2 text-neutral-500 hover:bg-neutral-100"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
+
+        {/* Main navigation */}
+        <nav className="hidden md:flex items-center space-x-8">
+          <Link href="/" className={`font-medium py-1 ${isActive('/') ? 'text-primary-dark border-b-2 border-primary' : 'text-neutral-600 hover:text-primary hover:border-b-2 hover:border-primary'}`}>
+            Home
+          </Link>
+          <Link href="/catalog" className={`font-medium py-1 ${isActive('/catalog') ? 'text-primary-dark border-b-2 border-primary' : 'text-neutral-600 hover:text-primary hover:border-b-2 hover:border-primary'}`}>
+            Catalogo
+          </Link>
+          <Link href="#services" className="text-neutral-600 hover:text-primary font-medium py-1 hover:border-b-2 hover:border-primary">
+            Servizi
+          </Link>
+          <Link href="#about" className="text-neutral-600 hover:text-primary font-medium py-1 hover:border-b-2 hover:border-primary">
+            Chi siamo
+          </Link>
+          <Link href="#contact" className="text-neutral-600 hover:text-primary font-medium py-1 hover:border-b-2 hover:border-primary">
+            Contatti
+          </Link>
+        </nav>
+
+        <div className="hidden md:flex items-center space-x-4">
+          {user ? (
+            <Link href="/admin" className="text-white bg-primary hover:bg-primary-light px-4 py-2 rounded-md transition duration-300 flex items-center">
+              <User className="mr-2 h-5 w-5" />
+              Area Amministrativa
+            </Link>
+          ) : (
+            <Link href="/auth" className="text-white bg-primary hover:bg-primary-light px-4 py-2 rounded-md transition duration-300 flex items-center">
+              <User className="mr-2 h-5 w-5" />
+              Area Clienti
+            </Link>
+          )}
+          {user?.role === 'admin' && (
+            <Link href="/admin">
+              <Settings className="h-5 w-5 text-neutral-600 hover:text-primary" />
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile menu */}
+      <div className={`md:hidden bg-white px-4 py-2 shadow-md absolute top-full left-0 w-full ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+        <nav className="flex flex-col space-y-3 py-3">
+          <Link href="/" className={`font-medium py-2 px-2 rounded ${isActive('/') ? 'text-primary-dark bg-neutral-100' : 'text-neutral-600 hover:bg-neutral-100'}`}>
+            Home
+          </Link>
+          <Link href="/catalog" className={`font-medium py-2 px-2 rounded ${isActive('/catalog') ? 'text-primary-dark bg-neutral-100' : 'text-neutral-600 hover:bg-neutral-100'}`}>
+            Catalogo
+          </Link>
+          <Link href="#services" className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100">
+            Servizi
+          </Link>
+          <Link href="#about" className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100">
+            Chi siamo
+          </Link>
+          <Link href="#contact" className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100">
+            Contatti
+          </Link>
+          {user ? (
+            <Link href="/admin" className="text-white bg-primary px-4 py-2 rounded-md flex items-center justify-center">
+              <User className="mr-2 h-5 w-5" />
+              Area Amministrativa
+            </Link>
+          ) : (
+            <Link href="/auth" className="text-white bg-primary px-4 py-2 rounded-md flex items-center justify-center">
+              <User className="mr-2 h-5 w-5" />
+              Area Clienti
+            </Link>
+          )}
+        </nav>
+      </div>
+    </header>
+  );
+}

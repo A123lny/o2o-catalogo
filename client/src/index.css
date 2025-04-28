@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --primary: 207 90% 54%;
+  --primary-foreground: 211 100% 99%;
+  --secondary: 0 84.2% 60.2%;
+  --secondary-foreground: 210 40% 98%;
+  --accent: 60 4.8% 95.9%;
+  --accent-foreground: 24 9.8% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 20 14.3% 4.1%;
+  --radius: 0.5rem;
+  --chart-1: 207 90% 54%;
+  --chart-2: 0 84.2% 60.2%;
+  --chart-3: 25 95% 53%;
+  --chart-4: 262 83% 58%;
+  --chart-5: 176 56% 55%;
+  --sidebar-background: 240 10% 3.9%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 207 90% 54%;
+  --sidebar-primary-foreground: 211 100% 99%;
+  --sidebar-accent: 240 3.7% 15.9%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar-ring: 240 4.9% 83.9%;
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 207 90% 54%;
+  --primary-foreground: 211 100% 99%;
+  --secondary: 0 84.2% 60.2%;
+  --secondary-foreground: 210 40% 98%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+  --chart-1: 207 90% 54%;
+  --chart-2: 0 84.2% 60.2%;
+  --chart-3: 25 95% 53%;
+  --chart-4: 262 83% 58%;
+  --chart-5: 176 56% 55%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Custom Additional Styles */
+.vehicle-card-badge {
+  @apply absolute top-0 right-0 mt-3 mr-3 px-2 py-1 rounded text-xs font-semibold;
+}
+
+.vehicle-card-badge.promo {
+  @apply bg-secondary text-white;
+}
+
+.vehicle-card-badge.new {
+  @apply bg-blue-600 text-white;
+}
+
+.vehicle-image-overlay {
+  @apply absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white p-4;
+}
+
+.feature-item {
+  @apply flex items-start my-2;
+}
+
+.feature-icon {
+  @apply text-primary mt-1 mr-2;
+}
+
+.tab-button {
+  @apply inline-block py-4 px-6 border-b-2 font-medium transition-colors;
+}
+
+.tab-button.active {
+  @apply border-primary text-primary;
+}
+
+.tab-button.inactive {
+  @apply border-transparent hover:text-primary;
+}
+
+.category-circle {
+  @apply relative w-full aspect-square rounded-full overflow-hidden mb-3 mx-auto max-w-[120px] shadow-md group-hover:shadow-lg transition-all duration-300;
+}
+
+.category-overlay {
+  @apply absolute inset-0 bg-primary opacity-20 group-hover:opacity-40 transition-opacity duration-300;
+}

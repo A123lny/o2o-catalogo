@@ -1,0 +1,43 @@
+import Header from "@/components/header";
+import Footer from "@/components/footer";
+import HeroSection from "@/components/hero-section";
+import CategoriesSection from "@/components/categories-section";
+import FeaturedVehicles from "@/components/featured-vehicles";
+import { useQuery } from "@tanstack/react-query";
+import { Category, Vehicle } from "@shared/schema";
+import { Loader2 } from "lucide-react";
+
+export default function HomePage() {
+  const { data: categories, isLoading: isLoadingCategories } = useQuery<Category[]>({
+    queryKey: ['/api/categories'],
+  });
+
+  const { data: featuredVehicles, isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
+    queryKey: ['/api/vehicles/featured'],
+  });
+
+  // Loading state for initial data fetch
+  if (isLoadingCategories || isLoadingVehicles) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-1">
+        <HeroSection />
+        <CategoriesSection categories={categories || []} />
+        <FeaturedVehicles vehicles={featuredVehicles || []} />
+      </main>
+      <Footer />
+    </div>
+  );
+}
