@@ -17,8 +17,7 @@ export default function HeroSection() {
   const [filters, setFilters] = useState({
     brandId: "",
     modelId: "",
-    categoryId: "",
-    maxPrice: "",
+    condition: "",
     year: ""
   });
 
@@ -76,14 +75,14 @@ export default function HeroSection() {
         />
       </div>
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-3xl">
+        <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Trova l'auto dei tuoi sogni</h1>
           <p className="text-xl mb-8">Dalla selezione alla consegna, la tua esperienza automobilistica premium inizia qui.</p>
           
-          {/* Search Form */}
-          <div className="bg-white rounded-lg shadow-lg p-6 text-neutral-800">
+          {/* Search Form - Centered */}
+          <div className="bg-white rounded-lg shadow-lg p-6 text-neutral-800 max-w-4xl mx-auto">
             <h3 className="text-xl font-semibold mb-4">Cerca il tuo veicolo ideale</h3>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-neutral-600 mb-1">Marca</label>
                 <Select
@@ -119,45 +118,8 @@ export default function HeroSection() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-600 mb-1">Categoria</label>
-                <Select
-                  value={filters.categoryId || "all"}
-                  onValueChange={(value) => handleFilterChange('categoryId', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tutte le categorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tutte le categorie</SelectItem>
-                    {categories?.map(category => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
-            <div className="grid md:grid-cols-3 gap-4 mt-4">
-              <div>
-                <label className="block text-sm font-medium text-neutral-600 mb-1">Prezzo Massimo</label>
-                <Select
-                  value={filters.maxPrice || ""}
-                  onValueChange={(value) => handleFilterChange('maxPrice', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Nessun limite" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priceOptions.map(option => (
-                      <SelectItem key={option.value || "default-price"} value={option.value || "default-price"}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid md:grid-cols-2 gap-4 mt-4">
               <div>
                 <label className="block text-sm font-medium text-neutral-600 mb-1">Anno</label>
                 <Select
@@ -176,14 +138,31 @@ export default function HeroSection() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-end">
-                <Button 
-                  onClick={handleSearch}
-                  className="w-full bg-secondary hover:bg-secondary-dark text-white font-medium"
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 mb-1">Condizione</label>
+                <Select
+                  value={filters.condition || "all"}
+                  onValueChange={(value) => handleFilterChange('condition', value)}
                 >
-                  <Search className="h-4 w-4 mr-2" /> Cerca
-                </Button>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tutte le condizioni" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tutte le condizioni</SelectItem>
+                    <SelectItem value="new">Nuovo</SelectItem>
+                    <SelectItem value="used">Usato</SelectItem>
+                    <SelectItem value="certified">Certificato</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+            <div className="mt-4">
+              <Button 
+                onClick={handleSearch}
+                className="w-full bg-secondary hover:bg-secondary-dark text-white font-medium py-2"
+              >
+                <Search className="h-4 w-4 mr-2" /> Cerca
+              </Button>
             </div>
           </div>
         </div>
