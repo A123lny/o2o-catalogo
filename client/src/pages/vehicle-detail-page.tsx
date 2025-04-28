@@ -424,8 +424,8 @@ export default function VehicleDetailPage() {
                               <div 
                                 className="w-16 h-16 rounded-full border border-gray-200 shadow-sm"
                                 style={{ 
-                                  backgroundColor: vehicle.colorHex || getColorHex(vehicle.color) || '#e5e5e5',
-                                  backgroundImage: vehicle.colorHex ? 'none' : 'linear-gradient(to bottom right, #f5f5f5, #e0e0e0)' 
+                                  backgroundColor: '#e5e5e5',
+                                  backgroundImage: 'linear-gradient(to bottom right, #f5f5f5, #e0e0e0)' 
                                 }}
                               ></div>
                               <span className="mt-2 text-sm text-center">{vehicle.color}</span>
@@ -445,8 +445,8 @@ export default function VehicleDetailPage() {
                               <div 
                                 className="w-16 h-16 rounded-full border border-gray-200 shadow-sm"
                                 style={{ 
-                                  backgroundColor: vehicle.interiorColorHex || getColorHex(vehicle.interiorColor) || '#e5e5e5',
-                                  backgroundImage: vehicle.interiorColorHex ? 'none' : 'linear-gradient(to bottom right, #f5f5f5, #e0e0e0)' 
+                                  backgroundColor: '#e5e5e5',
+                                  backgroundImage: 'linear-gradient(to bottom right, #f5f5f5, #e0e0e0)' 
                                 }}
                               ></div>
                               <span className="mt-2 text-sm text-center">{vehicle.interiorColor}</span>
@@ -753,10 +753,16 @@ export default function VehicleDetailPage() {
 
 
           
-          {/* Veicoli Simili */}
+          {/* Auto Simili */}
           {relatedVehicles && relatedVehicles.length > 0 && (
-            <div className="mt-12">
-              <h2 className="text-2xl font-bold mb-6 text-gray-800">Veicoli Simili</h2>
+            <div className="mt-12 mb-12 bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center mb-6">
+                <div className="w-1 h-6 bg-blue-600 mr-3"></div>
+                <h2 className="text-2xl font-bold text-gray-800">Auto Simili</h2>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Altre vetture che potrebbero interessarti in base alle caratteristiche di questa {vehicle.title}
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {relatedVehicles.map(vehicle => (
                   <VehicleCard key={vehicle.id} vehicle={vehicle} />

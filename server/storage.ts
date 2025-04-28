@@ -257,15 +257,60 @@ export class MemStorage implements IStorage {
   }
 
   async getRelatedVehicles(id: number): Promise<Vehicle[]> {
-    const vehicle = this.vehicles.get(id);
-    if (!vehicle) return [];
+    const targetVehicle = this.vehicles.get(id);
+    if (!targetVehicle) return [];
     
-    // Get vehicles with the same category or brand, excluding the current vehicle
-    const relatedVehicles = Array.from(this.vehicles.values())
-      .filter(v => v.id !== id && (v.categoryId === vehicle.categoryId || v.brandId === vehicle.brandId))
-      .slice(0, 3);
+    // Per un prodotto reale, qui si potrebbe implementare un algoritmo più sofisticato
+    // che considera più fattori come prezzo, anno, stato, ecc.
+    const allVehicles = Array.from(this.vehicles.values());
     
-    return relatedVehicles;
+    // Filtra veicoli in base a caratteristiche simili
+    const similarVehicles = allVehicles
+      .filter(v => v.id !== id) // Non includere il veicolo corrente
+      .map(vehicle => {
+        // Calcola un punteggio di somiglianza basato su vari criteri
+        let score = 0;
+        
+        // Stesso tipo di veicolo (categoria) - questo è il fattore più importante
+        if (vehicle.categoryId === targetVehicle.categoryId) score += 5;
+        
+        // Stessa marca
+        if (vehicle.brandId === targetVehicle.brandId) score += 3;
+        
+        // Simile fascia di prezzo (+/- 20%)
+        const priceMin = targetVehicle.price * 0.8;
+        const priceMax = targetVehicle.price * 1.2;
+        if (vehicle.price >= priceMin && vehicle.price <= priceMax) score += 2;
+        
+        // Simile anno di produzione (+/- 2 anni)
+        const yearDiff = Math.abs(vehicle.year - targetVehicle.year);
+        if (yearDiff <= 2) score += 2;
+        
+        // Stesso tipo di carburante
+        if (vehicle.fuelType === targetVehicle.fuelType) score += 2;
+        
+        // Stesso tipo di trasmissione
+        if (vehicle.transmission === targetVehicle.transmission) score += 1;
+        
+        return {
+          vehicle,
+          score
+        };
+      })
+      .sort((a, b) => b.score - a.score) // Ordina per punteggio più alto
+      .slice(0, 3) // Prendi i primi 3
+      .map(item => item.vehicle); // Estrai solo i veicoli
+    
+    // Se non ci sono abbastanza veicoli simili, aggiungi veicoli casuali
+    if (similarVehicles.length < 3) {
+      const randomVehicles = allVehicles
+        .filter(v => v.id !== id && !similarVehicles.some(sv => sv.id === v.id))
+        .slice(0, 3 - similarVehicles.length);
+      
+      return [...similarVehicles, ...randomVehicles];
+    }
+    
+    return similarVehicles;
   }
 
   async createVehicle(vehicle: InsertVehicle): Promise<Vehicle> {
