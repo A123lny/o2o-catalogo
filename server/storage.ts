@@ -334,6 +334,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.rentalOptions.values())
       .filter(option => option.vehicleId === vehicleId);
   }
+  
+  async getRentalOption(id: number): Promise<RentalOption | undefined> {
+    return this.rentalOptions.get(id);
+  }
 
   async createRentalOption(option: InsertRentalOption): Promise<RentalOption> {
     const id = this.currentRentalOptionId++;

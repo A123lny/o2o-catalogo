@@ -96,6 +96,12 @@ export default function VehicleEditPage() {
     enabled: isEditMode,
   });
 
+  // Fetch rental options if in edit mode
+  const { data: rentalOptions } = useQuery({
+    queryKey: [`/api/vehicles/${vehicleId}/rental-options`],
+    enabled: isEditMode,
+  });
+
   // Fetch brands and categories
   const { data: brands } = useQuery({
     queryKey: ['/api/brands'],
@@ -329,6 +335,18 @@ export default function VehicleEditPage() {
                   <TabsTrigger value="features">Caratteristiche</TabsTrigger>
                   <TabsTrigger value="images">Immagini</TabsTrigger>
                 </TabsList>
+                
+                {isEditMode && (
+                  <div className="flex justify-end mb-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setLocation(`/admin/vehicles/${vehicleId}/rental-options/new`)}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" /> Aggiungi Opzione di Noleggio
+                    </Button>
+                  </div>
+                )}
                 
                 {/* Details Tab */}
                 <TabsContent value="details">

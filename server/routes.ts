@@ -311,6 +311,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error fetching rental options" });
     }
   });
+  
+  app.get("/api/admin/rental-options/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const rentalOption = await storage.getRentalOption(id);
+      
+      if (!rentalOption) {
+        return res.status(404).json({ message: "Rental option not found" });
+      }
+      
+      res.json(rentalOption);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching rental option" });
+    }
+  });
 
   app.post("/api/admin/vehicles/:id/rental-options", async (req, res) => {
     try {
