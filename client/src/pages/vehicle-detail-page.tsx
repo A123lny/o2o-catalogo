@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, ChevronRight, MapPin, Calendar, Gauge, Zap, Fuel, BarChart2, Activity, Package2 } from "lucide-react";
@@ -10,6 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Vehicle, RentalOption } from "@shared/schema";
 
+// Estensione del tipo RentalOption per le opzioni raccomandate
+interface EnhancedRentalOption extends RentalOption {
+  recommendedForKm?: number;
+}
+
 export default function VehicleDetailPage() {
   const [, navigate] = useLocation();
   const [, params] = useRoute("/vehicle/:id");
@@ -19,6 +24,7 @@ export default function VehicleDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [clientType, setClientType] = useState<'privato' | 'azienda'>('privato');
+  const [activeContractType, setActiveContractType] = useState<'all' | 'NLT' | 'RTB'>('all');
 
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery<Vehicle>({
     queryKey: [`/api/vehicles/${vehicleId}`],
@@ -35,13 +41,76 @@ export default function VehicleDetailPage() {
     enabled: !!vehicleId,
   });
 
+  // Aggiungi più opzioni di noleggio e RTB manualmente per la dimostrazione
+  const enhancedRentalOptions = React.useMemo<EnhancedRentalOption[]>(() => {
+    if (!rentalOptions || rentalOptions.length === 0) return [];
+    
+    // Prendiamo le opzioni originali di NLT e RTB
+    const originalNlt = rentalOptions.find(o => o.type === 'NLT');
+    const originalRtb = rentalOptions.find(o => o.type === 'RTB');
+    
+    const result = [...rentalOptions];
+    
+    // Se esiste un'opzione NLT, ne creiamo altre con durate diverse
+    if (originalNlt) {
+      // Versione 24 mesi
+      result.push({
+        ...originalNlt,
+        id: 100, // ID fittizio per la demo
+        duration: 24,
+        deposit: Math.round(originalNlt.deposit * 0.8),
+        monthlyPrice: Math.round(originalNlt.monthlyPrice * 1.15),
+        recommendedForKm: 15000
+      });
+      
+      // Versione 48 mesi
+      result.push({
+        ...originalNlt,
+        id: 101, // ID fittizio per la demo
+        duration: 48,
+        deposit: Math.round(originalNlt.deposit * 1.2),
+        monthlyPrice: Math.round(originalNlt.monthlyPrice * 0.85),
+        annualMileage: 20000,
+        recommendedForKm: 20000
+      });
+    }
+    
+    // Se esiste un'opzione RTB, ne creiamo altre con durate diverse
+    if (originalRtb) {
+      // Versione 24 mesi
+      result.push({
+        ...originalRtb,
+        id: 102, // ID fittizio per la demo
+        duration: 24,
+        deposit: Math.round(originalRtb.deposit * 0.9),
+        monthlyPrice: Math.round(originalRtb.monthlyPrice * 1.2),
+        finalPayment: Math.round((originalRtb.finalPayment || 0) * 1.1)
+      });
+      
+      // Versione 60 mesi
+      result.push({
+        ...originalRtb,
+        id: 103, // ID fittizio per la demo
+        duration: 60,
+        deposit: Math.round(originalRtb.deposit * 1.3),
+        monthlyPrice: Math.round(originalRtb.monthlyPrice * 0.75),
+        finalPayment: Math.round((originalRtb.finalPayment || 0) * 0.9)
+      });
+    }
+    
+    return result;
+  }, [rentalOptions]);
+
   useEffect(() => {
     // Set the default rental option
-    if (rentalOptions && rentalOptions.length > 0) {
-      const defaultOption = rentalOptions.find(option => option.isDefault);
-      setSelectedRentalOption(defaultOption ? defaultOption.id : rentalOptions[0].id);
+    if (enhancedRentalOptions && enhancedRentalOptions.length > 0) {
+      // Trovia l'opzione consigliata (quella a 36 mesi)
+      const recommendedOption = enhancedRentalOptions.find(option => 
+        option.duration === 36 && option.type === 'NLT'
+      );
+      setSelectedRentalOption(recommendedOption ? recommendedOption.id : enhancedRentalOptions[0].id);
     }
-  }, [rentalOptions]);
+  }, [enhancedRentalOptions]);
 
   if (!vehicleId) {
     navigate("/");
@@ -343,78 +412,141 @@ export default function VehicleDetailPage() {
                 </div>
                 
                 {/* Opzioni di Noleggio */}
-                {rentalOptions && rentalOptions.length > 0 && (
+                {enhancedRentalOptions && enhancedRentalOptions.length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-3 text-gray-800">Opzioni di Acquisto</h3>
+                    
+                    {/* Filtro per tipo di contratto */}
+                    <div className="flex border border-gray-200 rounded-lg mb-4 overflow-hidden">
+                      <button 
+                        className={`flex-1 py-2 px-3 text-sm font-medium text-center ${activeContractType === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                        onClick={() => setActiveContractType('all')}
+                      >
+                        Tutte le soluzioni
+                      </button>
+                      <button 
+                        className={`flex-1 py-2 px-3 text-sm font-medium text-center ${activeContractType === 'NLT' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                        onClick={() => setActiveContractType('NLT')}
+                      >
+                        Noleggio (NLT)
+                      </button>
+                      <button 
+                        className={`flex-1 py-2 px-3 text-sm font-medium text-center ${activeContractType === 'RTB' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                        onClick={() => setActiveContractType('RTB')}
+                      >
+                        Rent to Buy
+                      </button>
+                    </div>
+                    
                     <div className="space-y-4">
-                      {rentalOptions.map((option) => (
-                        <div 
-                          key={option.id}
-                          className={`contract-card ${option.type === 'NLT' ? 'contract-nlt' : 'contract-rtb'} cursor-pointer ${selectedRentalOption === option.id ? 'ring-1 ring-blue-500' : ''}`}
-                          onClick={() => setSelectedRentalOption(option.id)}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <span className="inline-block text-xs font-semibold text-white px-2 py-1 rounded mb-2 bg-blue-500">
-                                {option.type}
-                              </span>
-                              <h4 className="text-lg font-bold">
-                                {option.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'}
-                              </h4>
-                              <p className="text-sm text-gray-600 mt-1">
-                                {option.duration} mesi {option.annualMileage ? `• ${option.annualMileage.toLocaleString()} km/anno` : ''}
-                              </p>
-                              <div className="mt-1 inline-block px-2 py-1 bg-gray-100 text-xs rounded text-gray-700">
-                                {clientType === 'privato' ? 'Prezzo per privati' : 'Prezzo per aziende'}
-                              </div>
-                            </div>
-                            <div className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${selectedRentalOption === option.id ? 'border-blue-500' : 'border-gray-300'}`}>
-                              {selectedRentalOption === option.id && <div className="w-3 h-3 rounded-full bg-blue-500"></div>}
-                            </div>
-                          </div>
+                      {enhancedRentalOptions
+                        .filter(option => activeContractType === 'all' || option.type === activeContractType)
+                        .map((option) => {
+                        const isRecommended = option.duration === 36 && option.type === 'NLT';
+                        const isRecommendedRTB = option.duration === 36 && option.type === 'RTB';
+                        const isRecommendedForKm = option.recommendedForKm === 20000;
+                        const showRecommended = (isRecommended || isRecommendedRTB || isRecommendedForKm);
                           
-                          <div className="mt-4 space-y-2">
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-gray-600">Anticipo</span>
-                              <span className="font-medium">
-                                € {clientType === 'privato' 
-                                  ? option.deposit.toLocaleString() 
-                                  : Math.round(option.deposit * 0.9).toLocaleString()}
-                              </span>
+                        return (
+                          <div 
+                            key={option.id}
+                            className={`contract-card ${option.type === 'NLT' ? 'contract-nlt' : 'contract-rtb'} cursor-pointer ${selectedRentalOption === option.id ? 'ring-1 ring-offset-1 ring-blue-500' : ''} ${showRecommended ? 'border border-blue-200' : ''}`}
+                            onClick={() => setSelectedRentalOption(option.id)}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                  <span className={`inline-block text-xs font-semibold text-white px-2 py-1 rounded ${option.type === 'NLT' ? 'bg-blue-500' : 'bg-orange-500'}`}>
+                                    {option.type}
+                                  </span>
+                                  
+                                  {showRecommended && (
+                                    <span className="inline-block text-xs font-semibold text-white px-2 py-1 rounded bg-green-500">
+                                      Consigliato
+                                    </span>
+                                  )}
+                                  
+                                  {option.recommendedForKm && (
+                                    <span className="inline-block text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                      {option.recommendedForKm.toLocaleString()} km/anno
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                <h4 className="text-lg font-bold">
+                                  {option.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'}
+                                </h4>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {option.duration} mesi {option.annualMileage ? `• ${option.annualMileage.toLocaleString()} km/anno` : ''}
+                                </p>
+                                <div className="mt-1 inline-block px-2 py-1 bg-gray-100 text-xs rounded text-gray-700">
+                                  {clientType === 'privato' ? 'Prezzo per privati' : 'Prezzo per aziende'}
+                                </div>
+                              </div>
+                              <div className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${selectedRentalOption === option.id ? 'border-blue-500' : 'border-gray-300'}`}>
+                                {selectedRentalOption === option.id && <div className="w-3 h-3 rounded-full bg-blue-500"></div>}
+                              </div>
                             </div>
                             
-                            {option.finalPayment && (
+                            <div className="mt-4 space-y-2">
                               <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-600">Maxirata finale</span>
+                                <span className="text-gray-600">Anticipo</span>
                                 <span className="font-medium">
-                                  € {clientType === 'privato'
-                                    ? option.finalPayment.toLocaleString()
-                                    : Math.round(option.finalPayment * 0.9).toLocaleString()}
+                                  € {clientType === 'privato' 
+                                    ? option.deposit.toLocaleString() 
+                                    : Math.round(option.deposit * 0.9).toLocaleString()}
                                 </span>
                               </div>
-                            )}
-                          </div>
-                          
-                          <div className="mt-4 pt-3 border-t border-gray-100">
-                            <div className="flex items-baseline">
-                              <span className={`text-2xl font-bold ${option.type === 'NLT' ? 'text-blue-600' : 'text-orange-500'}`}>
-                                € {clientType === 'privato'
-                                  ? option.monthlyPrice.toLocaleString()
-                                  : Math.round(option.monthlyPrice * 0.85).toLocaleString()}
-                              </span>
-                              <span className="text-sm text-gray-500 ml-1">/mese</span>
-                              {clientType === 'azienda' && (
-                                <span className="ml-2 text-sm bg-green-100 text-green-800 px-2 py-0.5 rounded">
-                                  IVA deducibile
-                                </span>
+                              
+                              {option.finalPayment && (
+                                <div className="flex justify-between items-center text-sm">
+                                  <span className="text-gray-600">Maxirata finale</span>
+                                  <span className="font-medium">
+                                    € {clientType === 'privato'
+                                      ? option.finalPayment.toLocaleString()
+                                      : Math.round(option.finalPayment * 0.9).toLocaleString()}
+                                  </span>
+                                </div>
                               )}
                             </div>
-                            {clientType === 'azienda' && (
-                              <p className="text-xs text-gray-500 mt-1">* I prezzi sono da intendersi IVA esclusa</p>
-                            )}
+                            
+                            <div className="mt-4 pt-3 border-t border-gray-100">
+                              <div className="flex flex-wrap items-baseline">
+                                <span className={`text-2xl font-bold ${option.type === 'NLT' ? 'text-blue-600' : 'text-orange-500'}`}>
+                                  € {clientType === 'privato'
+                                    ? option.monthlyPrice.toLocaleString()
+                                    : Math.round(option.monthlyPrice * 0.85).toLocaleString()}
+                                </span>
+                                <span className="text-sm text-gray-500 ml-1">/mese</span>
+                                
+                                {clientType === 'privato' ? (
+                                  <span className="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                    IVA inclusa
+                                  </span>
+                                ) : (
+                                  <span className="ml-2 text-sm bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                                    IVA deducibile
+                                  </span>
+                                )}
+                                
+                                {showRecommended && (
+                                  <div className="w-full mt-1">
+                                    <span className="text-xs text-green-700 font-medium">
+                                      {isRecommended ? "Offerta più scelta dai nostri clienti" : 
+                                       isRecommendedForKm ? "Ideale per chi percorre molti km" : 
+                                       "Soluzione con il miglior rapporto durata/prezzo"}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {clientType === 'azienda' && (
+                                <p className="text-xs text-gray-500 mt-1">* I prezzi sono da intendersi IVA esclusa</p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
