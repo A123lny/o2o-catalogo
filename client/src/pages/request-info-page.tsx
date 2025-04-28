@@ -53,7 +53,7 @@ const provinces = [
 
 export default function RequestInfoPage() {
   const [, params] = useRoute("/request-info/:vehicleId/:rentalOptionId?");
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   
   const vehicleId = parseInt(params?.vehicleId || "0");
@@ -108,7 +108,7 @@ export default function RequestInfoPage() {
         title: "Richiesta inviata con successo",
         description: "Ti contatteremo al più presto.",
       });
-      setLocation("/");
+      navigate("/");
     },
     onError: (error: Error) => {
       toast({
@@ -135,7 +135,7 @@ export default function RequestInfoPage() {
   
   // Redirect se il veicolo non esiste
   if (!vehicle && !isLoadingVehicle) {
-    setLocation("/");
+    navigate("/");
     return null;
   }
   
@@ -147,7 +147,7 @@ export default function RequestInfoPage() {
           {/* Breadcrumb e pulsante indietro */}
           <div className="mb-6">
             <button
-              onClick={() => setLocation(`/vehicle/${vehicleId}`)}
+              onClick={() => navigate(`/vehicle/${vehicleId}`)}
               className="flex items-center text-blue-600 hover:text-blue-800"
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
