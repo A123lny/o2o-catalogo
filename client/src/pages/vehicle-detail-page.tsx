@@ -18,6 +18,7 @@ export default function VehicleDetailPage() {
   const [selectedRentalOption, setSelectedRentalOption] = useState<number | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [clientType, setClientType] = useState<'privato' | 'azienda'>('privato');
 
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery<Vehicle>({
     queryKey: [`/api/vehicles/${vehicleId}`],
@@ -323,6 +324,24 @@ export default function VehicleDetailPage() {
                   </div>
                 </div>
 
+                {/* Switcher Privati/Aziende */}
+                <div className="mb-6">
+                  <div className="flex border border-gray-300 rounded-lg overflow-hidden mb-3">
+                    <button 
+                      className={`flex-1 py-3 px-4 font-medium text-center transition-colors ${clientType === 'privato' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                      onClick={() => setClientType('privato')}
+                    >
+                      Clienti Privati
+                    </button>
+                    <button 
+                      className={`flex-1 py-3 px-4 font-medium text-center transition-colors ${clientType === 'azienda' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                      onClick={() => setClientType('azienda')}
+                    >
+                      Aziende / P.IVA
+                    </button>
+                  </div>
+                </div>
+                
                 {/* Opzioni di Noleggio */}
                 {rentalOptions && rentalOptions.length > 0 && (
                   <div className="mb-6">
@@ -345,6 +364,9 @@ export default function VehicleDetailPage() {
                               <p className="text-sm text-gray-600 mt-1">
                                 {option.duration} mesi {option.annualMileage ? `• ${option.annualMileage.toLocaleString()} km/anno` : ''}
                               </p>
+                              <div className="mt-1 inline-block px-2 py-1 bg-gray-100 text-xs rounded text-gray-700">
+                                {clientType === 'privato' ? 'Prezzo per privati' : 'Prezzo per aziende'}
+                              </div>
                             </div>
                             <div className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${selectedRentalOption === option.id ? 'border-blue-500' : 'border-gray-300'}`}>
                               {selectedRentalOption === option.id && <div className="w-3 h-3 rounded-full bg-blue-500"></div>}
@@ -354,13 +376,21 @@ export default function VehicleDetailPage() {
                           <div className="mt-4 space-y-2">
                             <div className="flex justify-between items-center text-sm">
                               <span className="text-gray-600">Anticipo</span>
-                              <span className="font-medium">€ {option.deposit.toLocaleString()}</span>
+                              <span className="font-medium">
+                                € {clientType === 'privato' 
+                                  ? option.deposit.toLocaleString() 
+                                  : Math.round(option.deposit * 0.9).toLocaleString()}
+                              </span>
                             </div>
                             
                             {option.finalPayment && (
                               <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-600">Maxirata finale</span>
-                                <span className="font-medium">€ {option.finalPayment.toLocaleString()}</span>
+                                <span className="font-medium">
+                                  € {clientType === 'privato'
+                                    ? option.finalPayment.toLocaleString()
+                                    : Math.round(option.finalPayment * 0.9).toLocaleString()}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -368,10 +398,20 @@ export default function VehicleDetailPage() {
                           <div className="mt-4 pt-3 border-t border-gray-100">
                             <div className="flex items-baseline">
                               <span className={`text-2xl font-bold ${option.type === 'NLT' ? 'text-blue-600' : 'text-orange-500'}`}>
-                                € {option.monthlyPrice.toLocaleString()}
+                                € {clientType === 'privato'
+                                  ? option.monthlyPrice.toLocaleString()
+                                  : Math.round(option.monthlyPrice * 0.85).toLocaleString()}
                               </span>
                               <span className="text-sm text-gray-500 ml-1">/mese</span>
+                              {clientType === 'azienda' && (
+                                <span className="ml-2 text-sm bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                                  IVA deducibile
+                                </span>
+                              )}
                             </div>
+                            {clientType === 'azienda' && (
+                              <p className="text-xs text-gray-500 mt-1">* I prezzi sono da intendersi IVA esclusa</p>
+                            )}
                           </div>
                         </div>
                       ))}
