@@ -263,7 +263,8 @@ export default function VehicleDetailPage() {
   const handleRequestInfo = () => {
     if (selectedRentalOption) {
       console.log("Richiesta informazioni per opzione:", selectedRentalOption);
-      navigate(`/request-info/${vehicleId}/${selectedRentalOption}`);
+      // Passa anche il tipo di cliente (privato o azienda) come parametro URL
+      navigate(`/request-info/${vehicleId}/${selectedRentalOption}?clientType=${clientType}`);
     } else {
       toast({
         title: "Seleziona un'opzione",

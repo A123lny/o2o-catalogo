@@ -26,8 +26,32 @@ const requestFormSchema = z.object({
   phone: z.string().min(6, "Inserisci un numero di telefono valido"),
   province: z.string().min(2, "Seleziona una provincia"),
   isCompany: z.boolean().default(false),
-  companyName: z.string().optional(),
-  vatNumber: z.string().optional(),
+  companyName: z.string().optional()
+    .refine(
+      (val, ctx) => {
+        // Se isCompany è true nel contesto, allora companyName deve essere definito
+        if (ctx.path && ctx.path[0] === 'isCompany' && ctx.path.includes('isCompany') && ctx.data.isCompany && (!val || val.trim() === '')) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: "La ragione sociale è obbligatoria per le aziende"
+      }
+    ),
+  vatNumber: z.string().optional()
+    .refine(
+      (val, ctx) => {
+        // Se isCompany è true nel contesto, allora vatNumber deve essere definito
+        if (ctx.path && ctx.path[0] === 'isCompany' && ctx.path.includes('isCompany') && ctx.data.isCompany && (!val || val.trim() === '')) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: "La partita IVA è obbligatoria per le aziende"
+      }
+    ),
   interestType: z.string(),
   message: z.string().optional(),
   privacyConsent: z.boolean().refine(val => val === true, {
@@ -62,11 +86,15 @@ export default function RequestInfoPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
-  // Recupera i parametri dell'URL
+  // Recupera i parametri dell'URL e i query parameters
   const vehicleId = params ? parseInt(params.vehicleId) : 0;
   const rentalOptionId = params ? parseInt(params.rentalOptionId) : undefined;
   
-  console.log("URL Params:", { vehicleId, rentalOptionId });
+  // Ottieni il clientType dalla query string
+  const searchParams = new URLSearchParams(window.location.search);
+  const clientTypeParam = searchParams.get('clientType');
+  
+  console.log("URL Params:", { vehicleId, rentalOptionId, clientType: clientTypeParam });
   
   // Query per il veicolo
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery({
@@ -129,8 +157,10 @@ export default function RequestInfoPage() {
     }
   }, [rentalOptions, rentalOptionId]);
   
-  // Determina se il cliente è un'azienda in base alla categoria
-  const isCompany = vehicle?.categoryId === 2;
+  // Determina se il cliente è un'azienda:
+  // 1. In base al parametro URL clientType (se disponibile)
+  // 2. Altrimenti in base alla categoria del veicolo
+  const isCompany = clientTypeParam === 'business' || (clientTypeParam !== 'private' && vehicle?.categoryId === 2);
   
   // Formatta il testo dell'opzione selezionata
   const selectedOptionText = selectedOption
