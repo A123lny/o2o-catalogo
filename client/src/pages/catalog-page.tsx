@@ -41,6 +41,7 @@ export default function CatalogPage() {
       maxPrice: "",
       year: "",
       fuelType: "",
+      condition: "",
     });
   };
 

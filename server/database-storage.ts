@@ -195,6 +195,10 @@ export class DatabaseStorage implements IStorage {
       if (filters.fuelType) {
         query = query.where(eq(vehicles.fuelType, filters.fuelType));
       }
+      
+      if (filters.condition) {
+        query = query.where(eq(vehicles.condition, filters.condition));
+      }
     }
     
     return query;
