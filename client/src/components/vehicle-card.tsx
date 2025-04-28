@@ -1,16 +1,29 @@
 import { Link } from "wouter";
 import { Vehicle } from "@shared/schema";
-import { Calendar, Gauge, Fuel, ChevronRight } from "lucide-react";
+import { Calendar, Gauge, Fuel, Settings, Car } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { RentalOption } from "@shared/schema";
 
 interface VehicleCardProps {
   vehicle: Vehicle;
 }
 
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
-  // Determina il tipo di noleggio - per demo usiamo semplice logica randomica
-  const hasNLT = vehicle.id % 2 === 0;
-  const isPromo = vehicle.id % 5 === 0;
-  const price = 279; // Prezzo fisso per corrispondere all'esempio
+  // Otteniamo le opzioni di noleggio dal database
+  const { data: rentalOptions } = useQuery<RentalOption[]>({
+    queryKey: [`/api/vehicles/${vehicle.id}/rental-options`],
+    enabled: !!vehicle.id,
+  });
+  
+  // Determina il tipo di noleggio in base alle opzioni disponibili
+  const hasNLT = rentalOptions?.some(option => option.type === 'NLT');
+  const hasRTB = rentalOptions?.some(option => option.type === 'RTB');
+  const isPromo = vehicle.id % 5 === 0; // Simuliamo la promo per la demo
+  
+  // Calcola il prezzo mensile più basso dalle opzioni di noleggio disponibili
+  const lowestPrice = rentalOptions?.length 
+    ? Math.min(...rentalOptions.map(option => option.monthlyPrice))
+    : null;
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
@@ -34,13 +47,13 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         </div>
         
         {/* Badge prezzo mensile in alto a destra */}
-        <div className="absolute top-0 right-0 mt-3 mr-3">
-          <span className="bg-orange-500 text-white text-sm font-bold px-3 py-1 rounded">
-            €{price}/mese
-          </span>
-        </div>
-        
-        {/* Title overlay rimosso per corrispondere al design dell'esempio */}
+        {lowestPrice && (
+          <div className="absolute top-0 right-0 mt-3 mr-3">
+            <span className="bg-orange-500 text-white text-sm font-bold px-3 py-1 rounded">
+              €{lowestPrice}/mese
+            </span>
+          </div>
+        )}
       </div>
       
       <div className="p-4">
@@ -51,7 +64,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             <Fuel className="h-4 w-4 mr-1 text-neutral-400" /> {vehicle.fuelType}
           </div>
           <div className="flex items-center mr-4">
-            <span className="mr-1">🔄</span> Automatico
+            <Settings className="h-4 w-4 mr-1 text-neutral-400" /> {vehicle.transmission}
           </div>
           <div className="flex items-center">
             <Gauge className="h-4 w-4 mr-1 text-neutral-400" /> {vehicle.power} CV
@@ -60,7 +73,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         
         <div className="flex items-center text-sm text-neutral-600 mb-4">
           <div className="flex items-center mr-4">
-            <span className="mr-1">🚗</span> {vehicle.mileage.toLocaleString()} km/anno
+            <Car className="h-4 w-4 mr-1 text-neutral-400" /> {vehicle.mileage.toLocaleString()} km/anno
           </div>
           <div className="flex items-center">
             <Calendar className="h-4 w-4 mr-1 text-neutral-400" /> 36 mesi
@@ -76,7 +89,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           </Link>
           <div className="text-right">
             <div className="font-bold text-primary text-lg">
-              €{price}/mese
+              {lowestPrice ? `€${lowestPrice}/mese` : "Contattaci"}
             </div>
           </div>
         </div>
