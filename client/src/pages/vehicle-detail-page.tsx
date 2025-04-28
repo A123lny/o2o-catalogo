@@ -723,8 +723,8 @@ export default function VehicleDetailPage() {
                       <button 
                         className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center"
                         onClick={() => {
-                          // Per ora mostriamo solo un messaggio
-                          alert(`Richiesta informazioni per ${vehicle.title}`);
+                          // Reindirizza alla pagina di richiesta informazioni con l'ID del veicolo e dell'opzione selezionata
+                          setLocation(`/request-info/${vehicle.id}/${option.id}`);
                         }}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">

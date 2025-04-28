@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import VehicleDetailPage from "@/pages/vehicle-detail-page";
+import RequestInfoPage from "@/pages/request-info-page";
 import CatalogPage from "@/pages/catalog-page";
 import DashboardPage from "@/pages/admin/dashboard";
 import VehiclesPage from "@/pages/admin/vehicles";
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/catalog" component={CatalogPage} />
       <Route path="/vehicle/:id" component={VehicleDetailPage} />
+      <Route path="/request-info/:vehicleId/:rentalOptionId?" component={RequestInfoPage} />
       
       {/* Admin Routes */}
       <ProtectedRoute path="/admin" component={DashboardPage} />
