@@ -78,7 +78,7 @@ export default function RequestInfoPage() {
   
   // Prepariamo il testo dell'opzione selezionata
   const selectedOptionText = selectedOption 
-    ? `${selectedOption.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'} - ${selectedOption.duration} mesi - ${selectedOption.monthlyPrice}€/mese`
+    ? `${selectedOption.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'} - ${selectedOption.duration} mesi`
     : '';
     
   // Form di richiesta informazioni
@@ -260,11 +260,11 @@ export default function RequestInfoPage() {
                               <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
                                 selectedOption.type === 'NLT' ? 'bg-blue-500' : 'bg-orange-500'
                               }`}></span>
-                              <div className="flex items-center">
+                              <div className="flex items-center w-full">
                                 <input
                                   type="text"
-                                  className="bg-transparent flex-grow focus:outline-none text-gray-700 disabled:cursor-not-allowed"
-                                  value={`${selectedOption.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'} - ${selectedOption.duration} mesi`}
+                                  className="bg-transparent w-full focus:outline-none text-gray-700 disabled:cursor-not-allowed"
+                                  value={field.value}
                                   disabled
                                   readOnly
                                 />
