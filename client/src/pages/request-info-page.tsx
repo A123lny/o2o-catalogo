@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MailCheck, ChevronLeft, Phone, User, MapPin, Car, Calendar, Gauge, Zap, Fuel, Check } from "lucide-react";
+import { MailCheck, ChevronLeft, Phone, User, MapPin, Car, Calendar, Gauge, Zap, Fuel, Check, Building2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { insertRequestSchema, Vehicle, RentalOption } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -81,6 +82,9 @@ export default function RequestInfoPage() {
     ? `${selectedOption.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'} - ${selectedOption.duration} mesi`
     : '';
     
+  // Stato per tenere traccia se il cliente è un'azienda
+  const [isCompany, setIsCompany] = useState(false);
+    
   // Form di richiesta informazioni
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestFormSchema),
@@ -90,6 +94,9 @@ export default function RequestInfoPage() {
       email: "",
       phone: "",
       province: "",
+      isCompany: false,
+      companyName: "",
+      vatNumber: "",
       interestType: selectedOptionText || (rentalOptionId ? selectedOption?.type || "NLT" : "NLT"),
       message: "",
       privacyConsent: false,

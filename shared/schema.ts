@@ -76,6 +76,10 @@ export const requests = pgTable("requests", {
   fullName: text("full_name").notNull(),
   email: text("email").notNull(),
   phone: text("phone").notNull(),
+  province: text("province").notNull(),
+  isCompany: boolean("is_company").default(false),
+  companyName: text("company_name"),
+  vatNumber: text("vat_number"),
   interestType: text("interest_type").notNull(),
   message: text("message"),
   status: text("status").notNull().default("new"), // new, in_progress, completed
@@ -118,6 +122,10 @@ export const insertRequestSchema = createInsertSchema(requests).pick({
   fullName: true,
   email: true,
   phone: true,
+  province: true,
+  isCompany: true,
+  companyName: true,
+  vatNumber: true,
   interestType: true,
   message: true,
 });
