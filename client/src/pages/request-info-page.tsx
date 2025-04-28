@@ -116,46 +116,25 @@ export default function RequestInfoPage() {
   // Determina l'opzione selezionata quando i dati sono disponibili
   useEffect(() => {
     if (rentalOptions && rentalOptionId) {
+      // Cerca solo l'opzione esatta nel database
       const option = rentalOptions.find((opt: RentalOption) => opt.id === rentalOptionId);
       if (option) {
         console.log("Opzione selezionata:", option);
         setSelectedOption(option);
       } else {
-        // Se non si trova l'opzione esatta, seleziona una dello stesso tipo
-        // Cerca l'ID nel path URL
-        const urlPathParts = window.location.pathname.split('/');
-        const urlOptionId = urlPathParts[urlPathParts.length - 1];
+        // Se l'opzione non esiste, non mostriamo nulla di fittizio
+        console.log("Opzione con id", rentalOptionId, "non trovata nel database");
+        setSelectedOption(null);
         
-        // Determina il tipo (NLT vs RTB) in base all'ID
-        let optionType = null;
-        
-        // Determina in modo semplice il tipo dell'opzione
-        if (rentalOptions.length > 0) {
-          const firstNLT = rentalOptions.find((opt: RentalOption) => opt.type === 'NLT');
-          const firstRTB = rentalOptions.find((opt: RentalOption) => opt.type === 'RTB');
-          
-          if (firstNLT && firstRTB) {
-            // Se urlOptionId è più vicino all'ID del NLT, usa NLT, altrimenti RTB
-            optionType = Math.abs(parseInt(urlOptionId) - firstNLT.id) < 
-                         Math.abs(parseInt(urlOptionId) - firstRTB.id) ? 'NLT' : 'RTB';
-          } else if (firstNLT) {
-            optionType = 'NLT';
-          } else if (firstRTB) {
-            optionType = 'RTB';
-          }
-          
-          if (optionType) {
-            // Trova la prima opzione del tipo determinato
-            const option = rentalOptions.find((opt: RentalOption) => opt.type === optionType);
-            if (option) {
-              console.log(`Opzione di tipo ${optionType} selezionata come fallback:`, option);
-              setSelectedOption(option);
-            }
-          }
-        }
+        // Mostro un messaggio di errore all'utente
+        toast({
+          title: "Opzione non disponibile",
+          description: "L'opzione di noleggio selezionata non è più disponibile. Torna alla pagina del veicolo per vedere le opzioni attuali.",
+          variant: "destructive",
+        });
       }
     }
-  }, [rentalOptions, rentalOptionId]);
+  }, [rentalOptions, rentalOptionId, toast]);
   
   // Determina se il cliente è un'azienda:
   // 1. In base al parametro URL clientType (se disponibile)
