@@ -602,12 +602,13 @@ export default function VehicleDetailPage() {
                                 : 'border-gray-200'
                             }`}
                           >
-                            {/* Header con bordo colorato */}
+                            {/* Header con bordo colorato - l'intero div è cliccabile */}
                             <div 
-                              className="relative"
+                              className="relative cursor-pointer"
                               style={{ 
                                 borderLeft: `4px solid ${option.type === 'NLT' ? '#3b82f6' : '#f97316'}`
                               }}
+                              onClick={() => setSelectedRentalOption(option.id)}
                             >
                               {/* Badge "Popolare" o "Consigliato" */}
                               {isRecommended && (
@@ -627,7 +628,6 @@ export default function VehicleDetailPage() {
                                         ? option.type === 'NLT' ? 'border-blue-500' : 'border-orange-500' 
                                         : 'border-gray-300'
                                     }`}
-                                    onClick={() => setSelectedRentalOption(option.id)}
                                   >
                                     {selectedRentalOption === option.id && (
                                       <div className={`w-3 h-3 rounded-full ${
