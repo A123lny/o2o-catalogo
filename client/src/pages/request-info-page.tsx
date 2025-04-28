@@ -26,6 +26,19 @@ const requestFormSchema = z.object({
   email: z.string().email("Inserisci un'email valida"),
   phone: z.string().min(6, "Inserisci un numero di telefono valido"),
   province: z.string().min(2, "Seleziona una provincia"),
+  isCompany: z.boolean().default(false),
+  companyName: z.string().optional().refine((val) => {
+    if (val === undefined) return true;
+    return val.length > 0;
+  }, {
+    message: "Inserisci la ragione sociale dell'azienda"
+  }),
+  vatNumber: z.string().optional().refine((val) => {
+    if (val === undefined) return true;
+    return val.length > 0;
+  }, {
+    message: "Inserisci la P.IVA"
+  }),
   interestType: z.string(),
   message: z.string().optional(),
   privacyConsent: z.boolean().refine(val => val === true, {
@@ -185,6 +198,51 @@ export default function RequestInfoPage() {
                   
                   <FormField
                     control={form.control}
+                    name="isCompany"
+                    render={({ field }) => (
+                      <FormItem className="mb-6">
+                        <FormLabel>Tipo cliente</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={(value) => {
+                              const isCompanyValue = value === "company";
+                              setIsCompany(isCompanyValue);
+                              field.onChange(isCompanyValue);
+                              
+                              // Reset company fields if switching to private
+                              if (!isCompanyValue) {
+                                form.setValue("companyName", "");
+                                form.setValue("vatNumber", "");
+                              }
+                            }}
+                            defaultValue={field.value ? "company" : "private"}
+                            className="flex space-x-4"
+                          >
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="private" />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                Privato
+                              </FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="company" />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                Azienda / P.IVA
+                              </FormLabel>
+                            </FormItem>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
                     name="fullName"
                     render={({ field }) => (
                       <FormItem>
@@ -261,6 +319,41 @@ export default function RequestInfoPage() {
                       </FormItem>
                     )}
                   />
+                  
+                  {isCompany && (
+                    <div className="space-y-5">
+                      <FormField
+                        control={form.control}
+                        name="companyName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ragione Sociale</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input placeholder="Denominazione Azienda" {...field} className="pl-10" />
+                                <Building2 className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="vatNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Partita IVA</FormLabel>
+                            <FormControl>
+                              <Input placeholder="IT01234567890" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
                   
                   <FormField
                     control={form.control}
@@ -451,7 +544,7 @@ export default function RequestInfoPage() {
                         <span className="text-xl font-bold text-blue-600">
                           € {selectedOption.monthlyPrice.toLocaleString()}
                           <span className="text-xs ml-1 text-gray-500 font-normal">
-                            {vehicle?.categoryId === 2 ? "(IVA esclusa)" : "(IVA inclusa)"}
+                            {isCompany ? "(IVA esclusa)" : "(IVA inclusa)"}
                           </span>
                         </span>
                       </div>
@@ -466,7 +559,7 @@ export default function RequestInfoPage() {
                           <span className="font-medium">
                             € {selectedOption.deposit.toLocaleString()}
                             <span className="text-xs ml-1 text-gray-500">
-                              {vehicle?.categoryId === 2 ? "(IVA esclusa)" : "(IVA inclusa)"}
+                              {isCompany ? "(IVA esclusa)" : "(IVA inclusa)"}
                             </span>
                           </span>
                         </div>
