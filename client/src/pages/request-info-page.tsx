@@ -550,13 +550,13 @@ export default function RequestInfoPage() {
                   </div>
                   
                   <div className="mt-3">
-                    {vehicle.discountPrice ? (
+                    {selectedOption ? (
                       <div className="flex items-center">
-                        <span className="line-through text-gray-400 text-sm">€{vehicle.price.toLocaleString()}</span>
-                        <span className="text-lg font-bold text-blue-600 ml-2">€{vehicle.discountPrice.toLocaleString()}</span>
+                        <span className="text-lg font-bold text-blue-600">€{selectedOption.monthlyPrice}/mese</span>
+                        <span className="text-gray-500 ml-1">{clientTypeParam === 'private' ? '(IVA incl.)' : '(IVA escl.)'}</span>
                       </div>
                     ) : (
-                      <span className="text-lg font-bold text-blue-600">€{vehicle.price.toLocaleString()}</span>
+                      <span className="text-lg font-bold text-blue-600">Contattaci per un preventivo</span>
                     )}
                   </div>
                 </div>
