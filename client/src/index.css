@@ -180,18 +180,7 @@
   @apply bg-white rounded-lg overflow-hidden mb-6 shadow-sm;
 }
 
-/* Contract card styles */
-.contract-card {
-  @apply bg-white rounded-lg p-6 shadow-sm mb-4;
-}
-
-.contract-nlt {
-  @apply border-l-4 border-blue-500;
-}
-
-.contract-rtb {
-  @apply border-l-4 border-[#e67e22];
-}
+/* Contract card styles - These styles have been replaced with inline Tailwind classes */
 
 /* Car specs */
 .car-specs {
