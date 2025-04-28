@@ -4,10 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, ChevronRight, MapPin, Calendar, Gauge, Zap, Fuel, BarChart2, Activity, Package2 } from "lucide-react";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import RequestForm from "@/components/request-form";
+import VehicleGallery from "@/components/vehicle-gallery";
 import VehicleCard from "@/components/vehicle-card";
+import RequestForm from "@/components/request-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Vehicle, RentalOption } from "@shared/schema";
 
 // Estensione del tipo RentalOption per le opzioni raccomandate
@@ -82,8 +84,6 @@ export default function VehicleDetailPage() {
   const vehicleId = params?.id ? parseInt(params.id) : null;
   const [activeTab, setActiveTab] = useState("description");
   const [selectedRentalOption, setSelectedRentalOption] = useState<number | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [clientType, setClientType] = useState<'privato' | 'azienda'>('privato');
   const [activeContractType, setActiveContractType] = useState<'NLT' | 'RTB'>('NLT');
 
@@ -265,23 +265,10 @@ export default function VehicleDetailPage() {
     );
   }
 
-  const selectedOption = rentalOptions?.find(option => option.id === selectedRentalOption);
+  const selectedOption = enhancedRentalOptions?.find(option => option.id === selectedRentalOption);
   const allImages = vehicle.mainImage 
     ? [vehicle.mainImage, ...(vehicle.images as string[] || [])] 
     : (vehicle.images as string[] || []);
-
-  const handleNextImage = () => {
-    setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
-  };
-
-  const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
-  };
-
-  const openLightbox = (index: number) => {
-    setCurrentImageIndex(index);
-    setLightboxOpen(true);
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -301,65 +288,15 @@ export default function VehicleDetailPage() {
             {/* Left Column - Gallery */}
             <div className="lg:col-span-7">
               <div className="image-gallery bg-white rounded-lg overflow-hidden shadow-sm mb-6">
-                <div className="relative">
-                  <img 
-                    src={allImages[currentImageIndex] || "https://placehold.co/600x400?text=Immagine+non+disponibile"} 
-                    alt={vehicle.title} 
-                    className="w-full h-[400px] object-cover" 
+                {allImages.length > 0 ? (
+                  <VehicleGallery 
+                    mainImage={vehicle.mainImage || allImages[0]} 
+                    images={allImages.slice(1)} 
+                    title={vehicle.title}
                   />
-                  <button 
-                    onClick={() => openLightbox(currentImageIndex)}
-                    className="absolute bottom-4 right-4 bg-white/80 hover:bg-white p-2 rounded-full shadow-md text-blue-500"
-                    aria-label="Visualizza a schermo intero"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 011.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 011.414-1.414L15 13.586V12a1 1 0 011-1z" />
-                    </svg>
-                  </button>
-                  {allImages.length > 1 && (
-                    <>
-                      <button 
-                        onClick={handlePrevImage}
-                        className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md text-blue-500"
-                        aria-label="Immagine precedente"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={handleNextImage}
-                        className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md text-blue-500"
-                        aria-label="Immagine successiva"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {allImages.length > 0 && (
-                  <div className="bg-gray-50 p-3 border-t border-gray-100">
-                    <div className="flex space-x-2 overflow-x-auto">
-                      {allImages.map((image, index) => (
-                        <div 
-                          key={index}
-                          className={`flex-shrink-0 cursor-pointer transition-opacity ${
-                            index === currentImageIndex ? 'ring-2 ring-blue-500 opacity-100' : 'opacity-60 hover:opacity-100'
-                          }`}
-                          onClick={() => setCurrentImageIndex(index)}
-                          style={{ width: '80px', height: '60px' }}
-                        >
-                          <img 
-                            src={image} 
-                            alt={`${vehicle.title} - Vista ${index + 1}`} 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ))}
-                    </div>
+                ) : (
+                  <div className="h-[400px] bg-gray-100 flex items-center justify-center">
+                    <p className="text-gray-400">Nessuna immagine disponibile</p>
                   </div>
                 )}
               </div>
@@ -492,14 +429,21 @@ export default function VehicleDetailPage() {
                 {/* Badge */}
                 <div className="flex flex-wrap mb-2">
                   {vehicle.badges && (vehicle.badges as string[]).map((badge, index) => (
-                    <span key={index} className={`car-badge badge-${badge}`}>
+                    <div key={index} className={`text-xs font-bold py-1 px-2 mr-2 mb-2 rounded uppercase ${
+                      badge === 'promo' ? 'bg-red-500 text-white' : 
+                      badge === 'new' ? 'bg-green-500 text-white' : 
+                      badge === 'nlt' ? 'bg-blue-500 text-white' : 
+                      badge === 'rtb' ? 'bg-purple-500 text-white' : 
+                      badge === '2life' ? 'bg-emerald-500 text-white' : 
+                      'bg-gray-500 text-white'
+                    }`}>
                       {badge === 'promo' ? 'PROMO' : 
                       badge === 'new' ? 'NUOVO' : 
                       badge === 'nlt' ? 'NLT' : 
                       badge === 'rtb' ? 'RTB' : 
                       badge === '2life' ? '2LIFE' : 
                       badge.toUpperCase()}
-                    </span>
+                    </div>
                   ))}
                 </div>
 
@@ -596,11 +540,10 @@ export default function VehicleDetailPage() {
                           // Poi per durata (crescente)
                           return a.duration - b.duration;
                         })
-                        .map((enhancedOption) => {
-                        const option = enhancedOption as EnhancedRentalOption;
+                        .map(option => {
                         const isRecommended = option.duration === 36 && option.type === 'NLT';
                         const isRecommendedRTB = option.duration === 36 && option.type === 'RTB';
-                        const isRecommendedForKm = option.recommendedForKm === 20000;
+                        const isRecommendedForKm = (option as EnhancedRentalOption).recommendedForKm === 20000;
                         const showRecommended = (isRecommended || isRecommendedRTB || isRecommendedForKm);
                           
                         return (
@@ -626,9 +569,9 @@ export default function VehicleDetailPage() {
                                     </span>
                                   )}
                                   
-                                  {option.recommendedForKm && (
+                                  {(option as EnhancedRentalOption).recommendedForKm && (
                                     <span className="inline-block text-xs font-medium bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-sm">
-                                      {option.recommendedForKm.toLocaleString()} km/anno
+                                      {(option as EnhancedRentalOption).recommendedForKm?.toLocaleString()} km/anno
                                     </span>
                                   )}
                                 </div>
@@ -647,11 +590,11 @@ export default function VehicleDetailPage() {
                             </div>
                             
                             {/* Servizi inclusi */}
-                            {option.includedServices && option.includedServices.length > 0 && (
+                            {(option as EnhancedRentalOption).includedServices && (option as EnhancedRentalOption).includedServices?.length > 0 && (
                               <div className="mt-3 p-2 bg-blue-50 rounded-md">
                                 <h5 className="text-xs font-semibold text-blue-700 mb-1.5">Inclusi nel canone:</h5>
                                 <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                                  {option.includedServices.map((service, idx) => (
+                                  {(option as EnhancedRentalOption).includedServices?.map((service, idx) => (
                                     <div key={idx} className="flex items-center text-xs text-gray-700">
                                       <CheckIcon className="h-3 w-3 text-green-500 mr-1 flex-shrink-0" />
                                       <span className="text-xs">{service}</span>
@@ -727,15 +670,8 @@ export default function VehicleDetailPage() {
                       <button 
                         className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center"
                         onClick={() => {
-                          // Imposta l'opzione di noleggio selezionata per il form
-                          const selectedOption = enhancedRentalOptions?.find(o => o.id === selectedRentalOption);
-                          if (selectedOption) {
-                            // Qui puoi implementare la logica per aprire il form di richiesta
-                            // Per ora mostriamo solo un messaggio
-                            alert(`Richiesta informazioni per ${vehicle.title} - ${selectedOption.type} ${selectedOption.duration} mesi`);
-                          } else {
-                            alert(`Richiesta informazioni per ${vehicle.title}`);
-                          }
+                          // Per ora mostriamo solo un messaggio
+                          alert(`Richiesta informazioni per ${vehicle.title}`);
                         }}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -749,81 +685,77 @@ export default function VehicleDetailPage() {
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* Auto simili come sezione completamente indipendente */}
-        {relatedVehicles && relatedVehicles.length > 0 && (
-          <div className="py-16 mt-12 border-t border-gray-200 bg-gray-50">
-            <div className="container mx-auto px-4">
-              <h2 className="text-3xl font-bold mb-8 text-center">Auto simili</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                {relatedVehicles.map(vehicle => (
-                  <VehicleCard key={vehicle.id} vehicle={vehicle} />
-                ))}
+          
+          {/* Auto simili + Contratti a destra come div separato */}
+          {relatedVehicles && relatedVehicles.length > 0 && (
+            <div className="mt-12 pt-10 border-t border-gray-200">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Colonna Sinistra - Auto Simili */}
+                <div className="lg:col-span-7">
+                  <h2 className="text-2xl font-bold mb-6">Auto simili</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {relatedVehicles.map(vehicle => (
+                      <VehicleCard key={vehicle.id} vehicle={vehicle} />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Colonna Destra - Informazioni e richiesta */}
+                <div className="lg:col-span-5">
+                  <div className="bg-white rounded-lg shadow-sm p-6">
+                    <h2 className="text-2xl font-bold mb-4">Hai delle domande?</h2>
+                    <p className="text-gray-600 mb-6">
+                      Contattaci per ricevere maggiori informazioni su questo veicolo o sulle opzioni di noleggio e finanziamento disponibili.
+                    </p>
+                    
+                    <div className="space-y-6">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-800">Telefono</h3>
+                          <p className="text-gray-600">+39 02 1234 5678</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-800">Email</h3>
+                          <p className="text-gray-600">info@o2omobility.it</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-8">
+                      <button 
+                        className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors flex items-center justify-center"
+                        onClick={() => {
+                          // Apri un form di richiesta informazioni
+                          alert(`Richiesta informazioni per ${vehicle.title}`);
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        Richiedi informazioni
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </main>
       <Footer />
-
-      {/* Lightbox per la galleria immagini */}
-      {lightboxOpen && (
-        <div 
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center" 
-          onClick={() => setLightboxOpen(false)}
-        >
-          <div className="relative w-full max-w-4xl p-4">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrevImage();
-              }}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 p-2 rounded-full text-white z-10"
-              aria-label="Immagine precedente"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            <img 
-              src={allImages[currentImageIndex]} 
-              alt={`${vehicle.title} - Vista estesa ${currentImageIndex + 1}`}
-              className="max-h-[80vh] max-w-full mx-auto object-contain"
-            />
-            
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNextImage();
-              }}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 p-2 rounded-full text-white z-10"
-              aria-label="Immagine successiva"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            
-            <div className="absolute bottom-4 left-0 right-0 text-center">
-              <div className="inline-block bg-black/50 text-white px-4 py-2 rounded-full text-sm">
-                {currentImageIndex + 1} / {allImages.length}
-              </div>
-            </div>
-            
-            <button 
-              onClick={() => setLightboxOpen(false)}
-              className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 p-2 rounded-full text-white"
-              aria-label="Chiudi galleria"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
