@@ -398,6 +398,24 @@ export default function VehicleDetailPage() {
                     <div className="prose max-w-none">
                       <p className="text-gray-700 leading-relaxed">{vehicle.description || 'Nessuna descrizione disponibile per questo veicolo.'}</p>
                     </div>
+                    
+                    {/* Auto Simili nella tab descrizione */}
+                    {relatedVehicles && relatedVehicles.length > 0 && (
+                      <div className="mt-6 border-t pt-6">
+                        <h3 className="text-lg font-semibold mb-3 flex items-center">
+                          <span className="w-1 h-4 bg-blue-500 mr-2"></span>
+                          Auto Simili
+                        </h3>
+                        <p className="text-gray-600 mb-4 text-sm">
+                          Altre vetture che potrebbero interessarti in base alle caratteristiche di questo modello
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {relatedVehicles.map(vehicle => (
+                            <VehicleCard key={vehicle.id} vehicle={vehicle} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </TabsContent>
                   
                   <TabsContent value="features" className="pt-2">
@@ -753,23 +771,7 @@ export default function VehicleDetailPage() {
 
 
           
-          {/* Auto Simili */}
-          {relatedVehicles && relatedVehicles.length > 0 && (
-            <div className="mt-12 mb-12 bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center mb-6">
-                <div className="w-1 h-6 bg-blue-600 mr-3"></div>
-                <h2 className="text-2xl font-bold text-gray-800">Auto Simili</h2>
-              </div>
-              <p className="text-gray-600 mb-6">
-                Altre vetture che potrebbero interessarti in base alle caratteristiche di questa {vehicle.title}
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {relatedVehicles.map(vehicle => (
-                  <VehicleCard key={vehicle.id} vehicle={vehicle} />
-                ))}
-              </div>
-            </div>
-          )}
+
         </div>
       </main>
       <Footer />
