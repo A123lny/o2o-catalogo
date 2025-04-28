@@ -138,6 +138,8 @@ export default function VehicleDetailPage() {
         id: 100, // ID fittizio per la demo
         duration: 24,
         deposit: Math.round(originalNlt.deposit * 0.8),
+        caution: originalNlt.caution || 1200, // Mantenuto o impostato se non definito
+        setupFee: originalNlt.setupFee || 350, // Mantenuto o impostato se non definito
         monthlyPrice: Math.round(originalNlt.monthlyPrice * 1.15),
         recommendedForKm: 15000,
         includedServices: [
@@ -154,6 +156,8 @@ export default function VehicleDetailPage() {
         id: 101, // ID fittizio per la demo
         duration: 48,
         deposit: Math.round(originalNlt.deposit * 1.2),
+        caution: originalNlt.caution || 1500, // Mantenuto o impostato se non definito
+        setupFee: originalNlt.setupFee || 350, // Mantenuto o impostato se non definito
         monthlyPrice: Math.round(originalNlt.monthlyPrice * 0.85),
         annualMileage: 20000,
         recommendedForKm: 20000,
@@ -192,6 +196,8 @@ export default function VehicleDetailPage() {
         id: 102, // ID fittizio per la demo
         duration: 24,
         deposit: Math.round(originalRtb.deposit * 0.9),
+        caution: originalRtb.caution || 1000, // Mantenuto o impostato se non definito
+        setupFee: originalRtb.setupFee || 350, // Mantenuto o impostato se non definito
         monthlyPrice: Math.round(originalRtb.monthlyPrice * 1.2),
         finalPayment: Math.round((originalRtb.finalPayment || 0) * 1.1),
         includedServices: [
@@ -207,6 +213,8 @@ export default function VehicleDetailPage() {
         id: 103, // ID fittizio per la demo
         duration: 60,
         deposit: Math.round(originalRtb.deposit * 1.3),
+        caution: originalRtb.caution || 1800, // Mantenuto o impostato se non definito
+        setupFee: originalRtb.setupFee || 350, // Mantenuto o impostato se non definito
         monthlyPrice: Math.round(originalRtb.monthlyPrice * 0.75),
         finalPayment: Math.round((originalRtb.finalPayment || 0) * 0.9),
         includedServices: [
@@ -666,6 +674,26 @@ export default function VehicleDetailPage() {
                                     : Math.round(option.deposit * 0.9).toLocaleString()}
                                 </span>
                               </div>
+                              
+                              {/* Deposito Cauzionale */}
+                              {option.caution && (
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="text-gray-600">Deposito Cauzionale</span>
+                                  <span className="font-medium">
+                                    € {option.caution.toLocaleString()} {clientType === 'privato' ? '(IVA inclusa)' : '(IVA esclusa)'}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {/* Spese di Istruttoria */}
+                              {option.setupFee && (
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="text-gray-600">Spese di Istruttoria</span>
+                                  <span className="font-medium">
+                                    € {option.setupFee.toLocaleString()} {clientType === 'privato' ? '(IVA inclusa)' : '(IVA esclusa)'}
+                                  </span>
+                                </div>
+                              )}
                               
                               {option.finalPayment && (
                                 <div className="flex justify-between items-center text-xs">
