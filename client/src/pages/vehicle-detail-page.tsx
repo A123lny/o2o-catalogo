@@ -554,6 +554,21 @@ export default function VehicleDetailPage() {
                               </div>
                             </div>
                             
+                            {/* Servizi inclusi */}
+                            {option.includedServices && option.includedServices.length > 0 && (
+                              <div className="mt-3 p-2 bg-blue-50 rounded-md">
+                                <h5 className="text-xs font-semibold text-blue-700 mb-1.5">Inclusi nel canone:</h5>
+                                <div className="grid grid-cols-1 gap-1">
+                                  {option.includedServices.map((service, idx) => (
+                                    <div key={idx} className="flex items-center text-xs text-gray-700">
+                                      <CheckIcon className="h-3.5 w-3.5 text-green-500 mr-1.5 flex-shrink-0" />
+                                      <span>{service}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
                             <div className="mt-4 space-y-2">
                               <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-600">Anticipo</span>
