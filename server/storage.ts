@@ -264,6 +264,50 @@ export class MemStorage implements IStorage {
     // che considera più fattori come prezzo, anno, stato, ecc.
     const allVehicles = Array.from(this.vehicles.values());
     
+    // Se ci sono meno di 2 veicoli totali (oltre al veicolo corrente), 
+    // crea delle copie modificate del veicolo corrente
+    if (allVehicles.length <= 1) {
+      const baseVehicle = { ...targetVehicle };
+      
+      // Crea 3 varianti simili del veicolo corrente
+      const variant1: Vehicle = {
+        ...baseVehicle,
+        id: 9991,
+        title: `${baseVehicle.title} Sport`,
+        model: `${baseVehicle.model} Plus`,
+        year: baseVehicle.year + 1,
+        price: Math.round(baseVehicle.price * 1.15),
+        mileage: Math.max(0, baseVehicle.mileage - 5000)
+      };
+      
+      const variant2: Vehicle = {
+        ...baseVehicle,
+        id: 9992,
+        title: `${baseVehicle.title} Executive`,
+        model: `${baseVehicle.model} Executive`,
+        year: baseVehicle.year - 1,
+        price: Math.round(baseVehicle.price * 0.92),
+        mileage: baseVehicle.mileage + 15000
+      };
+      
+      const variant3: Vehicle = {
+        ...baseVehicle,
+        id: 9993,
+        title: `${baseVehicle.title} Premium`,
+        model: `${baseVehicle.model} Premium`,
+        color: baseVehicle.color === 'Nero' ? 'Bianco' : 'Nero',
+        price: Math.round(baseVehicle.price * 1.08),
+        mileage: Math.max(0, baseVehicle.mileage - 3000)
+      };
+      
+      // Salva temporaneamente queste varianti nello storage
+      this.vehicles.set(variant1.id, variant1);
+      this.vehicles.set(variant2.id, variant2);
+      this.vehicles.set(variant3.id, variant3);
+      
+      return [variant1, variant2, variant3];
+    }
+    
     // Filtra veicoli in base a caratteristiche simili
     const similarVehicles = allVehicles
       .filter(v => v.id !== id) // Non includere il veicolo corrente
