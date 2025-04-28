@@ -95,8 +95,8 @@ export default function RequestInfoPage() {
     ? `${selectedOption.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'} - ${selectedOption.duration} mesi`
     : '';
     
-  // Stato per tenere traccia se il cliente è un'azienda
-  const [isCompany, setIsCompany] = useState(false);
+  // Determiniamo se il cliente è un'azienda in base alla categoria del veicolo
+  const isCompany = vehicle?.categoryId === 2;
     
   // Form di richiesta informazioni
   const form = useForm<RequestFormValues>({
@@ -107,7 +107,7 @@ export default function RequestInfoPage() {
       email: "",
       phone: "",
       province: "",
-      isCompany: false,
+      isCompany: isCompany,
       companyName: "",
       vatNumber: "",
       interestType: selectedOptionText || (rentalOptionId ? selectedOption?.type || "NLT" : "NLT"),
@@ -196,50 +196,7 @@ export default function RequestInfoPage() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                   <h2 className="text-xl font-bold mb-4">I tuoi dati</h2>
                   
-                  <FormField
-                    control={form.control}
-                    name="isCompany"
-                    render={({ field }) => (
-                      <FormItem className="mb-6">
-                        <FormLabel>Tipo cliente</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={(value) => {
-                              const isCompanyValue = value === "company";
-                              setIsCompany(isCompanyValue);
-                              field.onChange(isCompanyValue);
-                              
-                              // Reset company fields if switching to private
-                              if (!isCompanyValue) {
-                                form.setValue("companyName", "");
-                                form.setValue("vatNumber", "");
-                              }
-                            }}
-                            defaultValue={field.value ? "company" : "private"}
-                            className="flex space-x-4"
-                          >
-                            <FormItem className="flex items-center space-x-2 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem value="private" />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                Privato
-                              </FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-2 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem value="company" />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                Azienda / P.IVA
-                              </FormLabel>
-                            </FormItem>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
                   
                   <FormField
                     control={form.control}
