@@ -435,6 +435,17 @@ export default function VehicleDetailPage() {
                     <div className="space-y-4">
                       {enhancedRentalOptions
                         .filter(option => option.type === activeContractType)
+                        .sort((a, b) => {
+                          // Prima ordinamento per "consigliato"
+                          const aRecommended = (a.duration === 36) || ((a as EnhancedRentalOption).recommendedForKm === 20000);
+                          const bRecommended = (b.duration === 36) || ((b as EnhancedRentalOption).recommendedForKm === 20000);
+                          
+                          if (aRecommended && !bRecommended) return -1;
+                          if (!aRecommended && bRecommended) return 1;
+                          
+                          // Poi per durata (crescente)
+                          return a.duration - b.duration;
+                        })
                         .map((enhancedOption) => {
                         const option = enhancedOption as EnhancedRentalOption;
                         const isRecommended = option.duration === 36 && option.type === 'NLT';
