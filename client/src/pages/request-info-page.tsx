@@ -76,6 +76,11 @@ export default function RequestInfoPage() {
   // Trova l'opzione di noleggio selezionata
   const selectedOption = rentalOptions?.find((option: RentalOption) => option.id === rentalOptionId);
   
+  // Prepariamo il testo dell'opzione selezionata
+  const selectedOptionText = selectedOption 
+    ? `${selectedOption.type === 'NLT' ? 'Noleggio a Lungo Termine' : 'Rent to Buy'} - ${selectedOption.duration} mesi - ${selectedOption.monthlyPrice}€/mese`
+    : '';
+    
   // Form di richiesta informazioni
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestFormSchema),
@@ -85,7 +90,7 @@ export default function RequestInfoPage() {
       email: "",
       phone: "",
       province: "",
-      interestType: rentalOptionId ? selectedOption?.type || "NLT" : "NLT",
+      interestType: selectedOptionText || (rentalOptionId ? selectedOption?.type || "NLT" : "NLT"),
       message: "",
       privacyConsent: false,
       termsConsent: false
@@ -249,21 +254,38 @@ export default function RequestInfoPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Soluzione di interesse</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
+                        {selectedOption ? (
                           <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Seleziona il tipo di contratto" />
-                            </SelectTrigger>
+                            <div className="flex items-center px-4 py-2 rounded bg-gray-100 border border-gray-200 text-gray-700">
+                              <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                                selectedOption.type === 'NLT' ? 'bg-blue-500' : 'bg-orange-500'
+                              }`}></span>
+                              <input
+                                type="text"
+                                className="bg-transparent flex-grow focus:outline-none text-gray-700 disabled:cursor-not-allowed"
+                                value={field.value}
+                                disabled
+                                readOnly
+                              />
+                            </div>
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="NLT">Noleggio a Lungo Termine (NLT)</SelectItem>
-                            <SelectItem value="RTB">Rent to Buy (RTB)</SelectItem>
-                            <SelectItem value="BOTH">Entrambe le soluzioni</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        ) : (
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Seleziona il tipo di contratto" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="NLT">Noleggio a Lungo Termine (NLT)</SelectItem>
+                              <SelectItem value="RTB">Rent to Buy (RTB)</SelectItem>
+                              <SelectItem value="BOTH">Entrambe le soluzioni</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
