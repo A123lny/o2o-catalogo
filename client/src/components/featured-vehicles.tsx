@@ -89,9 +89,9 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
     <section className="py-12 bg-neutral-100">
       <div className="container mx-auto px-4">
         <div className="flex flex-col w-full mb-8">
-          <h2 className="text-3xl font-bold mb-6 text-center">I Nostri Veicoli</h2>
+          <h2 className="text-3xl font-bold mb-6">I Nostri Veicoli</h2>
           
-          <div className="flex border-b border-neutral-200 max-w-6xl mx-auto w-full">
+          <div className="flex border-b border-neutral-200">
             <button 
               onClick={() => setActiveTab("featured")}
               className={`px-4 py-2 text-base font-medium transition-colors duration-300 ${
@@ -135,7 +135,7 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredVehicles.length > 0 ? (
             filteredVehicles.map(vehicle => (
               <VehicleCard key={vehicle.id} vehicle={vehicle} />
