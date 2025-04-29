@@ -83,6 +83,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general");
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [provinces, setProvinces] = useState<{[id: number]: string}>({});
 
   // Fetch general settings
   const { data: generalSettings, isLoading: isLoadingGeneral } = useQuery({
@@ -113,6 +114,27 @@ export default function SettingsPage() {
       return response.json();
     }
   });
+
+  // Fetch provinces
+  const { data: provincesData } = useQuery({
+    queryKey: ['/api/admin/provinces'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/provinces');
+      if (!response.ok) throw new Error('Errore nel recupero delle province');
+      return response.json();
+    }
+  });
+
+  // Organizza le province per ID per un rapido accesso
+  useEffect(() => {
+    if (provincesData) {
+      const provincesMap: {[id: number]: string} = {};
+      provincesData.forEach((province: any) => {
+        provincesMap[province.id] = `${province.name} (${province.code})`;
+      });
+      setProvinces(provincesMap);
+    }
+  }, [provincesData]);
 
   useEffect(() => {
     if (logs) {
@@ -778,11 +800,66 @@ export default function SettingsPage() {
                             <TableRow key={index}>
                               <TableCell>{new Date(log.createdAt).toLocaleString('it-IT')}</TableCell>
                               <TableCell>{log.username || 'Sistema'}</TableCell>
-                              <TableCell>{log.action}</TableCell>
-                              <TableCell className="max-w-[200px] truncate">
-                                {typeof log.details === 'object' 
-                                  ? JSON.stringify(log.details) 
-                                  : log.details}
+                              <TableCell>
+                                {(() => {
+                                  // Traduzione delle azioni in italiano
+                                  switch(log.action) {
+                                    case 'activate': return 'Attivazione';
+                                    case 'deactivate': return 'Disattivazione';
+                                    case 'create': return 'Creazione';
+                                    case 'update': return 'Aggiornamento';
+                                    case 'delete': return 'Eliminazione';
+                                    case 'login': return 'Accesso';
+                                    case 'logout': return 'Disconnessione';
+                                    case 'failed_login': return 'Accesso fallito';
+                                    default: return log.action;
+                                  }
+                                })()}
+                              </TableCell>
+                              <TableCell className="max-w-[300px]">
+                                {(() => {
+                                  if (!log.details) return "N/D";
+                                  
+                                  // Se è un oggetto, formatta in base al tipo di azione
+                                  if (typeof log.details === 'object') {
+                                    // Gestione province
+                                    if (log.action === 'activate' || log.action === 'deactivate') {
+                                      const ids = log.details.ids || [];
+                                      if (ids.length === 0) return "Nessuna provincia specificata";
+                                      
+                                      // Usa il nome della provincia se disponibile, altrimenti mostra solo l'ID
+                                      const provinceNames = ids.map((id: number) => 
+                                        provinces[id] || `Provincia ID: ${id}`
+                                      );
+                                      return (
+                                        <div>
+                                          <span className="font-medium">
+                                            {log.action === 'activate' ? 'Attivazione' : 'Disattivazione'} province:
+                                          </span>
+                                          <ul className="list-disc pl-5 mt-1">
+                                            {provinceNames.map((name: string, idx: number) => (
+                                              <li key={idx}>{name}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      );
+                                    }
+                                    
+                                    // Formattazione generica per altri tipi di oggetto
+                                    try {
+                                      const details = JSON.stringify(log.details, null, 2)
+                                        .replace(/[{}"\[\]]/g, '')
+                                        .replace(/,/g, ', ')
+                                        .replace(/:/g, ': ');
+                                      return details;
+                                    } catch (e) {
+                                      return "Dati non visualizzabili";
+                                    }
+                                  }
+                                  
+                                  // Se è già una stringa
+                                  return log.details;
+                                })()}
                               </TableCell>
                             </TableRow>
                           ))}
