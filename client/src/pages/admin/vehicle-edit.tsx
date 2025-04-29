@@ -553,7 +553,8 @@ export default function VehicleEditPage() {
                                     control={form.control}
                                     name="badges"
                                     render={({ field }) => {
-                                      // Utilizziamo l'ID come valore per salvare/visualizzare in modo coerente
+                                      // Nella tabella veicoli, i badge vengono visualizzati direttamente dall'array badge come stringhe
+                                      // quindi dobbiamo usare gli stessi valori qui per coerenza
                                       const isChecked = field.value?.includes(badge.id);
                                       return (
                                         <FormItem
@@ -565,6 +566,8 @@ export default function VehicleEditPage() {
                                               checked={isChecked}
                                               onCheckedChange={(checked) => {
                                                 const currentValues = field.value || [];
+                                                // Usiamo direttamente badge.id che contiene la stringa (es. "promo", "new")
+                                                // che è lo stesso valore che viene mostrato nella tabella veicoli
                                                 const newValues = checked
                                                   ? [...currentValues, badge.id]
                                                   : currentValues.filter(value => value !== badge.id);
