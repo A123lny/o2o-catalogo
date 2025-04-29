@@ -69,13 +69,22 @@ export default function VehiclesPage() {
     queryKey: ['/api/admin/vehicles'],
   });
 
-  const { data: brands } = useQuery<Brand[]>({
+  const { data: allBrands } = useQuery<Brand[]>({
     queryKey: ['/api/brands'],
   });
 
-  const { data: categories } = useQuery<Category[]>({
+  const { data: allCategories } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
+  
+  // Filtered brands and categories based on the vehicles we have
+  const availableBrands = allBrands?.filter(brand => 
+    vehicles?.some(vehicle => vehicle.brandId === brand.id)
+  ) || [];
+  
+  const availableCategories = allCategories?.filter(category => 
+    vehicles?.some(vehicle => vehicle.categoryId === category.id)
+  ) || [];
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -110,12 +119,12 @@ export default function VehiclesPage() {
   };
 
   const getBrandName = (brandId: number) => {
-    const brand = brands?.find(b => b.id === brandId);
+    const brand = allBrands?.find(b => b.id === brandId);
     return brand ? brand.name : `Brand ID: ${brandId}`;
   };
 
   const getCategoryName = (categoryId: number) => {
-    const category = categories?.find(c => c.id === categoryId);
+    const category = allCategories?.find(c => c.id === categoryId);
     return category ? category.name : `Category ID: ${categoryId}`;
   };
 
@@ -169,7 +178,7 @@ export default function VehiclesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tutte le marche</SelectItem>
-                  {brands?.map(brand => (
+                  {availableBrands.map(brand => (
                     <SelectItem key={brand.id} value={brand.id.toString()}>
                       {brand.name}
                     </SelectItem>
@@ -183,7 +192,7 @@ export default function VehiclesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tutte le categorie</SelectItem>
-                  {categories?.map(category => (
+                  {availableCategories.map(category => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
                     </SelectItem>
