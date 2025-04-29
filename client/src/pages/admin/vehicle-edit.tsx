@@ -76,17 +76,12 @@ type VehicleFormValues = z.infer<typeof vehicleFormSchema>;
 
 const badgeOptions = [
   { id: "Premium", label: "Premium" },
-  { id: "SUV", label: "SUV" },
-  { id: "Berlina", label: "Berlina" },
-  { id: "Coupé", label: "Coupé" },
-  { id: "2Life", label: "2Life" },
-  { id: "Elettrico", label: "Elettrico" },
-  { id: "Zero Emissioni", label: "Zero Emissioni" },
-  { id: "Sportiva", label: "Sportiva" },
-  { id: "Hot Hatch", label: "Hot Hatch" },
-  { id: "Luxury", label: "Luxury" },
-  { id: "Compatta", label: "Compatta" },
+  { id: "Promo", label: "Promo" },
   { id: "Economica", label: "Economica" },
+  { id: "Zero Emissioni", label: "Zero Emissioni" },
+  { id: "Riservato", label: "Riservato" },
+  { id: "Venduta", label: "Venduta" },
+  { id: "2Life", label: "2Life" },
 ];
 
 export default function VehicleEditPage() {
@@ -551,9 +546,14 @@ export default function VehicleEditPage() {
                               <div className="mb-4">
                                 <FormLabel className="text-base">Badge</FormLabel>
                                 <FormDescription>
-                                  Seleziona i badge da associare al veicolo.
-                                  Il badge '2Life' viene assegnato automaticamente a veicoli con più di 1000 km.
-                                  I badge SUV, Berlina, Coupé ecc. si basano sulla tipologia di veicolo.
+                                  Seleziona i badge appropriati per questo veicolo:
+                                  • Premium: Per veicoli di alta gamma
+                                  • Promo: Per veicoli in promozione speciale
+                                  • Economica: Per veicoli a basso costo
+                                  • Zero Emissioni: Per veicoli elettrici o eco-friendly
+                                  • Riservato: Per veicoli già prenotati
+                                  • Venduta: Per veicoli non più disponibili
+                                  • 2Life: Per veicoli usati (assegnato automaticamente sopra i 1000 km)
                                 </FormDescription>
                               </div>
                               <div className="grid grid-cols-2 gap-3">
