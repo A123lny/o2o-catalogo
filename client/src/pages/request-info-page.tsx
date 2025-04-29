@@ -82,7 +82,7 @@ const provinces = [
 ];
 
 export default function RequestInfoPage() {
-  const [, params] = useRoute("/request-info/:vehicleId/:rentalOptionId");
+  const [, params] = useRoute("/request-info/:vehicleId/:rentalOptionId?");
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
@@ -97,16 +97,14 @@ export default function RequestInfoPage() {
   console.log("URL Params:", { vehicleId, rentalOptionId, clientType: clientTypeParam });
   
   // Query per il veicolo
-  const { data: vehicle, isLoading: isLoadingVehicle } = useQuery({
-    queryKey: ["/api/vehicles", vehicleId],
-    queryFn: () => apiRequest("GET", `/api/vehicles/${vehicleId}`).then(res => res.json()),
+  const { data: vehicle, isLoading: isLoadingVehicle } = useQuery<Vehicle>({
+    queryKey: [`/api/vehicles/${vehicleId}`],
     enabled: vehicleId > 0
   });
   
   // Query per le opzioni di noleggio
-  const { data: rentalOptions, isLoading: isLoadingOptions } = useQuery({
-    queryKey: ["/api/vehicles", vehicleId, "rental-options"],
-    queryFn: () => apiRequest("GET", `/api/vehicles/${vehicleId}/rental-options`).then(res => res.json()),
+  const { data: rentalOptions, isLoading: isLoadingOptions } = useQuery<RentalOption[]>({
+    queryKey: [`/api/vehicles/${vehicleId}/rental-options`],
     enabled: vehicleId > 0
   });
   
