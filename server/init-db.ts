@@ -10,6 +10,15 @@ async function initializeDatabase() {
 
     // Elimina le tabelle se esistono
     await pool.query(`
+      DROP TABLE IF EXISTS password_resets CASCADE;
+      DROP TABLE IF EXISTS account_lockouts CASCADE;
+      DROP TABLE IF EXISTS activity_logs CASCADE;
+      DROP TABLE IF EXISTS password_history CASCADE;
+      DROP TABLE IF EXISTS featured_promos CASCADE;
+      DROP TABLE IF EXISTS promo_settings CASCADE;
+      DROP TABLE IF EXISTS security_settings CASCADE;
+      DROP TABLE IF EXISTS general_settings CASCADE;
+      DROP TABLE IF EXISTS provinces CASCADE;
       DROP TABLE IF EXISTS rental_options CASCADE;
       DROP TABLE IF EXISTS requests CASCADE;
       DROP TABLE IF EXISTS vehicles CASCADE;
@@ -98,6 +107,94 @@ async function initializeDatabase() {
         status TEXT NOT NULL DEFAULT 'new',
         created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS promo_settings (
+        id SERIAL PRIMARY KEY,
+        max_featured_vehicles INTEGER NOT NULL DEFAULT 16,
+        show_on_homepage BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS featured_promos (
+        id SERIAL PRIMARY KEY,
+        vehicle_id INTEGER NOT NULL,
+        display_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS provinces (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        code TEXT NOT NULL UNIQUE,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS general_settings (
+        id SERIAL PRIMARY KEY,
+        site_name TEXT NOT NULL DEFAULT 'o2o Mobility',
+        site_description TEXT,
+        contact_email TEXT,
+        phone_number TEXT,
+        address TEXT,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS security_settings (
+        id SERIAL PRIMARY KEY,
+        password_min_length INTEGER NOT NULL DEFAULT 8,
+        password_require_uppercase BOOLEAN NOT NULL DEFAULT TRUE,
+        password_require_lowercase BOOLEAN NOT NULL DEFAULT TRUE,
+        password_require_number BOOLEAN NOT NULL DEFAULT TRUE,
+        password_require_special_char BOOLEAN NOT NULL DEFAULT TRUE,
+        password_expiry_days INTEGER NOT NULL DEFAULT 90,
+        password_history_count INTEGER NOT NULL DEFAULT 5,
+        enable_2fa BOOLEAN NOT NULL DEFAULT FALSE,
+        failed_login_attempts INTEGER NOT NULL DEFAULT 5,
+        lockout_duration_minutes INTEGER NOT NULL DEFAULT 30,
+        session_timeout_minutes INTEGER NOT NULL DEFAULT 60,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS password_history (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        action TEXT NOT NULL,
+        entity_type TEXT,
+        entity_id INTEGER,
+        details JSONB,
+        ip_address TEXT,
+        user_agent TEXT,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS account_lockouts (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL UNIQUE,
+        failed_attempts INTEGER NOT NULL DEFAULT 0,
+        last_attempt_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        locked_until TIMESTAMP WITH TIME ZONE
+      );
+      
+      CREATE TABLE IF NOT EXISTS password_resets (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        token TEXT NOT NULL UNIQUE,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        used BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
       );
     `);
 

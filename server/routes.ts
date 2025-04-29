@@ -552,6 +552,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error updating promo order" });
     }
   });
+  
+  // ====== GESTIONE PROVINCE ======
+  
+  // Ottiene tutte le province
+  app.get("/api/provinces", async (req, res) => {
+    try {
+      const provinces = await storage.getProvinces();
+      res.json(provinces);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nel recupero delle province", error });
+    }
+  });
+  
+  // Ottiene solo le province attive
+  app.get("/api/provinces/active", async (req, res) => {
+    try {
+      const provinces = await storage.getActiveProvinces();
+      res.json(provinces);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nel recupero delle province attive", error });
+    }
+  });
+  
+  // API per la gestione admin delle province
+  app.get("/api/admin/provinces", isAdmin, async (req, res) => {
+    try {
+      const provinces = await storage.getProvinces();
+      res.json(provinces);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nel recupero delle province", error });
+    }
+  });
+  
+  app.post("/api/admin/provinces", isAdmin, async (req, res) => {
+    try {
+      const province = await storage.createProvince(req.body);
+      
+      // Registra l'attività
+      await storage.createActivityLog({
+        userId: req.user!.id,
+        action: "create",
+        entityType: "province",
+        entityId: province.id,
+        details: { name: province.name }
+      });
+      
+      res.status(201).json(province);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nella creazione della provincia", error });
+    }
+  });
+  
+  app.patch("/api/admin/provinces/:id", isAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    try {
+      const province = await storage.updateProvince(id, req.body);
+      
+      // Registra l'attività
+      await storage.createActivityLog({
+        userId: req.user!.id,
+        action: "update",
+        entityType: "province",
+        entityId: province.id,
+        details: { name: province.name, active: province.isActive }
+      });
+      
+      res.json(province);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nell'aggiornamento della provincia", error });
+    }
+  });
+  
+  app.delete("/api/admin/provinces/:id", isAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    try {
+      const province = await storage.getProvince(id);
+      await storage.deleteProvince(id);
+      
+      // Registra l'attività
+      if (province) {
+        await storage.createActivityLog({
+          userId: req.user!.id,
+          action: "delete",
+          entityType: "province",
+          entityId: id,
+          details: { name: province.name }
+        });
+      }
+      
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nell'eliminazione della provincia", error });
+    }
+  });
+  
+  app.put("/api/admin/provinces/update-status", isAdmin, async (req, res) => {
+    const { ids, isActive } = req.body;
+    try {
+      await storage.updateProvincesStatus(ids, isActive);
+      
+      // Registra l'attività
+      await storage.createActivityLog({
+        userId: req.user!.id,
+        action: isActive ? "activate" : "deactivate",
+        entityType: "provinces",
+        details: { ids, count: ids.length }
+      });
+      
+      res.sendStatus(200);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nell'aggiornamento dello stato delle province", error });
+    }
+  });
+  
+  // ====== IMPOSTAZIONI GENERALI ======
+  
+  app.get("/api/settings/general", async (req, res) => {
+    try {
+      const settings = await storage.getGeneralSettings();
+      res.json(settings || {});
+    } catch (error) {
+      res.status(500).json({ message: "Errore nel recupero delle impostazioni generali", error });
+    }
+  });
+  
+  app.patch("/api/admin/settings/general", isAdmin, async (req, res) => {
+    try {
+      const settings = await storage.updateGeneralSettings(req.body);
+      
+      // Registra l'attività
+      await storage.createActivityLog({
+        userId: req.user!.id,
+        action: "update",
+        entityType: "general_settings",
+        details: { siteName: settings.siteName }
+      });
+      
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nell'aggiornamento delle impostazioni generali", error });
+    }
+  });
+  
+  // ====== IMPOSTAZIONI DI SICUREZZA ======
+  
+  app.get("/api/admin/settings/security", isAdmin, async (req, res) => {
+    try {
+      const settings = await storage.getSecuritySettings();
+      res.json(settings || {});
+    } catch (error) {
+      res.status(500).json({ message: "Errore nel recupero delle impostazioni di sicurezza", error });
+    }
+  });
+  
+  app.patch("/api/admin/settings/security", isAdmin, async (req, res) => {
+    try {
+      const settings = await storage.updateSecuritySettings(req.body);
+      
+      // Registra l'attività
+      await storage.createActivityLog({
+        userId: req.user!.id,
+        action: "update",
+        entityType: "security_settings",
+        details: { 
+          passwordExpiryDays: settings.passwordExpiryDays,
+          enable2FA: settings.enable2FA,
+          failedLoginAttempts: settings.failedLoginAttempts 
+        }
+      });
+      
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nell'aggiornamento delle impostazioni di sicurezza", error });
+    }
+  });
+  
+  // ====== REGISTRO ATTIVITÀ ======
+  
+  app.get("/api/admin/activity-logs", isAdmin, async (req, res) => {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+    try {
+      const logs = await storage.getActivityLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nel recupero del registro attività", error });
+    }
+  });
+
+  app.get("/api/admin/activity-logs/user/:userId", isAdmin, async (req, res) => {
+    const userId = parseInt(req.params.userId);
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+    try {
+      const logs = await storage.getActivityLogsByUser(userId, limit);
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nel recupero delle attività dell'utente", error });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
