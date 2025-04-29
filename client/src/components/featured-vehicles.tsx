@@ -1,8 +1,9 @@
 import { Link } from "wouter";
 import { RentalOption, Vehicle } from "@shared/schema";
 import VehicleCard from "./vehicle-card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
 interface FeaturedVehiclesProps {
   vehicles: Vehicle[];
@@ -10,80 +11,100 @@ interface FeaturedVehiclesProps {
 
 export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
   const [activeTab, setActiveTab] = useState("featured");
+  const [isLoading, setIsLoading] = useState(false);
+  const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([]);
   
   if (!vehicles || vehicles.length === 0) {
     return null;
   }
 
-  // Filtra i veicoli in base al tab selezionato
-  const filteredVehicles = (() => {
-    // Funzione per verificare se un veicolo ha il badge specificato
-    const hasBadge = (vehicle: Vehicle, badgeName: string) => {
-      if (!vehicle.badges) return false;
+  // Pre-carichiamo i dati per NLT/RTB anche se il tab non è attivo
+  const { data: allRentalOptions, isLoading: isLoadingOptions } = useQuery<RentalOption[]>({
+    queryKey: ['/api/rental-options/all'],
+    staleTime: 1000 * 60 * 5, // Manteniamo i dati in cache per 5 minuti
+    refetchOnWindowFocus: false,
+  });
+
+  // Funzione per verificare se un veicolo ha il badge specificato
+  const hasBadge = (vehicle: Vehicle, badgeName: string) => {
+    if (!vehicle.badges) return false;
+    
+    // Assicuriamoci che badges sia un array
+    let badgesArray: string[] = [];
+    
+    if (typeof vehicle.badges === 'string') {
+      try {
+        badgesArray = JSON.parse(vehicle.badges as string);
+      } catch (e) {
+        console.error("Errore nel parsing dei badge:", e);
+        return false;
+      }
+    } else if (Array.isArray(vehicle.badges)) {
+      badgesArray = vehicle.badges as unknown as string[];
+    }
+    
+    return badgesArray.includes(badgeName);
+  };
+
+  // Effetto per filtrare i veicoli quando cambia il tab o arrivano i dati delle opzioni
+  useEffect(() => {
+    setIsLoading(true);
+    
+    // Breve timeout per assicurarsi che lo stato di caricamento sia visibile
+    // anche se il filtraggio è veloce
+    const timer = setTimeout(() => {
+      // Identificare i veicoli con opzioni NLT o RTB
+      const vehiclesWithContractTypes = new Map<number, Set<string>>();
       
-      // Assicuriamoci che badges sia un array
-      let badgesArray: string[] = [];
+      if (allRentalOptions && Array.isArray(allRentalOptions)) {
+        allRentalOptions.forEach((option: RentalOption) => {
+          if (!vehiclesWithContractTypes.has(option.vehicleId)) {
+            vehiclesWithContractTypes.set(option.vehicleId, new Set<string>());
+          }
+          const contractTypes = vehiclesWithContractTypes.get(option.vehicleId);
+          if (contractTypes) {
+            contractTypes.add(option.type);
+          }
+        });
+      }
+
+      let result: Vehicle[] = [];
       
-      if (typeof vehicle.badges === 'string') {
-        try {
-          badgesArray = JSON.parse(vehicle.badges as string);
-        } catch (e) {
-          console.error("Errore nel parsing dei badge:", e);
-          return false;
-        }
-      } else if (Array.isArray(vehicle.badges)) {
-        badgesArray = vehicle.badges as unknown as string[];
+      switch (activeTab) {
+        case "nlt":
+          // Mostra veicoli con opzioni NLT
+          result = vehicles
+            .filter(v => vehiclesWithContractTypes.has(v.id) && 
+                      vehiclesWithContractTypes.get(v.id)?.has("NLT"))
+            .slice(0, 8);
+          break;
+        case "rtb":
+          // Mostra veicoli con opzioni RTB
+          result = vehicles
+            .filter(v => vehiclesWithContractTypes.has(v.id) && 
+                      vehiclesWithContractTypes.get(v.id)?.has("RTB"))
+            .slice(0, 8);
+          break;
+        case "2life":
+          // Mostra veicoli usati (2Life)
+          result = vehicles
+            .filter(v => hasBadge(v, "2Life"))
+            .slice(0, 8);
+          break;
+        case "featured":
+        default:
+          // Mostra veicoli in evidenza 
+          // Non filtriamo perché questi veicoli sono già stati filtrati dal backend
+          result = vehicles.slice(0, 16);
+          break;
       }
       
-      return badgesArray.includes(badgeName);
-    };
+      setFilteredVehicles(result);
+      setIsLoading(false);
+    }, 300);
     
-    // Per i veicoli di tipo NLT/RTB, controlliamo le opzioni del veicolo
-    const { data: allRentalOptions } = useQuery<RentalOption[]>({
-      queryKey: ['/api/rental-options/all'],
-      enabled: activeTab === "nlt" || activeTab === "rtb",
-    });
-    
-    // Identificare i veicoli con opzioni NLT o RTB
-    const vehiclesWithContractTypes = new Map<number, Set<string>>();
-    
-    if (allRentalOptions && Array.isArray(allRentalOptions)) {
-      allRentalOptions.forEach((option: RentalOption) => {
-        if (!vehiclesWithContractTypes.has(option.vehicleId)) {
-          vehiclesWithContractTypes.set(option.vehicleId, new Set<string>());
-        }
-        const contractTypes = vehiclesWithContractTypes.get(option.vehicleId);
-        if (contractTypes) {
-          contractTypes.add(option.type);
-        }
-      });
-    }
-    
-    switch (activeTab) {
-      case "nlt":
-        // Mostra veicoli con opzioni NLT
-        return vehicles
-          .filter(v => vehiclesWithContractTypes.has(v.id) && 
-                     vehiclesWithContractTypes.get(v.id)?.has("NLT"))
-          .slice(0, 8);
-      case "rtb":
-        // Mostra veicoli con opzioni RTB
-        return vehicles
-          .filter(v => vehiclesWithContractTypes.has(v.id) && 
-                     vehiclesWithContractTypes.get(v.id)?.has("RTB"))
-          .slice(0, 8);
-      case "2life":
-        // Mostra veicoli usati (2Life)
-        return vehicles
-          .filter(v => hasBadge(v, "2Life"))
-          .slice(0, 8);
-      case "featured":
-      default:
-        // Mostra veicoli in evidenza 
-        // Non filtriamo perché questi veicoli sono già stati filtrati dal backend
-        return vehicles.slice(0, 16);
-    }
-  })();
+    return () => clearTimeout(timer);
+  }, [activeTab, allRentalOptions, vehicles]);
 
   return (
     <section className="py-12 bg-neutral-100">
@@ -135,8 +156,15 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredVehicles.length > 0 ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-[300px]">
+          {isLoading || isLoadingOptions ? (
+            <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 flex justify-center items-center py-16">
+              <div className="flex flex-col items-center">
+                <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                <p className="text-lg text-gray-600">Caricamento veicoli in corso...</p>
+              </div>
+            </div>
+          ) : filteredVehicles.length > 0 ? (
             filteredVehicles.map(vehicle => (
               <VehicleCard key={vehicle.id} vehicle={vehicle} />
             ))
