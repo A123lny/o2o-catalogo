@@ -90,13 +90,13 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredVehicles.length > 0 ? (
             filteredVehicles.map(vehicle => (
               <VehicleCard key={vehicle.id} vehicle={vehicle} />
             ))
           ) : (
-            <div className="lg:col-span-3 text-center py-10">
+            <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 text-center py-10">
               <p className="text-lg text-gray-600">Nessun veicolo disponibile in questa categoria.</p>
             </div>
           )}

@@ -481,7 +481,7 @@ export default function VehicleDetailPage() {
               {relatedVehicles && relatedVehicles.length > 0 && (
                 <div className="mt-8">
                   <h2 className="text-2xl font-bold mb-6">Auto simili</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                     {relatedVehicles.map(relatedVehicle => (
                       <VehicleCard key={relatedVehicle.id} vehicle={relatedVehicle} />
                     ))}
