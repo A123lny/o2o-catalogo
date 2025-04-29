@@ -41,18 +41,26 @@ export default function HeroSection() {
   // Estrai gli anni unici dai veicoli disponibili
   useEffect(() => {
     if (allVehicles) {
-      const years = [...new Set(allVehicles.map(vehicle => vehicle.year))];
+      // Utilizziamo Array.from invece di spread operator per compatibilità
+      const yearsSet = new Set<number>();
+      allVehicles.forEach(vehicle => {
+        yearsSet.add(vehicle.year);
+      });
+      const years = Array.from(yearsSet);
       setUniqueYears(years.sort((a, b) => b - a)); // Ordina dal più recente
       
       // Estrai modelli disponibili 
       if (filters.brandId && filters.brandId !== "all") {
         const brandId = parseInt(filters.brandId);
-        const models = [...new Set(
-          allVehicles
-            .filter(v => v.brandId === brandId)
-            .map(v => v.model)
-        )];
-        setAvailableModels(models.sort());
+        const modelsSet = new Set<string>();
+        
+        allVehicles
+          .filter(v => v.brandId === brandId)
+          .forEach(v => {
+            modelsSet.add(v.model);
+          });
+          
+        setAvailableModels(Array.from(modelsSet).sort());
       } else {
         setAvailableModels([]);
       }
@@ -69,7 +77,8 @@ export default function HeroSection() {
     });
     
     // Navigate to catalog with filters
-    setLocation(`/catalog?${queryParams.toString()}`);
+    const queryString = queryParams.toString();
+    setLocation(`/catalog${queryString ? `?${queryString}` : ''}`);
   };
 
   const handleFilterChange = (key: string, value: string) => {

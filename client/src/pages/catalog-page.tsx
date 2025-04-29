@@ -7,8 +7,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Vehicle, Brand, Category } from "@shared/schema";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 
 export default function CatalogPage() {
+  const [location] = useLocation();
   const [filters, setFilters] = useState({
     brandId: "",
     categoryId: "",
@@ -17,6 +19,25 @@ export default function CatalogPage() {
     condition: "",
     contractType: "",
   });
+  
+  // Leggi i parametri URL quando la pagina viene caricata
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const initialFilters: { [key: string]: string } = {};
+    
+    // Leggi tutti i parametri disponibili nell'URL (metodo compatibile con tutti i browser)
+    // Convertire esplicitamente in tipo di array per evitare problemi di tipizzazione
+    searchParams.forEach((value, key) => {
+      if (value) {
+        initialFilters[key] = value;
+      }
+    });
+    
+    // Aggiorna i filtri solo se ci sono parametri nell'URL
+    if (Object.keys(initialFilters).length > 0) {
+      setFilters(prev => ({ ...prev, ...initialFilters }));
+    }
+  }, [location]);
   
   const { data: vehicles, isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
     queryKey: ['/api/vehicles', filters],
