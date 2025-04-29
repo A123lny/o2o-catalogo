@@ -1,0 +1,180 @@
+            <TabsContent value="provinces">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Aggiungi Provincia</CardTitle>
+                    <CardDescription>
+                      Aggiungi una nuova provincia al sistema
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={onProvinceSubmit} className="space-y-4">
+                      <div className="space-y-2">
+                        <FormLabel>Nome Provincia</FormLabel>
+                        <Input 
+                          placeholder="Es. Milano" 
+                          value={newProvince.name} 
+                          onChange={(e) => setNewProvince({...newProvince, name: e.target.value})}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <FormLabel>Codice Provincia</FormLabel>
+                        <Input 
+                          placeholder="Es. MI" 
+                          maxLength={2}
+                          value={newProvince.code} 
+                          onChange={(e) => setNewProvince({...newProvince, code: e.target.value.toUpperCase()})}
+                        />
+                        <FormDescription>
+                          Il codice deve essere di 2 caratteri (es. MI per Milano)
+                        </FormDescription>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="province-active" 
+                          checked={newProvince.isActive}
+                          onCheckedChange={(checked) => 
+                            setNewProvince({...newProvince, isActive: checked as boolean})
+                          }
+                        />
+                        <label
+                          htmlFor="province-active"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Provincia attiva
+                        </label>
+                      </div>
+                      
+                      <div className="pt-2">
+                        <Button type="submit" disabled={isSubmitting}>
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Aggiunta in corso...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" /> Aggiungi Provincia
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Gestione Province</CardTitle>
+                    <CardDescription>
+                      Attiva o disattiva province in blocco
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedProvinces.length > 0 && (
+                      <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded-md">
+                        <div className="text-sm">
+                          {selectedProvinces.length} province selezionate
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={handleActivateProvinces}
+                            disabled={isSubmitting}
+                          >
+                            Attiva
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={handleDeactivateProvinces}
+                            disabled={isSubmitting}
+                          >
+                            Disattiva
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="border rounded-md">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">
+                              <Checkbox 
+                                checked={selectedAllProvinces || (provinces && provinces.length > 0 && selectedProvinces.length === provinces.length)} 
+                                onCheckedChange={(checked) => {
+                                  if (provinces && provinces.length > 0) {
+                                    if (checked) {
+                                      setSelectedProvinces(provinces.map(province => province.id || 0).filter(id => id > 0));
+                                      setSelectedAllProvinces(true);
+                                    } else {
+                                      setSelectedProvinces([]);
+                                      setSelectedAllProvinces(false);
+                                    }
+                                  }
+                                }}
+                              />
+                            </TableHead>
+                            <TableHead>Nome</TableHead>
+                            <TableHead>Codice</TableHead>
+                            <TableHead>Stato</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {isLoadingProvinces ? (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center py-4">
+                                <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                              </TableCell>
+                            </TableRow>
+                          ) : provinces && provinces.length > 0 ? (
+                            provinces.map((province: any) => (
+                              <TableRow key={province.id}>
+                                <TableCell>
+                                  <Checkbox 
+                                    checked={selectedProvinces.includes(province.id || 0)} 
+                                    onCheckedChange={(checked) => {
+                                      const id = province.id || 0;
+                                      if (id > 0) {
+                                        if (checked) {
+                                          setSelectedProvinces(prev => [...prev, id]);
+                                        } else {
+                                          setSelectedProvinces(prev => prev.filter(provinceId => provinceId !== id));
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </TableCell>
+                                <TableCell>{province.name}</TableCell>
+                                <TableCell>{province.code}</TableCell>
+                                <TableCell>
+                                  {province.isActive ? (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                      Attiva
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                      Disattiva
+                                    </span>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center py-4">
+                                Nessuna provincia trovata
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            
