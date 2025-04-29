@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import { useAuth } from "@/hooks/use-auth";
+import ProvincesTab from "@/components/admin/provinces-tab";
 import {
   Card,
   CardContent,
@@ -508,19 +509,7 @@ export default function SettingsPage() {
             
             {/* Province Settings */}
             <TabsContent value="provinces">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Gestione Province</CardTitle>
-                  <CardDescription>
-                    Configurazione delle province disponibili nel sistema
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-neutral-600">
-                    Funzionalità in fase di sviluppo
-                  </div>
-                </CardContent>
-              </Card>
+              <ProvincesTab />
             </TabsContent>
             
             {/* Security Settings */}

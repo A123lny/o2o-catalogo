@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { 
   FormLabel, 
   FormDescription 
@@ -26,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Trash2 } from "lucide-react";
 
 // Schema per la validazione delle province
 const provinceSchema = z.object({
@@ -45,12 +46,12 @@ export default function ProvincesTab() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch provinces
-  const { data: provinces = [], isLoading: isLoadingProvinces } = useQuery({
+  const { data: provinces = [], isLoading: isLoadingProvinces, refetch } = useQuery({
     queryKey: ['/api/admin/provinces'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/provinces');
+      const response = await apiRequest('GET', '/api/admin/provinces');
       if (!response.ok) throw new Error('Errore nel recupero delle province');
-      return response.json();
+      return await response.json();
     }
   });
 
@@ -78,7 +79,11 @@ export default function ProvincesTab() {
     mutationFn: async (data: ProvinceValues) => {
       setIsSubmitting(true);
       const response = await apiRequest('POST', '/api/admin/provinces', data);
-      return response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Errore durante l\'aggiunta della provincia');
+      }
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -86,16 +91,51 @@ export default function ProvincesTab() {
         description: "La provincia è stata aggiunta con successo.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/provinces'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/provinces'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/provinces/active'] });
       setNewProvince({ name: "", code: "", isActive: true });
       setIsSubmitting(false);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Errore",
-        description: "Si è verificato un errore durante l'aggiunta della provincia.",
+        description: error.message || "Si è verificato un errore durante l'aggiunta della provincia.",
         variant: "destructive",
       });
       console.error("Error adding province:", error);
+      setIsSubmitting(false);
+    }
+  });
+
+  // Mutation per eliminare una provincia
+  const deleteProvince = useMutation({
+    mutationFn: async (id: number) => {
+      setIsSubmitting(true);
+      const response = await apiRequest('DELETE', `/api/admin/provinces/${id}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Errore durante l\'eliminazione della provincia');
+      }
+      return id;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Provincia eliminata",
+        description: "La provincia è stata eliminata con successo.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/provinces'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/provinces'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/provinces/active'] });
+      setSelectedProvinces([]);
+      setIsSubmitting(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Si è verificato un errore durante l'eliminazione della provincia.",
+        variant: "destructive",
+      });
+      console.error("Error deleting province:", error);
       setIsSubmitting(false);
     }
   });
@@ -105,7 +145,11 @@ export default function ProvincesTab() {
     mutationFn: async ({ ids, isActive }: { ids: number[], isActive: boolean }) => {
       setIsSubmitting(true);
       const response = await apiRequest('PUT', '/api/admin/provinces/update-status', { ids, isActive });
-      return response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Errore durante l\'aggiornamento dello stato delle province');
+      }
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -113,13 +157,15 @@ export default function ProvincesTab() {
         description: "Lo stato delle province selezionate è stato aggiornato con successo.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/provinces'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/provinces'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/provinces/active'] });
       setSelectedProvinces([]);
       setIsSubmitting(false);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Errore",
-        description: "Si è verificato un errore durante l'aggiornamento dello stato delle province.",
+        description: error.message || "Si è verificato un errore durante l'aggiornamento dello stato delle province.",
         variant: "destructive",
       });
       console.error("Error updating province status:", error);
@@ -151,6 +197,12 @@ export default function ProvincesTab() {
     }
     
     updateProvinceStatus.mutate({ ids: selectedProvinces, isActive: false });
+  };
+
+  const handleDeleteProvince = (id: number) => {
+    if (window.confirm('Sei sicuro di voler eliminare questa provincia?')) {
+      deleteProvince.mutate(id);
+    }
   };
 
   const onProvinceSubmit = (e: React.FormEvent) => {
@@ -207,7 +259,7 @@ export default function ProvincesTab() {
                 checked={newProvince.isActive}
                 onCheckedChange={(checked) => setNewProvince({...newProvince, isActive: checked === true})}
               />
-              <FormLabel htmlFor="province-active" className="cursor-pointer">
+              <FormLabel htmlFor="province-active" className="cursor-pointer font-normal">
                 Provincia attiva
               </FormLabel>
             </div>
@@ -253,6 +305,14 @@ export default function ProvincesTab() {
             >
               Disattiva selezionate
             </Button>
+            <Button 
+              variant="ghost"
+              onClick={() => refetch()}
+              size="sm"
+              disabled={isSubmitting}
+            >
+              Aggiorna
+            </Button>
           </div>
           
           {isLoadingProvinces ? (
@@ -277,6 +337,7 @@ export default function ProvincesTab() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Codice</TableHead>
                     <TableHead>Stato</TableHead>
+                    <TableHead className="w-12">Azioni</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -284,22 +345,32 @@ export default function ProvincesTab() {
                     <TableRow key={province.id}>
                       <TableCell>
                         <Checkbox 
-                          checked={selectedProvinces.includes(province.id || 0)} 
-                          onCheckedChange={(checked) => handleSelectProvince(province.id || 0, checked === true)}
+                          checked={selectedProvinces.includes(province.id)} 
+                          onCheckedChange={(checked) => handleSelectProvince(province.id, checked === true)}
                         />
                       </TableCell>
                       <TableCell>{province.name}</TableCell>
                       <TableCell>{province.code}</TableCell>
                       <TableCell>
                         {province.isActive ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">
                             Attiva
-                          </span>
+                          </Badge>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-50">
                             Disattiva
-                          </span>
+                          </Badge>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleDeleteProvince(province.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

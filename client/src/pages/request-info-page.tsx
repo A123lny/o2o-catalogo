@@ -65,22 +65,13 @@ const requestFormSchema = z.object({
 
 type RequestFormValues = z.infer<typeof requestFormSchema>;
 
-// Lista province italiane
-const provinces = [
-  "Agrigento", "Alessandria", "Ancona", "Aosta", "Arezzo", "Ascoli Piceno", "Asti", "Avellino", "Bari", 
-  "Barletta-Andria-Trani", "Belluno", "Benevento", "Bergamo", "Biella", "Bologna", "Bolzano", "Brescia", 
-  "Brindisi", "Cagliari", "Caltanissetta", "Campobasso", "Caserta", "Catania", "Catanzaro", "Chieti", 
-  "Como", "Cosenza", "Cremona", "Crotone", "Cuneo", "Enna", "Fermo", "Ferrara", "Firenze", "Foggia", 
-  "Forlì-Cesena", "Frosinone", "Genova", "Gorizia", "Grosseto", "Imperia", "Isernia", "La Spezia", 
-  "L'Aquila", "Latina", "Lecce", "Lecco", "Livorno", "Lodi", "Lucca", "Macerata", "Mantova", 
-  "Massa-Carrara", "Matera", "Messina", "Milano", "Modena", "Monza e Brianza", "Napoli", "Novara", 
-  "Nuoro", "Oristano", "Padova", "Palermo", "Parma", "Pavia", "Perugia", "Pesaro e Urbino", "Pescara", 
-  "Piacenza", "Pisa", "Pistoia", "Pordenone", "Potenza", "Prato", "Ragusa", "Ravenna", "Reggio Calabria", 
-  "Reggio Emilia", "Rieti", "Rimini", "Roma", "Rovigo", "Salerno", "Sassari", "Savona", "Siena", 
-  "Siracusa", "Sondrio", "Sud Sardegna", "Taranto", "Teramo", "Terni", "Torino", "Trapani", "Trento", 
-  "Treviso", "Trieste", "Udine", "Varese", "Venezia", "Verbano-Cusio-Ossola", "Vercelli", "Verona", 
-  "Vibo Valentia", "Vicenza", "Viterbo"
-];
+// Ottieni le province attive dal database
+type Province = {
+  id: number;
+  name: string;
+  code: string;
+  isActive: boolean;
+};
 
 export default function RequestInfoPage() {
   const [, params] = useRoute("/request-info/:vehicleId/:rentalOptionId?");
@@ -96,6 +87,16 @@ export default function RequestInfoPage() {
   const clientTypeParam = searchParams.get('clientType');
   
   console.log("URL Params:", { vehicleId, rentalOptionId, clientType: clientTypeParam });
+  
+  // Query per ottenere le province attive
+  const { data: provinces = [], isLoading: isLoadingProvinces } = useQuery<Province[]>({
+    queryKey: ['/api/provinces/active'],
+    queryFn: async () => {
+      const response = await fetch('/api/provinces/active');
+      if (!response.ok) throw new Error('Errore nel recupero delle province');
+      return response.json();
+    }
+  });
   
   // Query per il veicolo
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery<Vehicle>({
@@ -204,7 +205,7 @@ export default function RequestInfoPage() {
   }
   
   // Mostra loader durante il caricamento
-  if (isLoadingVehicle || isLoadingOptions) {
+  if (isLoadingVehicle || isLoadingOptions || isLoadingProvinces) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -317,9 +318,15 @@ export default function RequestInfoPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {provinces.map((province) => (
-                              <SelectItem key={province} value={province}>{province}</SelectItem>
-                            ))}
+                            {isLoadingProvinces ? (
+                              <div className="p-2 text-center">Caricamento...</div>
+                            ) : provinces.length === 0 ? (
+                              <div className="p-2 text-center">Nessuna provincia disponibile</div>
+                            ) : (
+                              provinces.map((province) => (
+                                <SelectItem key={province.id} value={province.name}>{province.name} ({province.code})</SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
