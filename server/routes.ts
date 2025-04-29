@@ -183,6 +183,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error deleting vehicle" });
     }
   });
+  
+  // Route specifica per aggiornare lo stato "Assegnato" di un veicolo
+  app.put("/api/admin/vehicles/:id/toggle-assigned", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { assigned } = req.body;
+      
+      // Recupera il veicolo
+      const vehicle = await storage.getVehicle(id);
+      
+      if (!vehicle) {
+        return res.status(404).json({ message: "Vehicle not found" });
+      }
+      
+      // Modifica i badge
+      let badges = Array.isArray(vehicle.badges) ? [...vehicle.badges] : [];
+      
+      if (assigned && !badges.includes("Assegnato")) {
+        badges.push("Assegnato");
+      } else if (!assigned) {
+        badges = badges.filter(badge => badge !== "Assegnato");
+      }
+      
+      // Aggiorna il veicolo
+      const updatedVehicle = await storage.updateVehicle(id, { ...vehicle, badges });
+      res.json(updatedVehicle);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating vehicle status" });
+    }
+  });
 
   // Upload additional vehicle images
   app.post("/api/admin/vehicles/:id/images", isAdmin, upload.array("images", 10), async (req, res) => {

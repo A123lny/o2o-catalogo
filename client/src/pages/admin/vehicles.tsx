@@ -125,30 +125,8 @@ export default function VehiclesPage() {
   
   const toggleAssignedMutation = useMutation({
     mutationFn: async ({ id, assigned }: { id: number; assigned: boolean }) => {
-      const vehicle = vehicles?.find(v => v.id === id);
-      if (!vehicle) return;
-      
-      // Creiamo una copia dei badge correnti o un array vuoto se non esistono
-      const currentBadges = Array.isArray(vehicle.badges) ? [...vehicle.badges] : [];
-      
-      // Aggiungiamo o rimuoviamo il badge "Assegnato"
-      let updatedBadges;
-      if (assigned) {
-        updatedBadges = currentBadges.includes("Assegnato") 
-          ? currentBadges 
-          : [...currentBadges, "Assegnato"];
-      } else {
-        updatedBadges = currentBadges.filter(badge => badge !== "Assegnato");
-      }
-      
-      // Inviamo la richiesta di aggiornamento
-      const formData = new FormData();
-      formData.append('data', JSON.stringify({
-        ...vehicle,
-        badges: updatedBadges
-      }));
-      
-      return await apiRequest("PUT", `/api/admin/vehicles/${id}`, formData);
+      // Utilizziamo l'endpoint dedicato per il toggle dello stato "Assegnato"
+      return await apiRequest("PUT", `/api/admin/vehicles/${id}/toggle-assigned`, { assigned });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/vehicles'] });
