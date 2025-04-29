@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Car,
@@ -9,13 +10,26 @@ import {
   Settings,
   Plug,
   LogOut,
-  Megaphone
+  Megaphone,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AdminSidebar() {
   const [location] = useLocation();
   const { logoutMutation } = useAuth();
+
+  // Fetch general settings to get site name
+  const { data: generalSettings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['/api/settings/general'],
+    queryFn: async () => {
+      const response = await fetch('/api/settings/general');
+      if (!response.ok) throw new Error('Errore nel recupero delle impostazioni generali');
+      return response.json();
+    }
+  });
+
+  const siteName = generalSettings?.siteName || "o2o Mobility";
 
   const isActive = (path: string) => {
     return location === path;
@@ -31,7 +45,14 @@ export default function AdminSidebar() {
         <div className="flex items-center">
           <Link href="/">
             <div className="cursor-pointer">
-              <span className="font-bold text-xl">AUTO<span className="opacity-80">PRESTIGE</span></span>
+              {isLoadingSettings ? (
+                <div className="flex items-center">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <span className="font-bold text-xl">Caricamento...</span>
+                </div>
+              ) : (
+                <span className="font-bold text-xl">{siteName}</span>
+              )}
             </div>
           </Link>
         </div>

@@ -1,13 +1,31 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, Settings } from "lucide-react";
+import { Menu, X, User, Settings, Loader2 } from "lucide-react";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location] = useLocation();
   const { user } = useAuth();
+
+  // Fetch general settings to get site name
+  const { data: generalSettings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['/api/settings/general'],
+    queryFn: async () => {
+      const response = await fetch('/api/settings/general');
+      if (!response.ok) throw new Error('Errore nel recupero delle impostazioni generali');
+      return response.json();
+    }
+  });
+
+  const siteName = generalSettings?.siteName || "o2o Mobility";
+  
+  // Divide il nome in due parti per applicare colori diversi (se contiene uno spazio)
+  const nameParts = siteName.split(' ');
+  const firstPart = nameParts[0];
+  const secondPart = nameParts.slice(1).join(' ');
 
   const isActive = (path: string) => {
     return location === path;
@@ -18,7 +36,16 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4 flex flex-wrap items-center justify-between">
         <div className="flex items-center">
           <Link href="/" className="flex items-center">
-            <span className="text-primary font-bold text-2xl">o2o <span className="text-secondary">Mobility</span></span>
+            {isLoadingSettings ? (
+              <div className="flex items-center">
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <span className="font-bold text-2xl">Caricamento...</span>
+              </div>
+            ) : (
+              <span className="text-primary font-bold text-2xl">
+                {firstPart} {secondPart && <span className="text-secondary">{secondPart}</span>}
+              </span>
+            )}
           </Link>
         </div>
 
