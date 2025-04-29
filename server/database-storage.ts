@@ -1229,7 +1229,7 @@ export class DatabaseStorage implements IStorage {
     return db
       .select()
       .from(activityLogs)
-      .orderBy(desc(activityLogs.timestamp))
+      .orderBy(desc(activityLogs.createdAt))
       .limit(limit);
   }
 
@@ -1238,7 +1238,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(activityLogs)
       .where(eq(activityLogs.userId, userId))
-      .orderBy(desc(activityLogs.timestamp))
+      .orderBy(desc(activityLogs.createdAt))
       .limit(limit);
   }
 
@@ -1250,7 +1250,7 @@ export class DatabaseStorage implements IStorage {
         eq(activityLogs.entityType, entityType),
         eq(activityLogs.entityId, entityId)
       ))
-      .orderBy(desc(activityLogs.timestamp))
+      .orderBy(desc(activityLogs.createdAt))
       .limit(limit);
   }
 
@@ -1259,7 +1259,7 @@ export class DatabaseStorage implements IStorage {
       .insert(activityLogs)
       .values({
         ...log,
-        timestamp: new Date()
+        createdAt: new Date()
       })
       .returning();
     
