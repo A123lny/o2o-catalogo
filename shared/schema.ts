@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, jsonb, boolean, date, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // User and Auth tables
 export const users = pgTable("users", {
@@ -86,6 +87,34 @@ export const requests = pgTable("requests", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Promo settings and featured vehicles order
+export const promoSettings = pgTable("promo_settings", {
+  id: serial("id").primaryKey(),
+  maxFeaturedVehicles: integer("max_featured_vehicles").notNull().default(16),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Featured promo vehicles with order
+export const featuredPromos = pgTable("featured_promos", {
+  id: serial("id").primaryKey(),
+  vehicleId: integer("vehicle_id").notNull().unique(),
+  displayOrder: integer("display_order").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Relations
+export const vehiclesRelations = relations(vehicles, ({ many }) => ({
+  featuredPromo: many(featuredPromos),
+}));
+
+export const featuredPromosRelations = relations(featuredPromos, ({ one }) => ({
+  vehicle: one(vehicles, {
+    fields: [featuredPromos.vehicleId],
+    references: [vehicles.id],
+  }),
+}));
+
 // SCHEMAS
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -148,5 +177,22 @@ export type RentalOption = typeof rentalOptions.$inferSelect;
 
 export type InsertRequest = z.infer<typeof insertRequestSchema>;
 export type Request = typeof requests.$inferSelect;
+
+export const insertPromoSettingsSchema = createInsertSchema(promoSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertFeaturedPromoSchema = createInsertSchema(featuredPromos).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPromoSettings = z.infer<typeof insertPromoSettingsSchema>;
+export type PromoSettings = typeof promoSettings.$inferSelect;
+
+export type InsertFeaturedPromo = z.infer<typeof insertFeaturedPromoSchema>;
+export type FeaturedPromo = typeof featuredPromos.$inferSelect;
 
 export type LoginData = Pick<InsertUser, 'username' | 'password'>;
