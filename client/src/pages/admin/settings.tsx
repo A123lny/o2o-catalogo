@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
+import ProvincesTab from "@/components/admin/provinces-tab";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Card,
@@ -26,13 +27,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox"; 
 import { 
   Save, 
   Cog, 
   Mail, 
   Globe, 
-  Lock, 
   MapPin, 
   Shield, 
   List,
@@ -75,24 +74,13 @@ const securitySettingsSchema = z.object({
   lockoutDurationMinutes: z.number().min(1).max(1440),
 });
 
-const provinceSchema = z.object({
-  id: z.number().optional(),
-  name: z.string().min(1, "Il nome della provincia è obbligatorio"),
-  code: z.string().min(2, "Il codice provincia è obbligatorio").max(2, "Il codice provincia deve essere di 2 caratteri"),
-  isActive: z.boolean().default(true),
-});
-
 type GeneralSettingsValues = z.infer<typeof generalSettingsSchema>;
 type SecuritySettingsValues = z.infer<typeof securitySettingsSchema>;
-type ProvinceValues = z.infer<typeof provinceSchema>;
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("general");
-  const [newProvince, setNewProvince] = useState<ProvinceValues>({ name: "", code: "", isActive: true });
-  const [selectedProvinces, setSelectedProvinces] = useState<number[]>([]);
-  const [selectedAllProvinces, setSelectedAllProvinces] = useState(false);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -112,16 +100,6 @@ export default function SettingsPage() {
     queryFn: async () => {
       const response = await fetch('/api/admin/settings/security');
       if (!response.ok) throw new Error('Errore nel recupero delle impostazioni di sicurezza');
-      return response.json();
-    }
-  });
-
-  // Fetch provinces
-  const { data: provinces, isLoading: isLoadingProvinces } = useQuery({
-    queryKey: ['/api/admin/provinces'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/provinces');
-      if (!response.ok) throw new Error('Errore nel recupero delle province');
       return response.json();
     }
   });
@@ -214,26 +192,7 @@ export default function SettingsPage() {
     }
   }, [securitySettings, securityForm]);
 
-  // Funzione per selezionare/deselezionare una provincia
-  const handleSelectProvince = (id: number, isChecked: boolean) => {
-    if (isChecked) {
-      setSelectedProvinces(prev => [...prev, id]);
-    } else {
-      setSelectedProvinces(prev => prev.filter(provinceId => provinceId !== id));
-    }
-  };
 
-  // Funzione per selezionare/deselezionare tutte le province
-  const handleSelectAllProvinces = (isChecked: boolean) => {
-    if (isChecked && provinces && provinces.length > 0) {
-      const provinceIds = provinces.map(province => province.id || 0).filter(id => id > 0);
-      setSelectedProvinces(provinceIds);
-      setSelectedAllProvinces(true);
-    } else {
-      setSelectedProvinces([]);
-      setSelectedAllProvinces(false);
-    }
-  };
 
   // Mutations for updating settings
   const updateGeneralSettings = useMutation({
@@ -286,58 +245,7 @@ export default function SettingsPage() {
     }
   });
 
-  const addProvince = useMutation({
-    mutationFn: async (data: ProvinceValues) => {
-      setIsSubmitting(true);
-      const response = await apiRequest('POST', '/api/admin/provinces', data);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Provincia aggiunta",
-        description: "La provincia è stata aggiunta con successo.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/provinces'] });
-      setNewProvince({ name: "", code: "", isActive: true });
-      setIsSubmitting(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Errore",
-        description: "Si è verificato un errore durante l'aggiunta della provincia.",
-        variant: "destructive",
-      });
-      console.error("Error adding province:", error);
-      setIsSubmitting(false);
-    }
-  });
 
-  const updateProvinceStatus = useMutation({
-    mutationFn: async ({ ids, isActive }: { ids: number[], isActive: boolean }) => {
-      setIsSubmitting(true);
-      const response = await apiRequest('PUT', '/api/admin/provinces/update-status', { ids, isActive });
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Stato province aggiornato",
-        description: "Lo stato delle province selezionate è stato aggiornato con successo.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/provinces'] });
-      setSelectedProvinces([]);
-      setSelectedAllProvinces(false);
-      setIsSubmitting(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Errore",
-        description: "Si è verificato un errore durante l'aggiornamento dello stato delle province.",
-        variant: "destructive",
-      });
-      console.error("Error updating province status:", error);
-      setIsSubmitting(false);
-    }
-  });
 
   const onGeneralSubmit = (data: GeneralSettingsValues) => {
     updateGeneralSettings.mutate(data);
@@ -347,45 +255,7 @@ export default function SettingsPage() {
     updateSecuritySettings.mutate(data);
   };
 
-  const onProvinceSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newProvince.name || !newProvince.code) {
-      toast({
-        title: "Dati mancanti",
-        description: "Inserisci nome e codice provincia.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    addProvince.mutate(newProvince);
-  };
 
-  const handleActivateProvinces = () => {
-    if (selectedProvinces.length === 0) {
-      toast({
-        title: "Selezione vuota",
-        description: "Seleziona almeno una provincia.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    updateProvinceStatus.mutate({ ids: selectedProvinces, isActive: true });
-  };
-
-  const handleDeactivateProvinces = () => {
-    if (selectedProvinces.length === 0) {
-      toast({
-        title: "Selezione vuota",
-        description: "Seleziona almeno una provincia.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    updateProvinceStatus.mutate({ ids: selectedProvinces, isActive: false });
-  };
 
   return (
     <div className="flex h-screen bg-neutral-100">
