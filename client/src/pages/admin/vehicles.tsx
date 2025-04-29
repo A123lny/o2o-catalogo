@@ -125,8 +125,8 @@ export default function VehiclesPage() {
       vehicle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(searchTerm.toLowerCase());
       
-    const matchesBrand = filterBrand === "" || vehicle.brandId === parseInt(filterBrand);
-    const matchesCategory = filterCategory === "" || vehicle.categoryId === parseInt(filterCategory);
+    const matchesBrand = filterBrand === "" || filterBrand === "all" || vehicle.brandId === parseInt(filterBrand);
+    const matchesCategory = filterCategory === "" || filterCategory === "all" || vehicle.categoryId === parseInt(filterCategory);
     
     return matchesSearch && matchesBrand && matchesCategory;
   });
@@ -305,7 +305,7 @@ export default function VehiclesPage() {
                 <TagIcon className="h-12 w-12 text-neutral-300 mb-4" />
                 <h3 className="text-lg font-medium text-neutral-800 mb-1">Nessun veicolo trovato</h3>
                 <p className="text-neutral-500 mb-4">
-                  {searchTerm || filterBrand || filterCategory 
+                  {searchTerm || (filterBrand && filterBrand !== "all") || (filterCategory && filterCategory !== "all")
                     ? 'Nessun veicolo corrisponde ai criteri di ricerca' 
                     : 'Aggiungi il tuo primo veicolo per iniziare'}
                 </p>
