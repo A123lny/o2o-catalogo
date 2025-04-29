@@ -70,11 +70,18 @@ export default function VehicleDetailPage() {
     enabled: vehicleId > 0
   });
   
+  // Verifica se il veicolo è assegnato
+  const isVehicleAssigned = vehicle && 
+    vehicle.badges && 
+    (Array.isArray(vehicle.badges) ? 
+      vehicle.badges.includes("Assegnato") : 
+      JSON.parse(vehicle.badges as string).includes("Assegnato"));
+  
   // Fetch opzioni noleggio
   const { data: rentalOptions, isLoading: isLoadingRentalOptions } = useQuery<RentalOption[]>({
     queryKey: ["/api/vehicles", vehicleId, "rental-options"],
     queryFn: () => apiRequest("GET", `/api/vehicles/${vehicleId}/rental-options`).then(res => res.json()),
-    enabled: vehicleId > 0
+    enabled: vehicleId > 0 && !isVehicleAssigned
   });
   
   // Fetch veicoli correlati
@@ -315,6 +322,29 @@ export default function VehicleDetailPage() {
             <ChevronRight className="mx-2 h-4 w-4 text-gray-400" />
             <span className="text-gray-600">{vehicle.title}</span>
           </nav>
+          
+          {/* Messaggio se il veicolo è assegnato */}
+          {isVehicleAssigned && (
+            <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-6 mb-8">
+              <div className="flex flex-col items-center text-center">
+                <div className="bg-red-100 p-3 rounded-full mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Veicolo non disponibile</h2>
+                <p className="text-lg mb-4">Questo veicolo è stato assegnato e non è più disponibile per il noleggio.</p>
+                <div className="flex space-x-4">
+                  <Button onClick={() => navigate("/catalog")} className="bg-red-600 hover:bg-red-700">
+                    Torna al catalogo
+                  </Button>
+                  <Button onClick={() => navigate("/")} variant="outline" className="border-red-600 text-red-600 hover:bg-red-50">
+                    Vai alla home
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Colonna sinistra - Galleria e dettagli veicolo */}
@@ -503,81 +533,84 @@ export default function VehicleDetailPage() {
                   <span>{vehicle.mileage.toLocaleString()} km</span>
                 </div>
                 
-                {/* Il blocco dei prezzi di vendita è stato rimosso, dato che mostriamo solo le opzioni di noleggio */}
-                <div className="mb-6">
-                  {enhancedRentalOptions.length > 0 && (
-                    <div className="flex items-center">
-                      <span className="text-2xl font-bold text-blue-600">
-                        A partire da €{Math.min(...enhancedRentalOptions.map(o => o.monthlyPrice))}/mese
-                      </span>
+                {/* Mostro il resto della sezione solo se il veicolo non è assegnato */}
+                {!isVehicleAssigned && (
+                  <>
+                    {/* Il blocco dei prezzi di vendita è stato rimosso, dato che mostriamo solo le opzioni di noleggio */}
+                    <div className="mb-6">
+                      {enhancedRentalOptions.length > 0 && (
+                        <div className="flex items-center">
+                          <span className="text-2xl font-bold text-blue-600">
+                            A partire da €{Math.min(...enhancedRentalOptions.map(o => o.monthlyPrice))}/mese
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
                 
-                <Separator className="my-6" />
+                    <Separator className="my-6" />
                 
-                <h2 className="text-xl font-bold mb-4">Le nostre Soluzioni</h2>
+                    <h2 className="text-xl font-bold mb-4">Le nostre Soluzioni</h2>
                 
-                {/* Selettore tipo cliente */}
-                <div className="mb-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Tipo cliente:</h3>
-                  <div className="flex space-x-3">
-                    <button 
-                      onClick={() => setClientType('private')}
-                      className={`flex items-center px-3 py-1.5 rounded-md text-sm ${
-                        clientType === 'private' 
-                          ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                          : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
-                      }`}
-                    >
-                      <User2 className="w-4 h-4 mr-1.5" />
-                      Privato
-                      {clientType === 'private' && <Star className="w-3.5 h-3.5 ml-1.5 text-blue-500" />}
-                    </button>
-                    <button 
-                      onClick={() => setClientType('business')}
-                      className={`flex items-center px-3 py-1.5 rounded-md text-sm ${
-                        clientType === 'business' 
-                          ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                          : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Briefcase className="w-4 h-4 mr-1.5" />
-                      Azienda/P.IVA
-                      {clientType === 'business' && <Star className="w-3.5 h-3.5 ml-1.5 text-blue-500" />}
-                    </button>
-                  </div>
-                </div>
+                    {/* Selettore tipo cliente */}
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-700 mb-2">Tipo cliente:</h3>
+                      <div className="flex space-x-3">
+                        <button 
+                          onClick={() => setClientType('private')}
+                          className={`flex items-center px-3 py-1.5 rounded-md text-sm ${
+                            clientType === 'private' 
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                              : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          <User2 className="w-4 h-4 mr-1.5" />
+                          Privato
+                          {clientType === 'private' && <Star className="w-3.5 h-3.5 ml-1.5 text-blue-500" />}
+                        </button>
+                        <button 
+                          onClick={() => setClientType('business')}
+                          className={`flex items-center px-3 py-1.5 rounded-md text-sm ${
+                            clientType === 'business' 
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                              : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Briefcase className="w-4 h-4 mr-1.5" />
+                          Azienda/P.IVA
+                          {clientType === 'business' && <Star className="w-3.5 h-3.5 ml-1.5 text-blue-500" />}
+                        </button>
+                      </div>
+                    </div>
                 
-                {/* Selettore tipo contratto */}
-                <div className="flex space-x-4 mb-6">
-                  <Button
-                    variant={activeContractType === 'NLT' ? "default" : "outline"}
-                    className={`flex-1 ${activeContractType === 'NLT' ? 'bg-blue-500 hover:bg-blue-600' : ''}`}
-                    onClick={() => handleContractTypeChange('NLT')}
-                  >
-                    Noleggio a Lungo Termine
-                  </Button>
-                  <Button
-                    variant={activeContractType === 'RTB' ? "default" : "outline"}
-                    className={`flex-1 ${activeContractType === 'RTB' ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
-                    onClick={() => handleContractTypeChange('RTB')}
-                  >
-                    Rent to Buy
-                  </Button>
-                </div>
+                    {/* Selettore tipo contratto */}
+                    <div className="flex space-x-4 mb-6">
+                      <Button
+                        variant={activeContractType === 'NLT' ? "default" : "outline"}
+                        className={`flex-1 ${activeContractType === 'NLT' ? 'bg-blue-500 hover:bg-blue-600' : ''}`}
+                        onClick={() => handleContractTypeChange('NLT')}
+                      >
+                        Noleggio a Lungo Termine
+                      </Button>
+                      <Button
+                        variant={activeContractType === 'RTB' ? "default" : "outline"}
+                        className={`flex-1 ${activeContractType === 'RTB' ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
+                        onClick={() => handleContractTypeChange('RTB')}
+                      >
+                        Rent to Buy
+                      </Button>
+                    </div>
                 
-                {/* Opzioni contratto */}
-                {filteredOptions.length > 0 ? (
-                  <div className="space-y-6">
-                    {filteredOptions
-                      // Mette 36 mesi all'inizio, poi ordina il resto per durata
-                      .sort((a, b) => {
-                        if (a.duration === 36) return -1;
-                        if (b.duration === 36) return 1;
-                        return a.duration - b.duration;
-                      })
-                      .map((option) => {
+                    {/* Opzioni contratto */}
+                    {filteredOptions.length > 0 ? (
+                      <div className="space-y-6">
+                        {filteredOptions
+                          // Mette 36 mesi all'inizio, poi ordina il resto per durata
+                          .sort((a, b) => {
+                            if (a.duration === 36) return -1;
+                            if (b.duration === 36) return 1;
+                            return a.duration - b.duration;
+                          })
+                          .map((option) => {
                         // Determina se questa è l'opzione consigliata
                         const isRecommended = option.duration === 36;
                         
@@ -723,27 +756,29 @@ export default function VehicleDetailPage() {
                           </div>
                         );
                       })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">Nessuna opzione di noleggio disponibile per questo veicolo.</p>
-                  </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">Nessuna opzione di noleggio disponibile per questo veicolo.</p>
+                      </div>
+                    )}
+                    
+                    {/* Pulsante richiedi informazioni */}
+                    <div className="mt-6">
+                      <Button 
+                        onClick={handleRequestInfo}
+                        className="w-full py-6 text-base bg-orange-500 hover:bg-orange-600"
+                      >
+                        Richiedi informazioni
+                      </Button>
+                    </div>
+                    
+                    {/* Nota sull'IVA */}
+                    <div className="mt-4 text-xs text-gray-500 text-center">
+                      Tutti i prezzi sono da intendersi {clientType === 'private' ? 'IVA inclusa' : 'IVA esclusa'}
+                    </div>
+                  </>
                 )}
-                
-                {/* Pulsante richiedi informazioni */}
-                <div className="mt-6">
-                  <Button 
-                    onClick={handleRequestInfo}
-                    className="w-full py-6 text-base bg-orange-500 hover:bg-orange-600"
-                  >
-                    Richiedi informazioni
-                  </Button>
-                </div>
-                
-                {/* Nota sull'IVA */}
-                <div className="mt-4 text-xs text-gray-500 text-center">
-                  Tutti i prezzi sono da intendersi {clientType === 'private' ? 'IVA inclusa' : 'IVA esclusa'}
-                </div>
               </div>
             </div>
           </div>
