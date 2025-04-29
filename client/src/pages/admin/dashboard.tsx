@@ -159,7 +159,7 @@ export default function AdminDashboard() {
                             <div>
                               <div className="font-medium">{vehicle.title}</div>
                               <div className="text-sm text-gray-500">
-                                {vehicle.price.toLocaleString('it-IT')} € - {vehicle.condition}
+                                {vehicle.condition} - {vehicle.mileage.toLocaleString('it-IT')} km
                               </div>
                             </div>
                           </div>

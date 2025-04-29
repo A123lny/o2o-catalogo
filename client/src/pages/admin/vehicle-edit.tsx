@@ -60,11 +60,6 @@ const vehicleFormSchema = insertVehicleSchema.extend({
   images: z.array(z.any()).optional(),
   features: z.array(z.string()).min(1, "Aggiungi almeno una caratteristica"),
   badges: z.array(z.string()).optional(),
-}).refine((data) => {
-  return data.discountPrice ? data.discountPrice < data.price : true;
-}, {
-  message: "Il prezzo scontato deve essere inferiore al prezzo originale",
-  path: ["discountPrice"],
 });
 
 type VehicleFormValues = z.infer<typeof vehicleFormSchema>;
@@ -120,8 +115,7 @@ export default function VehicleEditPage() {
       model: "",
       year: new Date().getFullYear(),
       mileage: 0,
-      price: 0,
-      discountPrice: undefined,
+      // I campi price e discountPrice sono stati rimossi perché non necessari per il modello di noleggio
       fuelType: "",
       transmission: "",
       power: 0,
