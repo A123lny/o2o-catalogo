@@ -12,6 +12,7 @@ import CatalogPage from "@/pages/catalog-page";
 import DashboardPage from "@/pages/admin/dashboard";
 import VehiclesPage from "@/pages/admin/vehicles";
 import VehicleEditPage from "@/pages/admin/vehicle-edit";
+import RentalOptionEditPage from "@/pages/admin/rental-option-edit";
 import BrandsCategoriesPage from "@/pages/admin/brands-categories";
 import RequestsPage from "@/pages/admin/requests";
 import UsersPage from "@/pages/admin/users";
@@ -34,6 +35,7 @@ function Router() {
       <ProtectedRoute path="/admin/vehicles" component={VehiclesPage} />
       <ProtectedRoute path="/admin/vehicles/new" component={VehicleEditPage} />
       <ProtectedRoute path="/admin/vehicles/:id/edit" component={VehicleEditPage} />
+      <ProtectedRoute path="/admin/vehicles/:vehicleId/rental-options/:optionId" component={RentalOptionEditPage} />
       <ProtectedRoute path="/admin/brands-categories" component={BrandsCategoriesPage} />
       <ProtectedRoute path="/admin/requests" component={RequestsPage} />
       <ProtectedRoute path="/admin/users" component={UsersPage} />
