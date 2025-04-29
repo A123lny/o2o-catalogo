@@ -65,8 +65,7 @@ export default function VehicleDetailPage() {
   
   // Fetch veicolo
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery<Vehicle>({
-    queryKey: ["/api/vehicles", vehicleId],
-    queryFn: () => apiRequest("GET", `/api/vehicles/${vehicleId}`).then(res => res.json()),
+    queryKey: [`/api/vehicles/${vehicleId}`],
     enabled: vehicleId > 0
   });
   
@@ -79,15 +78,13 @@ export default function VehicleDetailPage() {
   
   // Fetch opzioni noleggio
   const { data: rentalOptions, isLoading: isLoadingRentalOptions } = useQuery<RentalOption[]>({
-    queryKey: ["/api/vehicles", vehicleId, "rental-options"],
-    queryFn: () => apiRequest("GET", `/api/vehicles/${vehicleId}/rental-options`).then(res => res.json()),
+    queryKey: [`/api/vehicles/${vehicleId}/rental-options`],
     enabled: vehicleId > 0 && !isVehicleAssigned
   });
   
   // Fetch veicoli correlati
   const { data: relatedVehicles, isLoading: isLoadingRelated } = useQuery<Vehicle[]>({
-    queryKey: ["/api/vehicles", vehicleId, "related"],
-    queryFn: () => apiRequest("GET", `/api/vehicles/${vehicleId}/related`).then(res => res.json()),
+    queryKey: [`/api/vehicles/${vehicleId}/related`],
     enabled: vehicleId > 0
   });
   
