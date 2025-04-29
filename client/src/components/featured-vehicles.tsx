@@ -1,8 +1,7 @@
 import { Link } from "wouter";
-import { Vehicle } from "@shared/schema";
+import { RentalOption, Vehicle } from "@shared/schema";
 import VehicleCard from "./vehicle-card";
-import { ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 interface FeaturedVehiclesProps {
@@ -40,20 +39,23 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
     };
     
     // Per i veicoli di tipo NLT/RTB, controlliamo le opzioni del veicolo
-    const { data: allRentalOptions } = useQuery({
-      queryKey: ['/api/vehicles/options'],
+    const { data: allRentalOptions } = useQuery<RentalOption[]>({
+      queryKey: ['/api/rental-options/all'],
       enabled: activeTab === "nlt" || activeTab === "rtb",
     });
     
     // Identificare i veicoli con opzioni NLT o RTB
     const vehiclesWithContractTypes = new Map<number, Set<string>>();
     
-    if (allRentalOptions) {
-      allRentalOptions.forEach((option: any) => {
+    if (allRentalOptions && Array.isArray(allRentalOptions)) {
+      allRentalOptions.forEach((option: RentalOption) => {
         if (!vehiclesWithContractTypes.has(option.vehicleId)) {
           vehiclesWithContractTypes.set(option.vehicleId, new Set<string>());
         }
-        vehiclesWithContractTypes.get(option.vehicleId)?.add(option.type);
+        const contractTypes = vehiclesWithContractTypes.get(option.vehicleId);
+        if (contractTypes) {
+          contractTypes.add(option.type);
+        }
       });
     }
     
