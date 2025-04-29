@@ -30,8 +30,6 @@ import { Button } from "@/components/ui/button";
 import { 
   Save, 
   Cog, 
-  Mail, 
-  Globe, 
   MapPin, 
   Shield, 
   List,
@@ -39,6 +37,8 @@ import {
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -192,8 +192,6 @@ export default function SettingsPage() {
     }
   }, [securitySettings, securityForm]);
 
-
-
   // Mutations for updating settings
   const updateGeneralSettings = useMutation({
     mutationFn: async (data: GeneralSettingsValues) => {
@@ -245,8 +243,6 @@ export default function SettingsPage() {
     }
   });
 
-
-
   const onGeneralSubmit = (data: GeneralSettingsValues) => {
     updateGeneralSettings.mutate(data);
   };
@@ -254,8 +250,6 @@ export default function SettingsPage() {
   const onSecuritySubmit = (data: SecuritySettingsValues) => {
     updateSecuritySettings.mutate(data);
   };
-
-
 
   return (
     <div className="flex h-screen bg-neutral-100">
