@@ -437,7 +437,7 @@ export default function SettingsPage() {
                               <Input {...field} />
                             </FormControl>
                             <FormDescription>
-                              Questo nome verrà mostrato nell'intestazione del sito e nelle email
+                              Questo nome verrà mostrato nell'intestazione, nel footer e nelle email
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -446,20 +446,62 @@ export default function SettingsPage() {
                       
                       <FormField
                         control={generalForm.control}
-                        name="siteDescription"
+                        name="logoPath"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Descrizione del Sito</FormLabel>
+                            <FormLabel>URL Logo</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} placeholder="https://esempio.com/logo.png" />
                             </FormControl>
                             <FormDescription>
-                              Una breve descrizione dell'attività, utilizzata per il SEO
+                              URL del logo aziendale (utilizzerà il nome del sito se mancante)
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={generalForm.control}
+                          name="primaryColor"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Colore Primario</FormLabel>
+                              <div className="flex gap-2">
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <div className="w-10 h-10 rounded border" style={{ backgroundColor: field.value || '#3b82f6' }} />
+                              </div>
+                              <FormDescription>
+                                Colore primario (es. #3b82f6)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={generalForm.control}
+                          name="secondaryColor"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Colore Secondario</FormLabel>
+                              <div className="flex gap-2">
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <div className="w-10 h-10 rounded border" style={{ backgroundColor: field.value || '#f97316' }} />
+                              </div>
+                              <FormDescription>
+                                Colore secondario (es. #f97316)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       
                       <FormField
                         control={generalForm.control}
@@ -481,7 +523,7 @@ export default function SettingsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           control={generalForm.control}
-                          name="phoneNumber"
+                          name="contactPhone"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Numero di Telefono</FormLabel>
@@ -507,6 +549,84 @@ export default function SettingsPage() {
                           )}
                         />
                       </div>
+                      
+                      <FormField
+                        control={generalForm.control}
+                        name="vatNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Partita IVA</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              Partita IVA dell'azienda
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={generalForm.control}
+                          name="socialFacebook"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Facebook</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="URL pagina Facebook" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={generalForm.control}
+                          name="socialInstagram"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Instagram</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="URL pagina Instagram" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={generalForm.control}
+                          name="socialLinkedin"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>LinkedIn</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="URL pagina LinkedIn" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={generalForm.control}
+                        name="footerText"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Testo Footer</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Testo da mostrare nel footer" />
+                            </FormControl>
+                            <FormDescription>
+                              Es. "Tutti i diritti riservati." (il nome del sito e l'anno verranno aggiunti automaticamente)
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       
                       <div className="flex justify-end">
                         <Button type="submit">
