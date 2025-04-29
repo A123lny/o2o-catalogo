@@ -121,6 +121,7 @@ export const featuredPromosRelations = relations(featuredPromos, ({ one }) => ({
 export const provinces = pgTable("provinces", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
+  code: text("code").notNull().unique(), // Codice provincia (2 caratteri)
   isActive: boolean("is_active").default(true).notNull(),
   displayOrder: integer("display_order").notNull(),
 });
