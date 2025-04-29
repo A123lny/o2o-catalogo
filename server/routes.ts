@@ -747,6 +747,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/activity-logs", isAdmin, async (req, res) => {
+    try {
+      const log = await storage.createActivityLog({
+        userId: req.user!.id,
+        ...req.body
+      });
+      res.status(201).json(log);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nella creazione del log di attività", error });
+    }
+  });
+
   app.get("/api/admin/activity-logs/user/:userId", isAdmin, async (req, res) => {
     const userId = parseInt(req.params.userId);
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
