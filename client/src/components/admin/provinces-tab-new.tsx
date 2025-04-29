@@ -35,6 +35,7 @@ const provinceSchema = z.object({
   name: z.string().min(1, "Il nome della provincia è obbligatorio"),
   code: z.string().min(2, "Il codice provincia è obbligatorio").max(2, "Il codice provincia deve essere di 2 caratteri"),
   isActive: z.boolean().default(true),
+  displayOrder: z.number().optional(),
 });
 
 type ProvinceValues = z.infer<typeof provinceSchema>;
