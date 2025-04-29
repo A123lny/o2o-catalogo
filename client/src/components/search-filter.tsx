@@ -16,8 +16,8 @@ interface SearchFilterProps {
   brands: Brand[];
   categories: Category[];
   filters: {
-    brandId: string;
-    categoryId: string;
+    brandIds: string[];
+    categoryIds: string[];
     year: string;
     fuelType: string;
     condition: string;
@@ -103,7 +103,7 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
   return (
     <div className="space-y-6">
       <Accordion type="single" collapsible defaultValue="brands">
-        {/* Brands Filter */}
+        {/* Brands Filter - Selezione multipla */}
         <AccordionItem value="brands">
           <AccordionTrigger className="text-sm font-medium">Marche</AccordionTrigger>
           <AccordionContent>
@@ -111,8 +111,8 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="all-brands" 
-                  checked={!filters.brandId} 
-                  onCheckedChange={() => onFilterChange({ brandId: "" })}
+                  checked={filters.brandIds.length === 0} 
+                  onCheckedChange={() => onFilterChange({ brandIds: [] })}
                 />
                 <Label htmlFor="all-brands" className="text-sm">Tutte le marche</Label>
               </div>
@@ -121,10 +121,23 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
                 <div key={brand.id} className="flex items-center space-x-2">
                   <Checkbox 
                     id={`brand-${brand.id}`} 
-                    checked={filters.brandId === brand.id.toString()}
-                    onCheckedChange={() => onFilterChange({ 
-                      brandId: filters.brandId === brand.id.toString() ? "" : brand.id.toString()
-                    })}
+                    checked={filters.brandIds.includes(brand.id.toString())}
+                    onCheckedChange={(checked) => {
+                      const brandId = brand.id.toString();
+                      let newBrandIds = [...filters.brandIds];
+                      
+                      if (checked) {
+                        // Aggiungi il brand se non è già presente
+                        if (!newBrandIds.includes(brandId)) {
+                          newBrandIds.push(brandId);
+                        }
+                      } else {
+                        // Rimuovi il brand se presente
+                        newBrandIds = newBrandIds.filter(id => id !== brandId);
+                      }
+                      
+                      onFilterChange({ brandIds: newBrandIds });
+                    }}
                   />
                   <Label htmlFor={`brand-${brand.id}`} className="text-sm">{brand.name}</Label>
                 </div>
@@ -133,7 +146,7 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
           </AccordionContent>
         </AccordionItem>
         
-        {/* Categories Filter */}
+        {/* Categories Filter - Selezione multipla */}
         <AccordionItem value="categories">
           <AccordionTrigger className="text-sm font-medium">Categorie</AccordionTrigger>
           <AccordionContent>
@@ -141,8 +154,8 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="all-categories" 
-                  checked={!filters.categoryId} 
-                  onCheckedChange={() => onFilterChange({ categoryId: "" })}
+                  checked={filters.categoryIds.length === 0} 
+                  onCheckedChange={() => onFilterChange({ categoryIds: [] })}
                 />
                 <Label htmlFor="all-categories" className="text-sm">Tutte le categorie</Label>
               </div>
@@ -151,10 +164,23 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
                 <div key={category.id} className="flex items-center space-x-2">
                   <Checkbox 
                     id={`category-${category.id}`} 
-                    checked={filters.categoryId === category.id.toString()}
-                    onCheckedChange={() => onFilterChange({ 
-                      categoryId: filters.categoryId === category.id.toString() ? "" : category.id.toString()
-                    })}
+                    checked={filters.categoryIds.includes(category.id.toString())}
+                    onCheckedChange={(checked) => {
+                      const categoryId = category.id.toString();
+                      let newCategoryIds = [...filters.categoryIds];
+                      
+                      if (checked) {
+                        // Aggiungi la categoria se non è già presente
+                        if (!newCategoryIds.includes(categoryId)) {
+                          newCategoryIds.push(categoryId);
+                        }
+                      } else {
+                        // Rimuovi la categoria se presente
+                        newCategoryIds = newCategoryIds.filter(id => id !== categoryId);
+                      }
+                      
+                      onFilterChange({ categoryIds: newCategoryIds });
+                    }}
                   />
                   <Label htmlFor={`category-${category.id}`} className="text-sm">{category.name}</Label>
                 </div>

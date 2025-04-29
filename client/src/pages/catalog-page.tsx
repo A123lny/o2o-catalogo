@@ -12,8 +12,8 @@ import { useLocation } from "wouter";
 export default function CatalogPage() {
   const [location] = useLocation();
   const [filters, setFilters] = useState({
-    brandId: "",
-    categoryId: "",
+    brandIds: [] as string[],
+    categoryIds: [] as string[],
     year: "",
     fuelType: "",
     condition: "",
@@ -23,19 +23,30 @@ export default function CatalogPage() {
   // Leggi i parametri URL quando la pagina viene caricata
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
-    const initialFilters: { [key: string]: string } = {};
+    const initialFilters: any = {
+      brandIds: [],
+      categoryIds: [],
+      year: "",
+      fuelType: "",
+      condition: "",
+      contractType: "",
+    };
     
-    // Leggi tutti i parametri disponibili nell'URL (metodo compatibile con tutti i browser)
-    // Convertire esplicitamente in tipo di array per evitare problemi di tipizzazione
+    // Leggi tutti i parametri disponibili nell'URL
     searchParams.forEach((value, key) => {
       if (value) {
-        initialFilters[key] = value;
+        // Gestisci parametri array come brandIds e categoryIds
+        if (key === 'brandIds' || key === 'categoryIds') {
+          initialFilters[key] = value.split(',');
+        } else {
+          initialFilters[key] = value;
+        }
       }
     });
     
     // Aggiorna i filtri solo se ci sono parametri nell'URL
-    if (Object.keys(initialFilters).length > 0) {
-      setFilters(prev => ({ ...prev, ...initialFilters }));
+    if (Object.values(initialFilters).some(v => Array.isArray(v) ? v.length > 0 : v !== "")) {
+      setFilters(initialFilters);
     }
   }, [location]);
   
@@ -58,8 +69,8 @@ export default function CatalogPage() {
   
   const clearFilters = () => {
     setFilters({
-      brandId: "",
-      categoryId: "",
+      brandIds: [],
+      categoryIds: [],
       year: "",
       fuelType: "",
       condition: "",
@@ -88,7 +99,7 @@ export default function CatalogPage() {
                   variant="outline" 
                   size="sm" 
                   onClick={clearFilters}
-                  disabled={!Object.values(filters).some(v => v !== "")}
+                  disabled={!Object.values(filters).some(v => Array.isArray(v) ? v.length > 0 : v !== "")}
                 >
                   Cancella
                 </Button>
