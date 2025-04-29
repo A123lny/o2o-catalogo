@@ -779,7 +779,11 @@ export default function SettingsPage() {
                               <TableCell>{new Date(log.createdAt).toLocaleString('it-IT')}</TableCell>
                               <TableCell>{log.username || 'Sistema'}</TableCell>
                               <TableCell>{log.action}</TableCell>
-                              <TableCell className="max-w-[200px] truncate">{log.details}</TableCell>
+                              <TableCell className="max-w-[200px] truncate">
+                                {typeof log.details === 'object' 
+                                  ? JSON.stringify(log.details) 
+                                  : log.details}
+                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
