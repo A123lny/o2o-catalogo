@@ -225,11 +225,13 @@ export default function SettingsPage() {
 
   // Toggle select all provinces
   const toggleAllProvinces = () => {
-    if (selectedAllProvinces || (provinces && selectedProvinces.length === provinces.length)) {
+    if (selectedAllProvinces || (provinces && provinces.length > 0 && selectedProvinces.length === provinces.length)) {
       setSelectedProvinces([]);
       setSelectedAllProvinces(false);
-    } else if (provinces) {
-      setSelectedProvinces(provinces.map(province => province.id));
+    } else if (provinces && provinces.length > 0) {
+      // Assicuriamoci che provinces esista e che abbia degli elementi prima di usare map
+      const provinceIds = provinces.map((province) => province.id || 0).filter(id => id > 0);
+      setSelectedProvinces(provinceIds);
       setSelectedAllProvinces(true);
     }
   };
@@ -747,7 +749,7 @@ export default function SettingsPage() {
                             <TableHead className="w-12">
                               <Checkbox 
                                 checked={selectedAllProvinces || (provinces && provinces.length > 0 && selectedProvinces.length === provinces.length)} 
-                                onCheckedChange={toggleAllProvinces}
+                                onCheckedChange={() => toggleAllProvinces()}
                               />
                             </TableHead>
                             <TableHead>Nome</TableHead>
@@ -767,8 +769,8 @@ export default function SettingsPage() {
                               <TableRow key={province.id}>
                                 <TableCell>
                                   <Checkbox 
-                                    checked={selectedProvinces.includes(province.id)} 
-                                    onCheckedChange={() => toggleProvinceSelection(province.id)}
+                                    checked={selectedProvinces.includes(province.id || 0)} 
+                                    onCheckedChange={() => toggleProvinceSelection(province.id || 0)}
                                   />
                                 </TableCell>
                                 <TableCell>{province.name}</TableCell>
