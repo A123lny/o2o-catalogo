@@ -14,11 +14,11 @@ export default function CategoriesSection({ categories }: CategoriesSectionProps
     <section className="py-12 bg-white">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold mb-8 text-center">Sfoglia per Tipo</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 justify-items-center max-w-6xl mx-auto">
           {categories.map((category) => (
             <Link 
               key={category.id} 
-              href={`/catalog?categoryId=${category.id}`} 
+              href={`/catalog?categoryIds=${category.id}`} 
               className="text-center group"
             >
               <div className="category-circle">
