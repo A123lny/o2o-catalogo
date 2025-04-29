@@ -47,7 +47,9 @@ export default function HomePage() {
         {activeCategories && activeCategories.length > 0 && (
           <CategoriesSection categories={activeCategories} />
         )}
-        <FeaturedVehicles vehicles={featuredVehicles || []} />
+        {featuredVehicles && featuredVehicles.length > 0 && (
+          <FeaturedVehicles vehicles={featuredVehicles} />
+        )}
       </main>
       <Footer />
     </div>

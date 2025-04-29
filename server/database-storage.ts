@@ -379,51 +379,12 @@ export class DatabaseStorage implements IStorage {
       const settings = await this.getPromoSettings();
       const maxVehicles = settings?.maxFeaturedVehicles || 16;
       
-      // Ottiene i veicoli in promozione nell'ordine specificato
+      // Ottiene i veicoli in promozione nell'ordine specificato dalla tabella featuredPromos
       const featuredPromoVehicles = await this.getFeaturedPromoVehicles();
       
-      // Se abbiamo veicoli in promozione ordinati, li usiamo
-      if (featuredPromoVehicles.length > 0) {
-        return featuredPromoVehicles.slice(0, maxVehicles);
-      }
-      
-      // Otteniamo tutti i veicoli
-      let allVehicles = await db.select().from(vehicles);
-      
-      // Filtra i veicoli con il badge "Promo" e senza il badge "Assegnato"
-      let featuredVehicles = allVehicles.filter(vehicle => {
-        if (!vehicle.badges) return false;
-        
-        // Se badges è una stringa, convertila in array
-        const badges = typeof vehicle.badges === 'string' 
-          ? JSON.parse(vehicle.badges as string) 
-          : vehicle.badges;
-        
-        if (!Array.isArray(badges)) return false;
-        
-        // Deve avere il badge "Promo" e non avere il badge "Assegnato"
-        return badges.includes("Promo") && !badges.includes("Assegnato");
-      });
-      
-      // Se ci sono veicoli con il badge "Promo", aggiungiamoli automaticamente alla tabella featuredPromos
-      if (featuredVehicles.length > 0 && featuredPromoVehicles.length === 0) {
-        console.log(`Aggiungendo automaticamente ${featuredVehicles.length} veicoli alla tabella featuredPromos`);
-        
-        // Aggiungiamo ogni veicolo alla tabella delle promozioni
-        for (let i = 0; i < featuredVehicles.length; i++) {
-          try {
-            await this.addVehicleToPromo(featuredVehicles[i].id, i);
-          } catch (error) {
-            console.error(`Errore nell'aggiungere il veicolo ${featuredVehicles[i].id} alle promozioni:`, error);
-          }
-        }
-        
-        // Ricarichiamo i veicoli in promozione dopo averli aggiunti
-        return this.getFeaturedPromoVehicles();
-      }
-      
-      // Limita al numero massimo di veicoli specificato nelle impostazioni
-      return featuredVehicles.slice(0, maxVehicles);
+      // Utilizziamo SOLO i veicoli che sono esplicitamente aggiunti alla tabella featuredPromos
+      // Se non ci sono veicoli nella tabella, non mostriamo nulla
+      return featuredPromoVehicles.slice(0, maxVehicles);
     } catch (error) {
       console.error("Errore nel recupero dei veicoli in evidenza:", error);
       return [];
