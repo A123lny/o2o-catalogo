@@ -33,8 +33,7 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
     const getVehiclesByContract = (vehicleList: Vehicle[], contractType: string) => {
       return vehicleList
         .filter(v => {
-          // Verifica se qualche opzione di noleggio è del tipo desiderato
-          // Questo dovrebbe essere già precaricato nel component HomePage
+          // Verifica se il veicolo ha il badge del tipo di contratto desiderato
           const hasContractType = v.badges && hasBadge(v, contractType);
           return hasContractType;
         })

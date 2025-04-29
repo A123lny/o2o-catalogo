@@ -143,25 +143,25 @@ export default function PromoManagement() {
   // Caricamento delle impostazioni delle promozioni
   const { data: promoSettings } = useQuery({
     queryKey: ["/api/admin/promo/settings"],
-    queryFn: ({ signal }) => apiRequest("GET", "/api/admin/promo/settings", undefined, { signal }),
     enabled: !!user,
   });
 
   // Caricamento dei veicoli in promozione
   const { 
-    data: promoVehicles = [],
+    data: promoVehiclesData,
     isLoading,
     isError,
   } = useQuery({
     queryKey: ["/api/admin/promo/vehicles"],
-    queryFn: ({ signal }) => apiRequest("GET", "/api/admin/promo/vehicles", undefined, { signal }),
     enabled: !!user,
   });
+  
+  // Assicurati che promoVehicles sia sempre un array
+  const promoVehicles = Array.isArray(promoVehiclesData) ? promoVehiclesData : [];
 
   // Caricamento di tutti i veicoli
   const { data: allVehicles = [] } = useQuery({
     queryKey: ["/api/admin/vehicles"],
-    queryFn: ({ signal }) => apiRequest("GET", "/api/admin/vehicles", undefined, { signal }),
     enabled: !!user,
   });
 
