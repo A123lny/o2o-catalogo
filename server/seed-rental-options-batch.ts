@@ -3,8 +3,8 @@ import { InsertRentalOption, rentalOptions } from '@shared/schema';
 
 // Range di ID dei veicoli per cui aggiungere opzioni di noleggio
 // Modifica questi valori per ciascun batch
-const START_ID = 41;
-const END_ID = 50;
+const START_ID = 51;
+const END_ID = 60;
 
 async function addRentalOptions() {
   try {
