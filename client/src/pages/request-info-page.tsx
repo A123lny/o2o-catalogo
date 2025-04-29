@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import PageTitle from "@/components/page-title";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -223,6 +224,7 @@ export default function RequestInfoPage() {
   
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
+      <PageTitle title="Richiedi Informazioni" subtitle={vehicle.title} />
       <Header />
       <main className="flex-grow py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
