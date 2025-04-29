@@ -494,32 +494,7 @@ export default function VehicleEditPage() {
                           )}
                         />
                         
-                        <FormField
-                          control={form.control}
-                          name="condition"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Condizione*</FormLabel>
-                              <Select
-                                value={field.value}
-                                onValueChange={field.onChange}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Seleziona condizione" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="Nuovo">Nuovo</SelectItem>
-                                  <SelectItem value="Usato">Usato</SelectItem>
-                                  <SelectItem value="Km 0">Km 0</SelectItem>
-                                  <SelectItem value="Aziendale">Aziendale</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+
                         
                         <FormField
                           control={form.control}
