@@ -749,7 +749,17 @@ export default function SettingsPage() {
                             <TableHead className="w-12">
                               <Checkbox 
                                 checked={selectedAllProvinces || (provinces && provinces.length > 0 && selectedProvinces.length === provinces.length)} 
-                                onCheckedChange={() => toggleAllProvinces()}
+                                onCheckedChange={(checked) => {
+                                  if (provinces && provinces.length > 0) {
+                                    if (checked) {
+                                      setSelectedProvinces(provinces.map(province => province.id || 0).filter(id => id > 0));
+                                      setSelectedAllProvinces(true);
+                                    } else {
+                                      setSelectedProvinces([]);
+                                      setSelectedAllProvinces(false);
+                                    }
+                                  }
+                                }}
                               />
                             </TableHead>
                             <TableHead>Nome</TableHead>
@@ -770,7 +780,16 @@ export default function SettingsPage() {
                                 <TableCell>
                                   <Checkbox 
                                     checked={selectedProvinces.includes(province.id || 0)} 
-                                    onCheckedChange={() => toggleProvinceSelection(province.id || 0)}
+                                    onCheckedChange={(checked) => {
+                                      const id = province.id || 0;
+                                      if (id > 0) {
+                                        if (checked) {
+                                          setSelectedProvinces(prev => [...prev, id]);
+                                        } else {
+                                          setSelectedProvinces(prev => prev.filter(provinceId => provinceId !== id));
+                                        }
+                                      }
+                                    }}
                                   />
                                 </TableCell>
                                 <TableCell>{province.name}</TableCell>
