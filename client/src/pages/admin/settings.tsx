@@ -509,7 +509,17 @@ export default function SettingsPage() {
             
             {/* Province Settings */}
             <TabsContent value="provinces">
-              <ProvincesTab />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gestione Province</CardTitle>
+                  <CardDescription>
+                    Gestisci le province del sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  Funzionalità in fase di implementazione...
+                </CardContent>
+              </Card>
             </TabsContent>
             
             {/* Security Settings */}
