@@ -346,27 +346,26 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getFeaturedVehicles(): Promise<Vehicle[]> {
-    // Aggiorniamo temporaneamente i veicoli per garantire che alcuni siano "featured"
-    await db.update(vehicles).set({ featured: true }).where(eq(vehicles.id, 1));
-    await db.update(vehicles).set({ featured: true }).where(eq(vehicles.id, 2));
-    await db.update(vehicles).set({ featured: true }).where(eq(vehicles.id, 3));
+    // Otteniamo tutti i veicoli
+    let allVehicles = await db.select().from(vehicles);
     
-    // Ottieni tutti i veicoli in evidenza
-    let featuredVehicles = await db.select().from(vehicles).where(eq(vehicles.featured, true));
-    
-    // Filtra i veicoli con il badge "Assegnato"
-    featuredVehicles = featuredVehicles.filter(vehicle => {
-      if (!vehicle.badges) return true;
+    // Filtra i veicoli con il badge "Promo" e senza il badge "Assegnato"
+    let featuredVehicles = allVehicles.filter(vehicle => {
+      if (!vehicle.badges) return false;
       
       // Se badges è una stringa, convertila in array
       const badges = typeof vehicle.badges === 'string' 
         ? JSON.parse(vehicle.badges as string) 
         : vehicle.badges;
-        
-      return !Array.isArray(badges) || !badges.includes("Assegnato");
+      
+      if (!Array.isArray(badges)) return false;
+      
+      // Deve avere il badge "Promo" e non avere il badge "Assegnato"
+      return badges.includes("Promo") && !badges.includes("Assegnato");
     });
     
-    return featuredVehicles;
+    // Limita a 16 veicoli massimo
+    return featuredVehicles.slice(0, 16);
   }
   
   async getVehicle(id: number): Promise<Vehicle | undefined> {

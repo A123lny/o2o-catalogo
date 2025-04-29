@@ -17,26 +17,39 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
 
   // Filtra i veicoli in base al tab selezionato
   const filteredVehicles = (() => {
+    // Funzione per verificare se un veicolo ha il badge specificato
+    const hasBadge = (vehicle: Vehicle, badgeName: string) => {
+      if (!vehicle.badges) return false;
+      
+      const badges = typeof vehicle.badges === 'string'
+        ? JSON.parse(vehicle.badges as string)
+        : vehicle.badges;
+        
+      return Array.isArray(badges) && badges.includes(badgeName);
+    };
+    
     switch (activeTab) {
       case "nlt":
-        // Mostra veicoli che hanno opzioni NLT (mostreremo solo i primi 6)
-        return vehicles.filter(v => 
-          // Per semplicità, useremo alcuni veicoli specifici per questo tab
-          [1, 3, 5, 7, 9].includes(v.id)
-        ).slice(0, 6);
+        // Mostra veicoli che hanno opzioni NLT
+        return vehicles
+          .filter(v => v.rentalOptions?.some(option => option.type === "NLT"))
+          .slice(0, 8);
       case "rtb":
-        // Mostra veicoli che hanno opzioni RTB (mostreremo solo i primi 6)
-        return vehicles.filter(v => 
-          // Per semplicità, useremo alcuni veicoli specifici per questo tab
-          [2, 4, 6, 8, 10].includes(v.id)
-        ).slice(0, 6);
+        // Mostra veicoli che hanno opzioni RTB
+        return vehicles
+          .filter(v => v.rentalOptions?.some(option => option.type === "RTB"))
+          .slice(0, 8);
       case "2life":
         // Mostra veicoli usati (2Life)
-        return vehicles.filter(v => v.condition === "2Life").slice(0, 6);
+        return vehicles
+          .filter(v => hasBadge(v, "2Life") || v.condition === "2Life")
+          .slice(0, 8);
       case "featured":
       default:
-        // Mostra veicoli in evidenza
-        return vehicles.filter(v => v.featured).slice(0, 6);
+        // Mostra veicoli in evidenza (Promo)
+        return vehicles
+          .filter(v => hasBadge(v, "Promo"))
+          .slice(0, 16);
     }
   })();
 
