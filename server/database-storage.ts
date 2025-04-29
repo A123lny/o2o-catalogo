@@ -38,6 +38,9 @@ export interface IStorage {
   getActiveCategories(): Promise<Category[]>; // Categorie con veicoli disponibili
   getCategory(id: number): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
+  
+  // Rental Options
+  getAllRentalOptions(): Promise<RentalOption[]>; // Tutte le opzioni di tutti i veicoli
   updateCategory(id: number, category: InsertCategory): Promise<Category>;
   deleteCategory(id: number): Promise<void>;
   
@@ -493,6 +496,10 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(rentalOptions)
       .where(eq(rentalOptions.vehicleId, vehicleId));
+  }
+  
+  async getAllRentalOptions(): Promise<RentalOption[]> {
+    return db.select().from(rentalOptions);
   }
   
   async getRentalOption(id: number): Promise<RentalOption | undefined> {

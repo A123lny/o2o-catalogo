@@ -145,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get rental options for all vehicles (for filtering)
-  app.get("/api/vehicles/options", async (req, res) => {
+  app.get("/api/rental-options/all", async (req, res) => {
     try {
       // Ottieni tutte le opzioni di noleggio dal database
       const allOptions = await storage.getAllRentalOptions();
