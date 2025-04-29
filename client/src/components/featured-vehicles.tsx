@@ -2,7 +2,8 @@ import { Link } from "wouter";
 import { Vehicle } from "@shared/schema";
 import VehicleCard from "./vehicle-card";
 import { ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface FeaturedVehiclesProps {
   vehicles: Vehicle[];
@@ -28,21 +29,29 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
       return Array.isArray(badges) && badges.includes(badgeName);
     };
     
+    // Ottieni i veicoli di tipo NLT o RTB
+    const getVehiclesByContract = (vehicleList: Vehicle[], contractType: string) => {
+      return vehicleList
+        .filter(v => {
+          // Verifica se qualche opzione di noleggio è del tipo desiderato
+          // Questo dovrebbe essere già precaricato nel component HomePage
+          const hasContractType = v.badges && hasBadge(v, contractType);
+          return hasContractType;
+        })
+        .slice(0, 8);
+    };
+    
     switch (activeTab) {
       case "nlt":
-        // Mostra veicoli che hanno opzioni NLT
-        return vehicles
-          .filter(v => v.rentalOptions?.some(option => option.type === "NLT"))
-          .slice(0, 8);
+        // Mostra veicoli con badge NLT
+        return getVehiclesByContract(vehicles, "NLT").slice(0, 8);
       case "rtb":
-        // Mostra veicoli che hanno opzioni RTB
-        return vehicles
-          .filter(v => v.rentalOptions?.some(option => option.type === "RTB"))
-          .slice(0, 8);
+        // Mostra veicoli con badge RTB
+        return getVehiclesByContract(vehicles, "RTB").slice(0, 8);
       case "2life":
         // Mostra veicoli usati (2Life)
         return vehicles
-          .filter(v => hasBadge(v, "2Life") || v.condition === "2Life")
+          .filter(v => hasBadge(v, "2Life"))
           .slice(0, 8);
       case "featured":
       default:

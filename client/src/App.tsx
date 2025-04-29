@@ -17,6 +17,7 @@ import BrandsCategoriesPage from "@/pages/admin/brands-categories";
 import RequestsPage from "@/pages/admin/requests";
 import UsersPage from "@/pages/admin/users";
 import SettingsPage from "@/pages/admin/settings";
+import PromoManagementPage from "@/pages/admin/promo-management";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 
@@ -40,6 +41,7 @@ function Router() {
       <ProtectedRoute path="/admin/requests" component={RequestsPage} />
       <ProtectedRoute path="/admin/users" component={UsersPage} />
       <ProtectedRoute path="/admin/settings" component={SettingsPage} />
+      <ProtectedRoute path="/admin/promos" component={PromoManagementPage} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
