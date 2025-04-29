@@ -9,12 +9,13 @@ import { Category, Vehicle, Brand } from "@shared/schema";
 import { Loader2 } from "lucide-react";
 
 export default function HomePage() {
-  const { data: categories, isLoading: isLoadingCategories } = useQuery<Category[]>({
-    queryKey: ['/api/categories'],
+  // Utilizziamo le nuove API per ottenere solo marchi e categorie con veicoli disponibili
+  const { data: activeCategories, isLoading: isLoadingCategories } = useQuery<Category[]>({
+    queryKey: ['/api/categories/active'],
   });
 
-  const { data: brands, isLoading: isLoadingBrands } = useQuery<Brand[]>({
-    queryKey: ['/api/brands'],
+  const { data: activeBrands, isLoading: isLoadingBrands } = useQuery<Brand[]>({
+    queryKey: ['/api/brands/active'],
   });
 
   const { data: featuredVehicles, isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
@@ -39,8 +40,13 @@ export default function HomePage() {
       <Header />
       <main className="flex-1">
         <HeroSection />
-        <BrandsSection brands={brands || []} />
-        <CategoriesSection categories={categories || []} />
+        {/* Mostriamo le sezioni solo se ci sono elementi da visualizzare */}
+        {activeBrands && activeBrands.length > 0 && (
+          <BrandsSection brands={activeBrands} />
+        )}
+        {activeCategories && activeCategories.length > 0 && (
+          <CategoriesSection categories={activeCategories} />
+        )}
         <FeaturedVehicles vehicles={featuredVehicles || []} />
       </main>
       <Footer />
