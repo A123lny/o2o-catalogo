@@ -387,7 +387,6 @@ export class DatabaseStorage implements IStorage {
         return featuredPromoVehicles.slice(0, maxVehicles);
       }
       
-      // Altrimenti, utilizziamo il vecchio metodo
       // Otteniamo tutti i veicoli
       let allVehicles = await db.select().from(vehicles);
       
@@ -405,6 +404,23 @@ export class DatabaseStorage implements IStorage {
         // Deve avere il badge "Promo" e non avere il badge "Assegnato"
         return badges.includes("Promo") && !badges.includes("Assegnato");
       });
+      
+      // Se ci sono veicoli con il badge "Promo", aggiungiamoli automaticamente alla tabella featuredPromos
+      if (featuredVehicles.length > 0 && featuredPromoVehicles.length === 0) {
+        console.log(`Aggiungendo automaticamente ${featuredVehicles.length} veicoli alla tabella featuredPromos`);
+        
+        // Aggiungiamo ogni veicolo alla tabella delle promozioni
+        for (let i = 0; i < featuredVehicles.length; i++) {
+          try {
+            await this.addVehicleToPromo(featuredVehicles[i].id, i);
+          } catch (error) {
+            console.error(`Errore nell'aggiungere il veicolo ${featuredVehicles[i].id} alle promozioni:`, error);
+          }
+        }
+        
+        // Ricarichiamo i veicoli in promozione dopo averli aggiunti
+        return this.getFeaturedPromoVehicles();
+      }
       
       // Limita al numero massimo di veicoli specificato nelle impostazioni
       return featuredVehicles.slice(0, maxVehicles);
