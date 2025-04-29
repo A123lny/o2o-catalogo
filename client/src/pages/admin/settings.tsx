@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import { useAuth } from "@/hooks/use-auth";
+import ProvincesTab from "@/components/admin/provinces-tab";
 import {
   Card,
   CardContent,
@@ -508,28 +509,7 @@ export default function SettingsPage() {
             
             {/* Province Settings */}
             <TabsContent value="provinces">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Gestione Province</CardTitle>
-                  <CardDescription>
-                    Questa sezione è in fase di manutenzione
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-4">Stiamo aggiornando questa funzionalità dopo l'aggiunta dei codici provincia. Sarà disponibile a breve.</p>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      toast({
-                        title: "Aggiornamento in corso",
-                        description: "La funzionalità di gestione province sarà disponibile nella prossima versione.",
-                      });
-                    }}
-                  >
-                    <MapPin className="h-4 w-4 mr-2" /> Verifica stato
-                  </Button>
-                </CardContent>
-              </Card>
+              <ProvincesTab />
             </TabsContent>
             
             {/* Security Settings */}
