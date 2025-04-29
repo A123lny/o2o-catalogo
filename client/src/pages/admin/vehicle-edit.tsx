@@ -558,62 +558,12 @@ export default function VehicleEditPage() {
                     
                     <Card>
                       <CardHeader>
-                        <CardTitle>Prezzo e Badge</CardTitle>
+                        <CardTitle>Badge</CardTitle>
                         <CardDescription>
-                          Imposta il prezzo e gli indicatori promozionali
+                          Imposta gli indicatori promozionali per il veicolo
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="price"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Prezzo (€)*</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    min={0}
-                                    placeholder="Es. 75000" 
-                                    {...field}
-                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="discountPrice"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Prezzo Scontato (€)</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    min={0}
-                                    placeholder="Es. 68000" 
-                                    {...field}
-                                    value={field.value || ""}
-                                    onChange={(e) => {
-                                      const value = e.target.value === "" ? undefined : parseInt(e.target.value);
-                                      field.onChange(value);
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormDescription>
-                                  Lascia vuoto se non è in promozione
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <Separator className="my-4" />
                         
                         <FormField
                           control={form.control}
