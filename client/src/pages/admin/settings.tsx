@@ -49,24 +49,30 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const generalSettingsSchema = z.object({
   siteName: z.string().min(1, "Il nome del sito è obbligatorio"),
-  siteDescription: z.string().optional(),
-  contactEmail: z.string().email("Inserisci un indirizzo email valido").optional(),
-  phoneNumber: z.string().optional(),
-  address: z.string().optional(),
+  logoPath: z.string().optional(),
+  primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
+  contactEmail: z.string().email("Inserisci un indirizzo email valido").optional().nullable(),
+  contactPhone: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  vatNumber: z.string().optional().nullable(),
+  socialFacebook: z.string().optional().nullable(),
+  socialInstagram: z.string().optional().nullable(),
+  socialLinkedin: z.string().optional().nullable(),
+  footerText: z.string().optional().nullable(),
 });
 
 const securitySettingsSchema = z.object({
-  passwordMinLength: z.number().min(6).max(30),
-  passwordRequireUppercase: z.boolean(),
-  passwordRequireLowercase: z.boolean(),
-  passwordRequireNumber: z.boolean(),
-  passwordRequireSpecialChar: z.boolean(),
+  minPasswordLength: z.number().min(6).max(30),
+  requireUppercase: z.boolean(),
+  requireLowercase: z.boolean(),
+  requireNumber: z.boolean(),
+  requireSpecialChar: z.boolean(),
   passwordExpiryDays: z.number().min(0).max(365),
   passwordHistoryCount: z.number().min(0).max(20),
   enable2FA: z.boolean(),
   failedLoginAttempts: z.number().min(1).max(10),
   lockoutDurationMinutes: z.number().min(1).max(1440),
-  sessionTimeoutMinutes: z.number().min(5).max(1440),
 });
 
 const provinceSchema = z.object({
@@ -140,10 +146,17 @@ export default function SettingsPage() {
     resolver: zodResolver(generalSettingsSchema),
     defaultValues: {
       siteName: "o2o Mobility",
-      siteDescription: "",
+      logoPath: "",
+      primaryColor: "#3b82f6",
+      secondaryColor: "#f97316",
       contactEmail: "",
-      phoneNumber: "",
+      contactPhone: "",
       address: "",
+      vatNumber: "",
+      socialFacebook: "",
+      socialInstagram: "",
+      socialLinkedin: "",
+      footerText: "© 2023 o2o Mobility. Tutti i diritti riservati.",
     }
   });
 
@@ -152,10 +165,17 @@ export default function SettingsPage() {
     if (generalSettings) {
       generalForm.reset({
         siteName: generalSettings.siteName || "o2o Mobility",
-        siteDescription: generalSettings.siteDescription || "",
+        logoPath: generalSettings.logoPath || "",
+        primaryColor: generalSettings.primaryColor || "#3b82f6",
+        secondaryColor: generalSettings.secondaryColor || "#f97316",
         contactEmail: generalSettings.contactEmail || "",
-        phoneNumber: generalSettings.phoneNumber || "",
+        contactPhone: generalSettings.contactPhone || "",
         address: generalSettings.address || "",
+        vatNumber: generalSettings.vatNumber || "",
+        socialFacebook: generalSettings.socialFacebook || "",
+        socialInstagram: generalSettings.socialInstagram || "",
+        socialLinkedin: generalSettings.socialLinkedin || "",
+        footerText: generalSettings.footerText || "© 2023 o2o Mobility. Tutti i diritti riservati.",
       });
     }
   }, [generalSettings, generalForm]);
@@ -163,17 +183,16 @@ export default function SettingsPage() {
   const securityForm = useForm<SecuritySettingsValues>({
     resolver: zodResolver(securitySettingsSchema),
     defaultValues: {
-      passwordMinLength: 8,
-      passwordRequireUppercase: true,
-      passwordRequireLowercase: true,
-      passwordRequireNumber: true,
-      passwordRequireSpecialChar: true,
+      minPasswordLength: 8,
+      requireUppercase: true,
+      requireLowercase: true,
+      requireNumber: true,
+      requireSpecialChar: true,
       passwordExpiryDays: 90,
       passwordHistoryCount: 5,
       enable2FA: false,
       failedLoginAttempts: 5,
       lockoutDurationMinutes: 30,
-      sessionTimeoutMinutes: 60,
     },
   });
   
@@ -181,17 +200,16 @@ export default function SettingsPage() {
   useEffect(() => {
     if (securitySettings) {
       securityForm.reset({
-        passwordMinLength: securitySettings.passwordMinLength || 8,
-        passwordRequireUppercase: securitySettings.passwordRequireUppercase || true,
-        passwordRequireLowercase: securitySettings.passwordRequireLowercase || true,
-        passwordRequireNumber: securitySettings.passwordRequireNumber || true,
-        passwordRequireSpecialChar: securitySettings.passwordRequireSpecialChar || true,
+        minPasswordLength: securitySettings.minPasswordLength || 8,
+        requireUppercase: securitySettings.requireUppercase || true,
+        requireLowercase: securitySettings.requireLowercase || true,
+        requireNumber: securitySettings.requireNumber || true,
+        requireSpecialChar: securitySettings.requireSpecialChar || true,
         passwordExpiryDays: securitySettings.passwordExpiryDays || 90,
         passwordHistoryCount: securitySettings.passwordHistoryCount || 5,
         enable2FA: securitySettings.enable2FA || false,
         failedLoginAttempts: securitySettings.failedLoginAttempts || 5,
         lockoutDurationMinutes: securitySettings.lockoutDurationMinutes || 30,
-        sessionTimeoutMinutes: securitySettings.sessionTimeoutMinutes || 60,
       });
     }
   }, [securitySettings, securityForm]);
