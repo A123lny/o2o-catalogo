@@ -3,7 +3,7 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
 import { pool } from "./db";
-import { eq, and, like, lte, sql, desc, asc } from "drizzle-orm";
+import { eq, and, like, lte, sql, desc, asc, inArray } from "drizzle-orm";
 import { 
   users, brands, categories, vehicles, 
   rentalOptions, requests 
@@ -272,6 +272,42 @@ export class DatabaseStorage implements IStorage {
           
         return !Array.isArray(badges) || !badges.includes("Assegnato");
       });
+    }
+    
+    // Filtra per tipo di contratto (NLT, RTB, o entrambi)
+    if (filters?.contractType) {
+      // Prima otteniamo le opzioni di noleggio per tutti i veicoli in un'unica query
+      const vehicleIds = result.map(v => v.id);
+      
+      if (vehicleIds.length > 0) {
+        const allOptions = await db.select().from(rentalOptions)
+          .where(inArray(rentalOptions.vehicleId, vehicleIds));
+        
+        // Mappa delle opzioni di noleggio per veicolo
+        const optionsByVehicleId = new Map();
+        
+        allOptions.forEach(option => {
+          if (!optionsByVehicleId.has(option.vehicleId)) {
+            optionsByVehicleId.set(option.vehicleId, []);
+          }
+          optionsByVehicleId.get(option.vehicleId).push(option);
+        });
+        
+        // Filtra i veicoli in base ai tipi di contratto
+        result = result.filter(vehicle => {
+          const options = optionsByVehicleId.get(vehicle.id) || [];
+          
+          if (filters.contractType === 'NLT') {
+            return options.some(o => o.type === 'NLT');
+          } else if (filters.contractType === 'RTB') {
+            return options.some(o => o.type === 'RTB');
+          } else if (filters.contractType === 'NLTRTB') {
+            return options.some(o => o.type === 'NLT') && options.some(o => o.type === 'RTB');
+          }
+          
+          return true;
+        });
+      }
     }
     
     return result;

@@ -43,6 +43,14 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
     { value: "2Life", label: "2Life (Usato)" },
   ];
   
+  // Contract type options
+  const contractTypes = [
+    { value: "", label: "Tutti i contratti" },
+    { value: "NLT", label: "Noleggio a Lungo Termine" },
+    { value: "RTB", label: "Rent to Buy" },
+    { value: "NLTRTB", label: "NLT e RTB" },
+  ];
+  
   // Year options (current year down to 10 years ago)
   const currentYear = new Date().getFullYear();
   const years = [
@@ -169,6 +177,25 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
                 <div key={condition.value} className="flex items-center space-x-2">
                   <RadioGroupItem value={condition.value} id={`condition-${condition.value || 'any'}`} />
                   <Label htmlFor={`condition-${condition.value || 'any'}`} className="text-sm">{condition.label}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </AccordionContent>
+        </AccordionItem>
+        
+        {/* Contract Type Filter */}
+        <AccordionItem value="contractType">
+          <AccordionTrigger className="text-sm font-medium">Tipo Contratto</AccordionTrigger>
+          <AccordionContent>
+            <RadioGroup 
+              value={filters.contractType} 
+              onValueChange={(value) => onFilterChange({ contractType: value })}
+              className="space-y-2"
+            >
+              {contractTypes.map(type => (
+                <div key={type.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={type.value} id={`contract-${type.value || 'any'}`} />
+                  <Label htmlFor={`contract-${type.value || 'any'}`} className="text-sm">{type.label}</Label>
                 </div>
               ))}
             </RadioGroup>
