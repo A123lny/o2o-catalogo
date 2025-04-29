@@ -29,7 +29,9 @@ export default function AdminSidebar() {
       <div className="p-4 bg-primary">
         <div className="flex items-center">
           <Link href="/">
-            <span className="font-bold text-xl">AUTO<span className="opacity-80">PRESTIGE</span></span>
+            <div className="cursor-pointer">
+              <span className="font-bold text-xl">AUTO<span className="opacity-80">PRESTIGE</span></span>
+            </div>
           </Link>
         </div>
         <div className="text-sm opacity-80 mt-1">Pannello Amministrativo</div>
@@ -41,31 +43,31 @@ export default function AdminSidebar() {
         </div>
         
         <Link href="/admin">
-          <a className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin') ? 'bg-sidebar-accent' : ''}`}>
+          <div className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin') ? 'bg-sidebar-accent' : ''}`}>
             <LayoutDashboard className="w-5 h-5 mr-3" />
             <span>Dashboard</span>
-          </a>
+          </div>
         </Link>
         
         <Link href="/admin/vehicles">
-          <a className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/vehicles') || isActive('/admin/vehicles/new') || location.startsWith('/admin/vehicles/') ? 'bg-sidebar-accent' : ''}`}>
+          <div className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/vehicles') || isActive('/admin/vehicles/new') || location.startsWith('/admin/vehicles/') ? 'bg-sidebar-accent' : ''}`}>
             <Car className="w-5 h-5 mr-3" />
             <span>Veicoli</span>
-          </a>
+          </div>
         </Link>
         
         <Link href="/admin/requests">
-          <a className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/requests') ? 'bg-sidebar-accent' : ''}`}>
+          <div className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/requests') ? 'bg-sidebar-accent' : ''}`}>
             <Mail className="w-5 h-5 mr-3" />
             <span>Richieste</span>
-          </a>
+          </div>
         </Link>
         
         <Link href="/admin/brands-categories">
-          <a className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/brands-categories') ? 'bg-sidebar-accent' : ''}`}>
+          <div className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/brands-categories') ? 'bg-sidebar-accent' : ''}`}>
             <Tag className="w-5 h-5 mr-3" />
             <span>Marche & Categorie</span>
-          </a>
+          </div>
         </Link>
         
         <div className="px-4 py-2 text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider mt-4">
@@ -73,17 +75,17 @@ export default function AdminSidebar() {
         </div>
         
         <Link href="/admin/users">
-          <a className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/users') ? 'bg-sidebar-accent' : ''}`}>
+          <div className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/users') ? 'bg-sidebar-accent' : ''}`}>
             <Users className="w-5 h-5 mr-3" />
             <span>Utenti & Permessi</span>
-          </a>
+          </div>
         </Link>
         
         <Link href="/admin/settings">
-          <a className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/settings') ? 'bg-sidebar-accent' : ''}`}>
+          <div className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/settings') ? 'bg-sidebar-accent' : ''}`}>
             <Settings className="w-5 h-5 mr-3" />
             <span>Configurazione</span>
-          </a>
+          </div>
         </Link>
         
         <div className={`flex items-center px-4 py-3 hover:bg-sidebar-accent text-sidebar-foreground/80 cursor-pointer`}>
