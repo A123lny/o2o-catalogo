@@ -232,7 +232,7 @@ export default function VehicleDetailPage() {
   // Seleziona l'opzione predefinita al caricamento delle opzioni
   useEffect(() => {
     if (enhancedRentalOptions && enhancedRentalOptions.length > 0) {
-      // Trova le opzioni del tipo attivo
+      // Verifica se esistono opzioni del tipo attivo
       const typeOptions = enhancedRentalOptions.filter(option => option.type === activeContractType);
       
       if (typeOptions.length > 0) {
@@ -244,6 +244,15 @@ export default function VehicleDetailPage() {
         } else {
           // Altrimenti, prendi la prima opzione
           setSelectedRentalOption(typeOptions[0].id);
+        }
+      } else {
+        // Se non ci sono opzioni per il tipo selezionato, cambia automaticamente al tipo disponibile
+        const alternativeType = activeContractType === 'NLT' ? 'RTB' : 'NLT';
+        const alternativeOptions = enhancedRentalOptions.filter(option => option.type === alternativeType);
+        
+        if (alternativeOptions.length > 0) {
+          setActiveContractType(alternativeType);
+          // L'opzione verrà selezionata quando l'effetto verrà richiamato con il nuovo tipo di contratto
         }
       }
     }
@@ -582,23 +591,32 @@ export default function VehicleDetailPage() {
                       </div>
                     </div>
                 
-                    {/* Selettore tipo contratto */}
-                    <div className="flex space-x-4 mb-6">
-                      <Button
-                        variant={activeContractType === 'NLT' ? "default" : "outline"}
-                        className={`flex-1 ${activeContractType === 'NLT' ? 'bg-blue-500 hover:bg-blue-600' : ''}`}
-                        onClick={() => handleContractTypeChange('NLT')}
-                      >
-                        Noleggio a Lungo Termine
-                      </Button>
-                      <Button
-                        variant={activeContractType === 'RTB' ? "default" : "outline"}
-                        className={`flex-1 ${activeContractType === 'RTB' ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
-                        onClick={() => handleContractTypeChange('RTB')}
-                      >
-                        Rent to Buy
-                      </Button>
-                    </div>
+                    {/* Selettore tipo contratto - mostra solo i tipi di contratto disponibili */}
+                    {enhancedRentalOptions.length > 0 && (
+                      <div className="flex space-x-4 mb-6">
+                        {/* Verifica se esistono opzioni NLT */}
+                        {enhancedRentalOptions.some(option => option.type === 'NLT') && (
+                          <Button
+                            variant={activeContractType === 'NLT' ? "default" : "outline"}
+                            className={`flex-1 ${activeContractType === 'NLT' ? 'bg-blue-500 hover:bg-blue-600' : ''}`}
+                            onClick={() => handleContractTypeChange('NLT')}
+                          >
+                            Noleggio a Lungo Termine
+                          </Button>
+                        )}
+                        
+                        {/* Verifica se esistono opzioni RTB */}
+                        {enhancedRentalOptions.some(option => option.type === 'RTB') && (
+                          <Button
+                            variant={activeContractType === 'RTB' ? "default" : "outline"}
+                            className={`flex-1 ${activeContractType === 'RTB' ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
+                            onClick={() => handleContractTypeChange('RTB')}
+                          >
+                            Rent to Buy
+                          </Button>
+                        )}
+                      </div>
+                    )}
                 
                     {/* Opzioni contratto */}
                     {filteredOptions.length > 0 ? (
