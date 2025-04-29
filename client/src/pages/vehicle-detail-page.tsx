@@ -6,6 +6,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import VehicleGallery from "@/components/vehicle-gallery";
 import VehicleCard from "@/components/vehicle-card";
+import PageTitle from "@/components/page-title";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -317,6 +318,7 @@ export default function VehicleDetailPage() {
   
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
+      <PageTitle title={vehicle.title} />
       <Header />
       <main className="flex-grow">
         <div className="container mx-auto px-4 py-8">

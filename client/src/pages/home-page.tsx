@@ -4,6 +4,7 @@ import HeroSection from "@/components/hero-section";
 import CategoriesSection from "@/components/categories-section";
 import BrandsSection from "@/components/brands-section";
 import FeaturedVehicles from "@/components/featured-vehicles";
+import PageTitle from "@/components/page-title";
 import { useQuery } from "@tanstack/react-query";
 import { Category, Vehicle, Brand } from "@shared/schema";
 import { Loader2 } from "lucide-react";
@@ -37,6 +38,7 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <PageTitle suffix="Noleggio e Rent to Buy" />
       <Header />
       <main className="flex-1">
         <HeroSection />

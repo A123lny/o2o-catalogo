@@ -3,6 +3,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import SearchFilter from "@/components/search-filter";
 import VehicleCard from "@/components/vehicle-card";
+import PageTitle from "@/components/page-title";
 import { useQuery } from "@tanstack/react-query";
 import { Vehicle, Brand, Category } from "@shared/schema";
 import { Loader2 } from "lucide-react";
@@ -82,6 +83,7 @@ export default function CatalogPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <PageTitle title="Catalogo Veicoli" />
       <Header />
       <main className="flex-1 py-12 bg-neutral-100">
         <div className="container mx-auto px-4">
