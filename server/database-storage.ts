@@ -306,6 +306,20 @@ export class DatabaseStorage implements IStorage {
       });
     }
     
+    // Filtra per badge "Promo" se richiesto
+    if (filters?.isPromo === 'true' || filters?.isPromo === true) {
+      result = result.filter(vehicle => {
+        if (!vehicle.badges) return false;
+        
+        // Se badges è una stringa, convertila in array
+        const badges = typeof vehicle.badges === 'string' 
+          ? JSON.parse(vehicle.badges as string) 
+          : vehicle.badges;
+          
+        return Array.isArray(badges) && badges.includes("Promo");
+      });
+    }
+    
     // Filtra per tipo di contratto (NLT, RTB, o entrambi)
     if (filters?.contractType) {
       // Prima otteniamo le opzioni di noleggio per tutti i veicoli in un'unica query

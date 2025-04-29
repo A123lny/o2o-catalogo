@@ -18,6 +18,7 @@ export default function CatalogPage() {
     fuelType: "",
     condition: "",
     contractType: "",
+    isPromo: false,
   });
   
   // Leggi i parametri URL quando la pagina viene caricata
@@ -75,6 +76,7 @@ export default function CatalogPage() {
       fuelType: "",
       condition: "",
       contractType: "",
+      isPromo: false,
     });
   };
 

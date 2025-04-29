@@ -116,7 +116,10 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
         </div>
         
         <div className="mt-10 text-center">
-          <Link href="/catalog" className="inline-block px-6 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-md transition duration-300">
+          <Link 
+            href={activeTab === "featured" ? "/catalog?isPromo=true" : "/catalog"}
+            className="inline-block px-6 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-md transition duration-300"
+          >
             Scopri tutto il catalogo
           </Link>
         </div>

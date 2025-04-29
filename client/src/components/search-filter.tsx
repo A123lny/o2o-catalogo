@@ -22,6 +22,7 @@ interface SearchFilterProps {
     fuelType: string;
     condition: string;
     contractType: string;
+    isPromo: boolean;
   };
   onFilterChange: (filters: any) => void;
 }
@@ -102,6 +103,18 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
 
   return (
     <div className="space-y-6">
+      {/* Promo Filter Checkbox */}
+      <div className="flex items-center space-x-2 px-1 py-2">
+        <Checkbox 
+          id="promo-filter" 
+          checked={filters.isPromo}
+          onCheckedChange={(checked) => onFilterChange({ isPromo: !!checked })}
+        />
+        <Label htmlFor="promo-filter" className="text-sm font-medium cursor-pointer flex items-center">
+          <span className="text-red-600 font-semibold mr-1">PROMO</span> Solo veicoli in promozione
+        </Label>
+      </div>
+      
       <Accordion type="single" collapsible defaultValue="brands">
         {/* Brands Filter - Selezione multipla */}
         <AccordionItem value="brands">
