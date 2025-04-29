@@ -374,26 +374,44 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getFeaturedVehicles(): Promise<Vehicle[]> {
-    // Otteniamo tutti i veicoli
-    let allVehicles = await db.select().from(vehicles);
-    
-    // Filtra i veicoli con il badge "Promo" e senza il badge "Assegnato"
-    let featuredVehicles = allVehicles.filter(vehicle => {
-      if (!vehicle.badges) return false;
+    try {
+      // Ottiene le impostazioni delle promozioni
+      const settings = await this.getPromoSettings();
+      const maxVehicles = settings?.maxFeaturedVehicles || 16;
       
-      // Se badges è una stringa, convertila in array
-      const badges = typeof vehicle.badges === 'string' 
-        ? JSON.parse(vehicle.badges as string) 
-        : vehicle.badges;
+      // Ottiene i veicoli in promozione nell'ordine specificato
+      const featuredPromoVehicles = await this.getFeaturedPromoVehicles();
       
-      if (!Array.isArray(badges)) return false;
+      // Se abbiamo veicoli in promozione ordinati, li usiamo
+      if (featuredPromoVehicles.length > 0) {
+        return featuredPromoVehicles.slice(0, maxVehicles);
+      }
       
-      // Deve avere il badge "Promo" e non avere il badge "Assegnato"
-      return badges.includes("Promo") && !badges.includes("Assegnato");
-    });
-    
-    // Limita a 16 veicoli massimo
-    return featuredVehicles.slice(0, 16);
+      // Altrimenti, utilizziamo il vecchio metodo
+      // Otteniamo tutti i veicoli
+      let allVehicles = await db.select().from(vehicles);
+      
+      // Filtra i veicoli con il badge "Promo" e senza il badge "Assegnato"
+      let featuredVehicles = allVehicles.filter(vehicle => {
+        if (!vehicle.badges) return false;
+        
+        // Se badges è una stringa, convertila in array
+        const badges = typeof vehicle.badges === 'string' 
+          ? JSON.parse(vehicle.badges as string) 
+          : vehicle.badges;
+        
+        if (!Array.isArray(badges)) return false;
+        
+        // Deve avere il badge "Promo" e non avere il badge "Assegnato"
+        return badges.includes("Promo") && !badges.includes("Assegnato");
+      });
+      
+      // Limita al numero massimo di veicoli specificato nelle impostazioni
+      return featuredVehicles.slice(0, maxVehicles);
+    } catch (error) {
+      console.error("Errore nel recupero dei veicoli in evidenza:", error);
+      return [];
+    }
   }
   
   async getVehicle(id: number): Promise<Vehicle | undefined> {
@@ -625,5 +643,202 @@ export class DatabaseStorage implements IStorage {
       recentVehicles,
       recentRequests
     };
+  }
+  
+  // Promo Management
+  
+  async getPromoSettings(): Promise<PromoSettings | undefined> {
+    // Prova a ottenere le impostazioni esistenti
+    const [settings] = await db.select().from(promoSettings);
+    
+    // Se non esistono impostazioni, crea quelle di default
+    if (!settings) {
+      return this.updatePromoSettings({ maxFeaturedVehicles: 16 });
+    }
+    
+    return settings;
+  }
+  
+  async updatePromoSettings(settings: InsertPromoSettings): Promise<PromoSettings> {
+    // Verifica se esistono già delle impostazioni
+    const existingSettings = await db.select().from(promoSettings);
+    
+    if (existingSettings.length === 0) {
+      // Se non esistono, crea un nuovo record
+      const [newSettings] = await db
+        .insert(promoSettings)
+        .values({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .returning();
+      return newSettings;
+    } else {
+      // Altrimenti aggiorna il record esistente
+      const [updatedSettings] = await db
+        .update(promoSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .where(eq(promoSettings.id, existingSettings[0].id))
+        .returning();
+      return updatedSettings;
+    }
+  }
+  
+  async getFeaturedPromos(): Promise<FeaturedPromo[]> {
+    return db
+      .select()
+      .from(featuredPromos)
+      .orderBy(asc(featuredPromos.displayOrder));
+  }
+  
+  async getFeaturedPromoVehicles(): Promise<Array<Vehicle & { displayOrder: number }>> {
+    // Otteniamo tutte le promozioni in ordine
+    const promos = await this.getFeaturedPromos();
+    
+    if (promos.length === 0) {
+      return [];
+    }
+    
+    // Estraiamo gli ID dei veicoli
+    const vehicleIds = promos.map(promo => promo.vehicleId);
+    
+    // Otteniamo i veicoli
+    const allVehicles = await db
+      .select()
+      .from(vehicles)
+      .where(inArray(vehicles.id, vehicleIds));
+    
+    // Assegniamo l'ordine di visualizzazione a ciascun veicolo
+    const result = allVehicles.map(vehicle => {
+      const promo = promos.find(p => p.vehicleId === vehicle.id);
+      return {
+        ...vehicle,
+        displayOrder: promo ? promo.displayOrder : 999
+      };
+    });
+    
+    // Ordiniamo in base all'ordine di visualizzazione
+    return result.sort((a, b) => a.displayOrder - b.displayOrder);
+  }
+  
+  async addVehicleToPromo(vehicleId: number, displayOrder?: number): Promise<FeaturedPromo> {
+    // Verifica se il veicolo esiste
+    const vehicle = await this.getVehicle(vehicleId);
+    if (!vehicle) {
+      throw new Error(`Vehicle with id ${vehicleId} not found`);
+    }
+    
+    // Verifica se il veicolo è già in promo
+    const existing = await db
+      .select()
+      .from(featuredPromos)
+      .where(eq(featuredPromos.vehicleId, vehicleId));
+    
+    if (existing.length > 0) {
+      // Se è già in promo, aggiorniamo solo l'ordine se specificato
+      if (displayOrder !== undefined) {
+        const [updated] = await db
+          .update(featuredPromos)
+          .set({ displayOrder, updatedAt: new Date() })
+          .where(eq(featuredPromos.vehicleId, vehicleId))
+          .returning();
+        return updated;
+      }
+      return existing[0];
+    }
+    
+    // Se non è specificato un ordine, mettilo alla fine
+    let order = displayOrder;
+    if (order === undefined) {
+      const lastPromo = await db
+        .select()
+        .from(featuredPromos)
+        .orderBy(desc(featuredPromos.displayOrder))
+        .limit(1);
+      
+      order = lastPromo.length > 0 ? lastPromo[0].displayOrder + 1 : 0;
+    }
+    
+    // Aggiungi il veicolo alle promozioni
+    const [newPromo] = await db
+      .insert(featuredPromos)
+      .values({
+        vehicleId,
+        displayOrder: order,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    
+    // Assicuriamoci che il veicolo abbia il badge "Promo"
+    if (vehicle.badges) {
+      const badges = typeof vehicle.badges === 'string'
+        ? JSON.parse(vehicle.badges as string)
+        : vehicle.badges;
+      
+      if (Array.isArray(badges) && !badges.includes("Promo")) {
+        // Aggiungi il badge "Promo"
+        badges.push("Promo");
+        await this.updateVehicle(vehicleId, {
+          ...vehicle,
+          badges
+        });
+      }
+    } else {
+      // Se non ha badge, crea un array con "Promo"
+      await this.updateVehicle(vehicleId, {
+        ...vehicle,
+        badges: ["Promo"]
+      });
+    }
+    
+    return newPromo;
+  }
+  
+  async removeVehicleFromPromo(vehicleId: number): Promise<void> {
+    // Rimuovi il veicolo dalle promozioni
+    await db
+      .delete(featuredPromos)
+      .where(eq(featuredPromos.vehicleId, vehicleId));
+    
+    // Opzionalmente, rimuovi il badge "Promo" dal veicolo
+    const vehicle = await this.getVehicle(vehicleId);
+    if (vehicle && vehicle.badges) {
+      const badges = typeof vehicle.badges === 'string'
+        ? JSON.parse(vehicle.badges as string)
+        : vehicle.badges;
+      
+      if (Array.isArray(badges) && badges.includes("Promo")) {
+        // Rimuovi il badge "Promo"
+        const newBadges = badges.filter(b => b !== "Promo");
+        await this.updateVehicle(vehicleId, {
+          ...vehicle,
+          badges: newBadges
+        });
+      }
+    }
+  }
+  
+  async updatePromoOrder(promos: { vehicleId: number, displayOrder: number }[]): Promise<FeaturedPromo[]> {
+    // Aggiorna l'ordine di ogni promo uno alla volta
+    const results: FeaturedPromo[] = [];
+    
+    for (const promo of promos) {
+      const [updated] = await db
+        .update(featuredPromos)
+        .set({ displayOrder: promo.displayOrder, updatedAt: new Date() })
+        .where(eq(featuredPromos.vehicleId, promo.vehicleId))
+        .returning();
+      
+      if (updated) {
+        results.push(updated);
+      }
+    }
+    
+    // Ritorna tutte le promozioni nell'ordine aggiornato
+    return this.getFeaturedPromos();
   }
 }

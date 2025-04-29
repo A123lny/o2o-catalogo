@@ -3,7 +3,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import multer from "multer";
-import { insertVehicleSchema, insertBrandSchema, insertCategorySchema, insertRequestSchema, insertRentalOptionSchema } from "@shared/schema";
+import { 
+  insertVehicleSchema, 
+  insertBrandSchema, 
+  insertCategorySchema, 
+  insertRequestSchema, 
+  insertRentalOptionSchema,
+  insertPromoSettingsSchema
+} from "@shared/schema";
 
 // Configure multer for in-memory storage
 const upload = multer({ 
@@ -455,6 +462,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({ message: "Error deleting request" });
+    }
+  });
+
+  // Gestione Promozioni
+  
+  // Ottieni le impostazioni delle promozioni
+  app.get("/api/admin/promo/settings", isAdmin, async (req, res) => {
+    try {
+      const settings = await storage.getPromoSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching promo settings" });
+    }
+  });
+  
+  // Aggiorna le impostazioni delle promozioni
+  app.put("/api/admin/promo/settings", isAdmin, async (req, res) => {
+    try {
+      const validatedData = insertPromoSettingsSchema.parse(req.body);
+      const settings = await storage.updatePromoSettings(validatedData);
+      res.json(settings);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid promo settings data" });
+    }
+  });
+  
+  // Ottieni i veicoli in promozione con il loro ordine
+  app.get("/api/admin/promo/vehicles", isAdmin, async (req, res) => {
+    try {
+      const promoVehicles = await storage.getFeaturedPromoVehicles();
+      res.json(promoVehicles);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching promo vehicles" });
+    }
+  });
+  
+  // Aggiungi un veicolo alla promozione
+  app.post("/api/admin/promo/vehicles/:id", isAdmin, async (req, res) => {
+    try {
+      const vehicleId = parseInt(req.params.id);
+      const { displayOrder } = req.body;
+      
+      const promoItem = await storage.addVehicleToPromo(
+        vehicleId, 
+        displayOrder !== undefined ? parseInt(displayOrder) : undefined
+      );
+      
+      res.status(201).json(promoItem);
+    } catch (error) {
+      res.status(500).json({ message: "Error adding vehicle to promo" });
+    }
+  });
+  
+  // Rimuovi un veicolo dalla promozione
+  app.delete("/api/admin/promo/vehicles/:id", isAdmin, async (req, res) => {
+    try {
+      const vehicleId = parseInt(req.params.id);
+      await storage.removeVehicleFromPromo(vehicleId);
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ message: "Error removing vehicle from promo" });
+    }
+  });
+  
+  // Aggiorna l'ordine dei veicoli in promozione
+  app.put("/api/admin/promo/order", isAdmin, async (req, res) => {
+    try {
+      const { promos } = req.body;
+      
+      if (!Array.isArray(promos)) {
+        return res.status(400).json({ message: "Invalid promos data" });
+      }
+      
+      const updatedPromos = await storage.updatePromoOrder(promos);
+      res.json(updatedPromos);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating promo order" });
     }
   });
 
