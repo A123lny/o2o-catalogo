@@ -143,6 +143,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error fetching rental options" });
     }
   });
+  
+  // Get rental options for all vehicles (for filtering)
+  app.get("/api/vehicles/options", async (req, res) => {
+    try {
+      // Ottieni tutte le opzioni di noleggio dal database
+      const allOptions = await storage.getAllRentalOptions();
+      res.json(allOptions);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching rental options" });
+    }
+  });
 
   // Admin API routes
 

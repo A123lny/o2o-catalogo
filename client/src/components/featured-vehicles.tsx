@@ -22,31 +22,54 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
     const hasBadge = (vehicle: Vehicle, badgeName: string) => {
       if (!vehicle.badges) return false;
       
-      const badges = typeof vehicle.badges === 'string'
-        ? JSON.parse(vehicle.badges as string)
-        : vehicle.badges;
-        
-      return Array.isArray(badges) && badges.includes(badgeName);
+      // Assicuriamoci che badges sia un array
+      let badgesArray: string[] = [];
+      
+      if (typeof vehicle.badges === 'string') {
+        try {
+          badgesArray = JSON.parse(vehicle.badges as string);
+        } catch (e) {
+          console.error("Errore nel parsing dei badge:", e);
+          return false;
+        }
+      } else if (Array.isArray(vehicle.badges)) {
+        badgesArray = vehicle.badges as unknown as string[];
+      }
+      
+      return badgesArray.includes(badgeName);
     };
     
-    // Ottieni i veicoli di tipo NLT o RTB
-    const getVehiclesByContract = (vehicleList: Vehicle[], contractType: string) => {
-      return vehicleList
-        .filter(v => {
-          // Verifica se il veicolo ha il badge del tipo di contratto desiderato
-          const hasContractType = v.badges && hasBadge(v, contractType);
-          return hasContractType;
-        })
-        .slice(0, 8);
-    };
+    // Per i veicoli di tipo NLT/RTB, controlliamo le opzioni del veicolo
+    const { data: allRentalOptions } = useQuery({
+      queryKey: ['/api/vehicles/options'],
+      enabled: activeTab === "nlt" || activeTab === "rtb",
+    });
+    
+    // Identificare i veicoli con opzioni NLT o RTB
+    const vehiclesWithContractTypes = new Map<number, Set<string>>();
+    
+    if (allRentalOptions) {
+      allRentalOptions.forEach((option: any) => {
+        if (!vehiclesWithContractTypes.has(option.vehicleId)) {
+          vehiclesWithContractTypes.set(option.vehicleId, new Set<string>());
+        }
+        vehiclesWithContractTypes.get(option.vehicleId)?.add(option.type);
+      });
+    }
     
     switch (activeTab) {
       case "nlt":
-        // Mostra veicoli con badge NLT
-        return getVehiclesByContract(vehicles, "NLT").slice(0, 8);
+        // Mostra veicoli con opzioni NLT
+        return vehicles
+          .filter(v => vehiclesWithContractTypes.has(v.id) && 
+                     vehiclesWithContractTypes.get(v.id)?.has("NLT"))
+          .slice(0, 8);
       case "rtb":
-        // Mostra veicoli con badge RTB
-        return getVehiclesByContract(vehicles, "RTB").slice(0, 8);
+        // Mostra veicoli con opzioni RTB
+        return vehicles
+          .filter(v => vehiclesWithContractTypes.has(v.id) && 
+                     vehiclesWithContractTypes.get(v.id)?.has("RTB"))
+          .slice(0, 8);
       case "2life":
         // Mostra veicoli usati (2Life)
         return vehicles
