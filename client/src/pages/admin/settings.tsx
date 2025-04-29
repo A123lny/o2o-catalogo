@@ -430,9 +430,6 @@ export default function SettingsPage() {
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
-                            <FormDescription>
-                              Partita IVA dell'azienda
-                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -446,7 +443,7 @@ export default function SettingsPage() {
                             <FormItem>
                               <FormLabel>Facebook</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="URL pagina Facebook" />
+                                <Input {...field} placeholder="https://facebook.com/..." />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -460,7 +457,7 @@ export default function SettingsPage() {
                             <FormItem>
                               <FormLabel>Instagram</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="URL pagina Instagram" />
+                                <Input {...field} placeholder="https://instagram.com/..." />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -474,7 +471,7 @@ export default function SettingsPage() {
                             <FormItem>
                               <FormLabel>LinkedIn</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="URL pagina LinkedIn" />
+                                <Input {...field} placeholder="https://linkedin.com/..." />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -489,21 +486,27 @@ export default function SettingsPage() {
                           <FormItem>
                             <FormLabel>Testo Footer</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="Testo da mostrare nel footer" />
+                              <Input {...field} />
                             </FormControl>
                             <FormDescription>
-                              Es. "Tutti i diritti riservati." (il nome del sito e l'anno verranno aggiunti automaticamente)
+                              Testo visualizzato nel footer del sito (es. copyright)
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       
-                      <div className="flex justify-end">
-                        <Button type="submit">
-                          <Save className="h-4 w-4 mr-2" /> Salva Impostazioni
-                        </Button>
-                      </div>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvataggio in corso...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-2" /> Salva Impostazioni
+                          </>
+                        )}
+                      </Button>
                     </form>
                   </Form>
                 </CardContent>
@@ -512,432 +515,235 @@ export default function SettingsPage() {
             
             {/* Province Settings */}
             <TabsContent value="provinces">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Aggiungi Provincia</CardTitle>
-                    <CardDescription>
-                      Aggiungi una nuova provincia al sistema
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={onProvinceSubmit} className="space-y-4">
-                      <div className="space-y-2">
-                        <FormLabel>Nome Provincia</FormLabel>
-                        <Input 
-                          placeholder="Es. Milano" 
-                          value={newProvince.name} 
-                          onChange={(e) => setNewProvince({...newProvince, name: e.target.value})}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <FormLabel>Codice Provincia</FormLabel>
-                        <Input 
-                          placeholder="Es. MI" 
-                          maxLength={2}
-                          value={newProvince.code} 
-                          onChange={(e) => setNewProvince({...newProvince, code: e.target.value.toUpperCase()})}
-                        />
-                        <FormDescription>
-                          Il codice deve essere di 2 caratteri (es. MI per Milano)
-                        </FormDescription>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="province-active" 
-                          checked={newProvince.isActive}
-                          onCheckedChange={(checked) => 
-                            setNewProvince({...newProvince, isActive: checked as boolean})
-                          }
-                        />
-                        <label
-                          htmlFor="province-active"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Provincia attiva
-                        </label>
-                      </div>
-                      
-                      <div className="pt-2">
-                        <Button type="submit" disabled={isSubmitting}>
-                          {isSubmitting ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Aggiunta in corso...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="h-4 w-4 mr-2" /> Aggiungi Provincia
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Gestione Province</CardTitle>
-                    <CardDescription>
-                      Attiva o disattiva province in blocco
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {selectedProvinces.length > 0 && (
-                      <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded-md">
-                        <div className="text-sm">
-                          {selectedProvinces.length} province selezionate
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={handleActivateProvinces}
-                            disabled={isSubmitting}
-                          >
-                            Attiva
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={handleDeactivateProvinces}
-                            disabled={isSubmitting}
-                          >
-                            Disattiva
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="border rounded-md">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-12">
-                              <Checkbox 
-                                checked={selectedAllProvinces || (provinces && provinces.length > 0 && selectedProvinces.length === provinces.length)} 
-                                onCheckedChange={(checked) => {
-                                  if (provinces && provinces.length > 0) {
-                                    if (checked) {
-                                      setSelectedProvinces(provinces.map(province => province.id || 0).filter(id => id > 0));
-                                      setSelectedAllProvinces(true);
-                                    } else {
-                                      setSelectedProvinces([]);
-                                      setSelectedAllProvinces(false);
-                                    }
-                                  }
-                                }}
-                              />
-                            </TableHead>
-                            <TableHead>Nome</TableHead>
-                            <TableHead>Codice</TableHead>
-                            <TableHead>Stato</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {isLoadingProvinces ? (
-                            <TableRow>
-                              <TableCell colSpan={4} className="text-center py-4">
-                                <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                              </TableCell>
-                            </TableRow>
-                          ) : provinces && provinces.length > 0 ? (
-                            provinces.map((province: any) => (
-                              <TableRow key={province.id}>
-                                <TableCell>
-                                  <Checkbox 
-                                    checked={selectedProvinces.includes(province.id || 0)} 
-                                    onCheckedChange={(checked) => {
-                                      const id = province.id || 0;
-                                      if (id > 0) {
-                                        if (checked) {
-                                          setSelectedProvinces(prev => [...prev, id]);
-                                        } else {
-                                          setSelectedProvinces(prev => prev.filter(provinceId => provinceId !== id));
-                                        }
-                                      }
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell>{province.name}</TableCell>
-                                <TableCell>{province.code}</TableCell>
-                                <TableCell>
-                                  {province.isActive ? (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                      Attiva
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                      Disattiva
-                                    </span>
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={4} className="text-center py-4">
-                                Nessuna provincia trovata
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <ProvincesTab />
             </TabsContent>
             
             {/* Security Settings */}
             <TabsContent value="security">
               <Card>
                 <CardHeader>
-                  <CardTitle>Impostazioni Sicurezza</CardTitle>
+                  <CardTitle>Impostazioni di Sicurezza</CardTitle>
                   <CardDescription>
-                    Configura i parametri di sicurezza dell'applicazione
+                    Configura le impostazioni di sicurezza del sistema
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Form {...securityForm}>
-                    <form onSubmit={securityForm.handleSubmit(onSecuritySubmit)} className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-medium mb-2">Password</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={securityForm.control}
-                            name="passwordMinLength"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Lunghezza minima</FormLabel>
-                                <FormControl>
-                                  <Input type="number" min="6" max="30" {...field} value={field.value.toString()} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={securityForm.control}
-                            name="passwordExpiryDays"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Scadenza password (giorni)</FormLabel>
-                                <FormControl>
-                                  <Input type="number" min="0" max="365" {...field} value={field.value.toString()} />
-                                </FormControl>
-                                <FormDescription>
-                                  0 = mai
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                          <FormField
-                            control={securityForm.control}
-                            name="passwordHistoryCount"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Ricorda ultime n password</FormLabel>
-                                <FormControl>
-                                  <Input type="number" min="0" max="20" {...field} value={field.value.toString()} />
-                                </FormControl>
-                                <FormDescription>
-                                  0 = disabilitato
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                          <FormField
-                            control={securityForm.control}
-                            name="passwordRequireUppercase"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between space-x-3 space-y-0 rounded-md border p-4">
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel>Richiedi maiuscole</FormLabel>
-                                  <FormDescription>
-                                    Almeno un carattere maiuscolo
-                                  </FormDescription>
-                                </div>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={securityForm.control}
-                            name="passwordRequireLowercase"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between space-x-3 space-y-0 rounded-md border p-4">
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel>Richiedi minuscole</FormLabel>
-                                  <FormDescription>
-                                    Almeno un carattere minuscolo
-                                  </FormDescription>
-                                </div>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                          <FormField
-                            control={securityForm.control}
-                            name="passwordRequireNumber"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between space-x-3 space-y-0 rounded-md border p-4">
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel>Richiedi numeri</FormLabel>
-                                  <FormDescription>
-                                    Almeno un carattere numerico
-                                  </FormDescription>
-                                </div>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={securityForm.control}
-                            name="passwordRequireSpecialChar"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between space-x-3 space-y-0 rounded-md border p-4">
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel>Richiedi caratteri speciali</FormLabel>
-                                  <FormDescription>
-                                    Almeno un carattere speciale ($, @, !, ecc)
-                                  </FormDescription>
-                                </div>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-lg font-medium mb-2">Protezione accesso</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={securityForm.control}
-                            name="sessionTimeoutMinutes"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Timeout sessione (minuti)</FormLabel>
-                                <FormControl>
-                                  <Input type="number" min="5" max="1440" {...field} value={field.value.toString()} />
-                                </FormControl>
-                                <FormDescription>
-                                  Tempo di inattività dopo il quale la sessione scade
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={securityForm.control}
-                            name="failedLoginAttempts"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Tentativi di accesso falliti</FormLabel>
-                                <FormControl>
-                                  <Input type="number" min="1" max="10" {...field} value={field.value.toString()} />
-                                </FormControl>
-                                <FormDescription>
-                                  Numero di tentativi prima del blocco account
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                          <FormField
-                            control={securityForm.control}
-                            name="lockoutDurationMinutes"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Durata blocco (minuti)</FormLabel>
-                                <FormControl>
-                                  <Input type="number" min="1" max="1440" {...field} value={field.value.toString()} />
-                                </FormControl>
-                                <FormDescription>
-                                  Tempo di blocco dopo troppi tentativi falliti
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={securityForm.control}
-                            name="enable2FA"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between space-x-3 space-y-0 rounded-md border p-4">
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel>Autenticazione a due fattori</FormLabel>
-                                  <FormDescription>
-                                    Abilita 2FA per gli account amministratore
-                                  </FormDescription>
-                                </div>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-end">
-                        <Button type="submit" disabled={isSubmitting}>
-                          {isSubmitting ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvataggio...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="h-4 w-4 mr-2" /> Salva Impostazioni
-                            </>
+                    <form onSubmit={securityForm.handleSubmit(onSecuritySubmit)} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={securityForm.control}
+                          name="minPasswordLength"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Lunghezza minima password</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                              </FormControl>
+                              <FormDescription>
+                                Minimo 6 caratteri, massimo 30
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
                           )}
-                        </Button>
+                        />
+                        
+                        <FormField
+                          control={securityForm.control}
+                          name="passwordExpiryDays"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Scadenza password (giorni)</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                              </FormControl>
+                              <FormDescription>
+                                0 = nessuna scadenza
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={securityForm.control}
+                          name="passwordHistoryCount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Storico password</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                              </FormControl>
+                              <FormDescription>
+                                Numero di password precedenti da ricordare (0-20)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={securityForm.control}
+                          name="failedLoginAttempts"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Tentativi di accesso falliti</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                              </FormControl>
+                              <FormDescription>
+                                Tentativi falliti prima del blocco dell'account
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={securityForm.control}
+                        name="lockoutDurationMinutes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Durata blocco (minuti)</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                            </FormControl>
+                            <FormDescription>
+                              Durata del blocco dell'account dopo i tentativi falliti
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={securityForm.control}
+                          name="requireUppercase"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between p-3 rounded-md border">
+                              <div>
+                                <FormLabel>Richiedi maiuscole</FormLabel>
+                                <FormDescription>
+                                  La password deve contenere almeno un carattere maiuscolo
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch 
+                                  checked={field.value} 
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={securityForm.control}
+                          name="requireLowercase"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between p-3 rounded-md border">
+                              <div>
+                                <FormLabel>Richiedi minuscole</FormLabel>
+                                <FormDescription>
+                                  La password deve contenere almeno un carattere minuscolo
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch 
+                                  checked={field.value} 
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={securityForm.control}
+                          name="requireNumber"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between p-3 rounded-md border">
+                              <div>
+                                <FormLabel>Richiedi numeri</FormLabel>
+                                <FormDescription>
+                                  La password deve contenere almeno un numero
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch 
+                                  checked={field.value} 
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={securityForm.control}
+                          name="requireSpecialChar"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between p-3 rounded-md border">
+                              <div>
+                                <FormLabel>Richiedi caratteri speciali</FormLabel>
+                                <FormDescription>
+                                  La password deve contenere almeno un carattere speciale
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch 
+                                  checked={field.value} 
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={securityForm.control}
+                        name="enable2FA"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between p-3 rounded-md border">
+                            <div>
+                              <FormLabel>Abilita 2FA</FormLabel>
+                              <FormDescription>
+                                Richiedi autenticazione a due fattori per gli accessi
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch 
+                                checked={field.value} 
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvataggio in corso...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-2" /> Salva Impostazioni
+                          </>
+                        )}
+                      </Button>
                     </form>
                   </Form>
                 </CardContent>
@@ -948,61 +754,44 @@ export default function SettingsPage() {
             <TabsContent value="logs">
               <Card>
                 <CardHeader>
-                  <CardTitle>Log delle Attività</CardTitle>
+                  <CardTitle>Log di Attività</CardTitle>
                   <CardDescription>
-                    Visualizza le operazioni recenti del sistema
+                    Visualizza le ultime attività nel sistema
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="border rounded-md overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Data/Ora</TableHead>
-                          <TableHead>Utente</TableHead>
-                          <TableHead>Azione</TableHead>
-                          <TableHead>Dettagli</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {isLoadingLogs ? (
+                  {isLoadingLogs ? (
+                    <div className="w-full py-10 flex justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : !activityLogs || activityLogs.length === 0 ? (
+                    <div className="text-center py-8 border rounded-md">
+                      Nessun log di attività disponibile
+                    </div>
+                  ) : (
+                    <div className="border rounded-md">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center py-8">
-                              <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                            </TableCell>
+                            <TableHead>Data</TableHead>
+                            <TableHead>Utente</TableHead>
+                            <TableHead>Azione</TableHead>
+                            <TableHead>Dettagli</TableHead>
                           </TableRow>
-                        ) : activityLogs && activityLogs.length > 0 ? (
-                          activityLogs.map((log: any) => (
-                            <TableRow key={log.id}>
-                              <TableCell className="whitespace-nowrap">
-                                {new Date(log.createdAt).toLocaleString('it-IT')}
-                              </TableCell>
-                              <TableCell>{log.username || log.userId}</TableCell>
+                        </TableHeader>
+                        <TableBody>
+                          {activityLogs.map((log, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{new Date(log.createdAt).toLocaleString('it-IT')}</TableCell>
+                              <TableCell>{log.username || 'Sistema'}</TableCell>
                               <TableCell>{log.action}</TableCell>
-                              <TableCell>
-                                {log.entityType && 
-                                  <span className="text-sm text-muted-foreground">
-                                    {log.entityType} {log.entityId ? `#${log.entityId}` : ''}
-                                  </span>
-                                }
-                                {log.details && 
-                                  <span className="text-sm block text-muted-foreground truncate max-w-[300px]">
-                                    {typeof log.details === 'object' ? JSON.stringify(log.details) : log.details}
-                                  </span>
-                                }
-                              </TableCell>
+                              <TableCell className="max-w-[200px] truncate">{log.details}</TableCell>
                             </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center py-8">
-                              Nessun log di attività trovato
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
