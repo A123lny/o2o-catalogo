@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Save, Trash2 } from "lucide-react";
+import { Loader2, Save, Trash2, RefreshCw } from "lucide-react";
 
 // Schema per la validazione delle province
 const provinceSchema = z.object({
@@ -40,50 +40,68 @@ const provinceSchema = z.object({
 
 type ProvinceValues = z.infer<typeof provinceSchema>;
 
+// Definizione del tipo Province
+interface Province {
+  id: number;
+  name: string;
+  code: string;
+  isActive: boolean;
+  displayOrder: number;
+}
+
 export default function ProvincesTab() {
   const { toast } = useToast();
-  const [newProvince, setNewProvince] = useState<ProvinceValues>({ name: "", code: "", isActive: true });
+  const [newProvince, setNewProvince] = useState<ProvinceValues>({ 
+    name: "", 
+    code: "", 
+    isActive: true 
+  });
   const [selectedProvinces, setSelectedProvinces] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch provinces
-  const { data: provinces = [], isLoading: isLoadingProvinces, refetch } = useQuery({
+  // Fetch province
+  const { 
+    data: provinces = [], 
+    isLoading,
+    refetch 
+  } = useQuery<Province[]>({
     queryKey: ['/api/admin/provinces'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/admin/provinces');
-      if (!response.ok) throw new Error('Errore nel recupero delle province');
-      return await response.json();
+      try {
+        const response = await fetch('/api/admin/provinces');
+        if (!response.ok) {
+          throw new Error('Errore nel recupero delle province');
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Errore nel caricamento delle province:", error);
+        toast({
+          title: "Errore",
+          description: "Impossibile caricare le province. Riprova più tardi.",
+          variant: "destructive",
+        });
+        return [];
+      }
     }
   });
 
-  // Funzione per selezionare/deselezionare una provincia
-  const handleSelectProvince = (id: number, isChecked: boolean) => {
-    if (isChecked) {
-      setSelectedProvinces(prev => [...prev, id]);
-    } else {
-      setSelectedProvinces(prev => prev.filter(provinceId => provinceId !== id));
-    }
-  };
-
-  // Funzione per selezionare/deselezionare tutte le province
-  const handleSelectAllProvinces = (isChecked: boolean) => {
-    if (isChecked && provinces && provinces.length > 0) {
-      const provinceIds = provinces.map((province: any) => province.id || 0).filter(id => id > 0);
-      setSelectedProvinces(provinceIds);
-    } else {
-      setSelectedProvinces([]);
-    }
-  };
-
-  // Mutation per aggiungere una provincia
+  // Aggiungi provincia
   const addProvince = useMutation({
     mutationFn: async (data: ProvinceValues) => {
       setIsSubmitting(true);
-      const response = await apiRequest('POST', '/api/admin/provinces', data);
+      const response = await fetch('/api/admin/provinces', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Errore durante l\'aggiunta della provincia');
       }
+      
       return await response.json();
     },
     onSuccess: () => {
@@ -91,9 +109,7 @@ export default function ProvincesTab() {
         title: "Provincia aggiunta",
         description: "La provincia è stata aggiunta con successo.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/provinces'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/provinces'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/provinces/active'] });
+      refetch();
       setNewProvince({ name: "", code: "", isActive: true });
       setIsSubmitting(false);
     },
@@ -103,20 +119,22 @@ export default function ProvincesTab() {
         description: error.message || "Si è verificato un errore durante l'aggiunta della provincia.",
         variant: "destructive",
       });
-      console.error("Error adding province:", error);
       setIsSubmitting(false);
-    }
+    },
   });
 
-  // Mutation per eliminare una provincia
+  // Elimina provincia
   const deleteProvince = useMutation({
     mutationFn: async (id: number) => {
       setIsSubmitting(true);
-      const response = await apiRequest('DELETE', `/api/admin/provinces/${id}`);
+      const response = await fetch(`/api/admin/provinces/${id}`, {
+        method: 'DELETE',
+      });
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Errore durante l\'eliminazione della provincia');
+        throw new Error('Errore durante l\'eliminazione della provincia');
       }
+      
       return id;
     },
     onSuccess: () => {
@@ -124,32 +142,36 @@ export default function ProvincesTab() {
         title: "Provincia eliminata",
         description: "La provincia è stata eliminata con successo.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/provinces'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/provinces'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/provinces/active'] });
+      refetch();
       setSelectedProvinces([]);
       setIsSubmitting(false);
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: "Errore",
-        description: error.message || "Si è verificato un errore durante l'eliminazione della provincia.",
+        description: "Si è verificato un errore durante l'eliminazione della provincia.",
         variant: "destructive",
       });
-      console.error("Error deleting province:", error);
       setIsSubmitting(false);
-    }
+    },
   });
 
-  // Mutation per aggiornare lo stato delle province
+  // Aggiorna stato province
   const updateProvinceStatus = useMutation({
     mutationFn: async ({ ids, isActive }: { ids: number[], isActive: boolean }) => {
       setIsSubmitting(true);
-      const response = await apiRequest('PUT', '/api/admin/provinces/update-status', { ids, isActive });
+      const response = await fetch('/api/admin/provinces/update-status', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids, isActive }),
+      });
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Errore durante l\'aggiornamento dello stato delle province');
+        throw new Error('Errore durante l\'aggiornamento dello stato delle province');
       }
+      
       return await response.json();
     },
     onSuccess: () => {
@@ -157,28 +179,44 @@ export default function ProvincesTab() {
         title: "Stato province aggiornato",
         description: "Lo stato delle province selezionate è stato aggiornato con successo.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/provinces'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/provinces'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/provinces/active'] });
+      refetch();
       setSelectedProvinces([]);
       setIsSubmitting(false);
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: "Errore",
-        description: error.message || "Si è verificato un errore durante l'aggiornamento dello stato delle province.",
+        description: "Si è verificato un errore durante l'aggiornamento dello stato delle province.",
         variant: "destructive",
       });
-      console.error("Error updating province status:", error);
       setIsSubmitting(false);
-    }
+    },
   });
 
+  // Handler per selezionare/deselezionare una provincia
+  const handleSelectProvince = (id: number, isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedProvinces(prev => [...prev, id]);
+    } else {
+      setSelectedProvinces(prev => prev.filter(provinceId => provinceId !== id));
+    }
+  };
+
+  // Handler per selezionare/deselezionare tutte le province
+  const handleSelectAllProvinces = (isChecked: boolean) => {
+    if (isChecked && provinces.length > 0) {
+      setSelectedProvinces(provinces.map(province => province.id));
+    } else {
+      setSelectedProvinces([]);
+    }
+  };
+
+  // Handler per attivare province selezionate
   const handleActivateProvinces = () => {
     if (selectedProvinces.length === 0) {
       toast({
-        title: "Selezione vuota",
-        description: "Seleziona almeno una provincia.",
+        title: "Nessuna provincia selezionata",
+        description: "Seleziona almeno una provincia da attivare.",
         variant: "destructive",
       });
       return;
@@ -187,11 +225,12 @@ export default function ProvincesTab() {
     updateProvinceStatus.mutate({ ids: selectedProvinces, isActive: true });
   };
 
+  // Handler per disattivare province selezionate
   const handleDeactivateProvinces = () => {
     if (selectedProvinces.length === 0) {
       toast({
-        title: "Selezione vuota",
-        description: "Seleziona almeno una provincia.",
+        title: "Nessuna provincia selezionata",
+        description: "Seleziona almeno una provincia da disattivare.",
         variant: "destructive",
       });
       return;
@@ -200,18 +239,31 @@ export default function ProvincesTab() {
     updateProvinceStatus.mutate({ ids: selectedProvinces, isActive: false });
   };
 
+  // Handler per eliminare una provincia
   const handleDeleteProvince = (id: number) => {
     if (window.confirm('Sei sicuro di voler eliminare questa provincia?')) {
       deleteProvince.mutate(id);
     }
   };
 
-  const onProvinceSubmit = (e: React.FormEvent) => {
+  // Handler per l'invio del form di aggiunta provincia
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validazione
     if (!newProvince.name || !newProvince.code) {
       toast({
-        title: "Dati mancanti",
-        description: "Inserisci nome e codice provincia.",
+        title: "Campi obbligatori mancanti",
+        description: "Compila tutti i campi obbligatori.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (newProvince.code.length !== 2) {
+      toast({
+        title: "Codice provincia non valido",
+        description: "Il codice provincia deve essere di 2 caratteri.",
         variant: "destructive",
       });
       return;
@@ -231,10 +283,11 @@ export default function ProvincesTab() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onProvinceSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <FormLabel>Nome Provincia</FormLabel>
+              <FormLabel htmlFor="province-name">Nome Provincia</FormLabel>
               <Input 
+                id="province-name"
                 placeholder="Es. Milano" 
                 value={newProvince.name} 
                 onChange={(e) => setNewProvince({...newProvince, name: e.target.value})}
@@ -242,8 +295,9 @@ export default function ProvincesTab() {
             </div>
             
             <div className="space-y-2">
-              <FormLabel>Codice Provincia</FormLabel>
+              <FormLabel htmlFor="province-code">Codice Provincia</FormLabel>
               <Input 
+                id="province-code"
                 placeholder="Es. MI" 
                 maxLength={2}
                 value={newProvince.code} 
@@ -312,20 +366,20 @@ export default function ProvincesTab() {
               size="sm"
               disabled={isSubmitting}
             >
-              Aggiorna
+              <RefreshCw className="h-4 w-4 mr-1" /> Aggiorna
             </Button>
           </div>
           
-          {isLoadingProvinces ? (
+          {isLoading ? (
             <div className="w-full py-10 flex justify-center">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
-          ) : !provinces || provinces.length === 0 ? (
+          ) : provinces.length === 0 ? (
             <div className="text-center py-8 border rounded-md">
               Nessuna provincia trovata
             </div>
           ) : (
-            <div className="border rounded-md">
+            <div className="border rounded-md overflow-auto max-h-[400px]">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -342,7 +396,7 @@ export default function ProvincesTab() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {provinces.map((province: any) => (
+                  {provinces.map((province) => (
                     <TableRow key={province.id}>
                       <TableCell>
                         <Checkbox 
