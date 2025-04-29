@@ -20,6 +20,7 @@ import SettingsPage from "@/pages/admin/settings";
 import PromoManagementPage from "@/pages/admin/promo-management";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
+import PageTitle from "@/components/page-title";
 
 function Router() {
   return (
