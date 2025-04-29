@@ -18,7 +18,10 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
   // Determina il tipo di noleggio in base alle opzioni disponibili
   const hasNLT = rentalOptions?.some(option => option.type === 'NLT');
   const hasRTB = rentalOptions?.some(option => option.type === 'RTB');
-  const isPromo = vehicle.id % 5 === 0; // Simuliamo la promo per la demo
+  
+  // Verifica se il veicolo ha il badge "Promo"
+  const isPromo = vehicle.badges && Array.isArray(vehicle.badges) && 
+    (vehicle.badges as string[]).includes("Promo");
   
   // Determina lo stato dell'auto in base al chilometraggio
   const isNew = vehicle.mileage < 1000;
@@ -48,16 +51,13 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           {hasRTB && (
             <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded">RTB</span>
           )}
-          {isPromo && (
-            <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded">PROMO</span>
-          )}
         </div>
         
-        {/* Badge prezzo mensile in alto a destra */}
-        {lowestPrice && (
+        {/* Mostro il badge PROMO in alto a destra solo se è una promo */}
+        {isPromo && (
           <div className="absolute top-0 right-0 mt-3 mr-3">
-            <span className="bg-orange-500 text-white text-sm font-bold px-3 py-1 rounded">
-              €{lowestPrice}/mese
+            <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded">
+              PROMO
             </span>
           </div>
         )}
