@@ -70,8 +70,16 @@ export default function HeroSection() {
   const handleSearch = () => {
     // Convert filters to query params
     const queryParams = new URLSearchParams();
+    
+    // Gestisci diversamente array e valori singoli
     Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== "all") {
+      if (Array.isArray(value)) {
+        // Se è un array e ha elementi, aggiungi come stringa separata da virgole
+        if (value.length > 0) {
+          queryParams.append(key, value.join(','));
+        }
+      } else if (value && value !== "all") {
+        // Per valori singoli
         queryParams.append(key, value);
       }
     });
@@ -82,10 +90,24 @@ export default function HeroSection() {
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    // Se stiamo cambiando marca, resettiamo il modello
-    if (key === 'brandId') {
-      setFilters(prev => ({ ...prev, [key]: value, modelId: "" }));
-    } else {
+    // Gestione della selezione della marca (ora come array)
+    if (key === 'brand') {
+      if (value === "all") {
+        setFilters(prev => ({ ...prev, brandIds: [], categoryIds: [] }));
+      } else {
+        setFilters(prev => ({ ...prev, brandIds: [value] }));
+      }
+    } 
+    // Gestione della selezione della categoria (ora come array) 
+    else if (key === 'category') {
+      if (value === "all") {
+        setFilters(prev => ({ ...prev, categoryIds: [] }));
+      } else {
+        setFilters(prev => ({ ...prev, categoryIds: [value] }));
+      }
+    }
+    // Altri filtri non array
+    else {
       setFilters(prev => ({ ...prev, [key]: value }));
     }
   };
@@ -128,8 +150,8 @@ export default function HeroSection() {
               <div>
                 <label className="block text-sm font-medium text-neutral-600 mb-1">Marca</label>
                 <Select
-                  value={filters.brandId || "all"}
-                  onValueChange={(value) => handleFilterChange('brandId', value)}
+                  value={filters.brandIds.length === 1 ? filters.brandIds[0] : "all"}
+                  onValueChange={(value) => handleFilterChange('brand', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Tutte le marche" />
@@ -145,20 +167,20 @@ export default function HeroSection() {
                 </Select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-neutral-600 mb-1">Modello</label>
+                <label className="block text-sm font-medium text-neutral-600 mb-1">Categoria</label>
                 <Select
-                  value={filters.modelId || "all"}
-                  onValueChange={(value) => handleFilterChange('modelId', value)}
-                  disabled={!filters.brandId || filters.brandId === "all" || availableModels.length === 0}
+                  value={filters.categoryIds.length === 1 ? filters.categoryIds[0] : "all"}
+                  onValueChange={(value) => handleFilterChange('category', value)}
+                  disabled={filters.brandIds.length === 0}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Tutti i modelli" />
+                    <SelectValue placeholder="Tutte le categorie" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tutti i modelli</SelectItem>
-                    {availableModels.map(model => (
-                      <SelectItem key={model} value={model}>
-                        {model}
+                    <SelectItem value="all">Tutte le categorie</SelectItem>
+                    {activeCategories?.map(category => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
