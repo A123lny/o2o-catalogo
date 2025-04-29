@@ -22,6 +22,7 @@ export interface IStorage {
   
   // Brands
   getBrands(): Promise<Brand[]>;
+  getActiveBrands(): Promise<Brand[]>; // Marche con veicoli disponibili
   getBrand(id: number): Promise<Brand | undefined>;
   createBrand(brand: InsertBrand): Promise<Brand>;
   updateBrand(id: number, brand: InsertBrand): Promise<Brand>;
@@ -29,6 +30,7 @@ export interface IStorage {
   
   // Categories
   getCategories(): Promise<Category[]>;
+  getActiveCategories(): Promise<Category[]>; // Categorie con veicoli disponibili
   getCategory(id: number): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: number, category: InsertCategory): Promise<Category>;
@@ -106,6 +108,32 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(brands);
   }
   
+  async getActiveBrands(): Promise<Brand[]> {
+    // Questa query ottiene tutti i brand che hanno almeno un veicolo non assegnato
+    const allVehicles = await this.getVehicles();
+    
+    // Filtra i veicoli per escludere quelli assegnati
+    const availableVehicles = allVehicles.filter(vehicle => {
+      if (!vehicle.badges) return true;
+      
+      // Se badges è una stringa, convertila in array
+      const badges = typeof vehicle.badges === 'string' 
+        ? JSON.parse(vehicle.badges as string) 
+        : vehicle.badges;
+        
+      return !Array.isArray(badges) || !badges.includes("Assegnato");
+    });
+    
+    // Estrai ID dei brand con veicoli disponibili
+    const activeBrandIds = [...new Set(availableVehicles.map(v => v.brandId))];
+    
+    // Ottiene tutti i brand
+    const allBrands = await this.getBrands();
+    
+    // Filtra i brand in base agli ID attivi
+    return allBrands.filter(brand => activeBrandIds.includes(brand.id));
+  }
+  
   async getBrand(id: number): Promise<Brand | undefined> {
     const [brand] = await db.select().from(brands).where(eq(brands.id, id));
     return brand;
@@ -139,6 +167,32 @@ export class DatabaseStorage implements IStorage {
   
   async getCategories(): Promise<Category[]> {
     return db.select().from(categories);
+  }
+  
+  async getActiveCategories(): Promise<Category[]> {
+    // Questa query ottiene tutte le categorie che hanno almeno un veicolo non assegnato
+    const allVehicles = await this.getVehicles();
+    
+    // Filtra i veicoli per escludere quelli assegnati
+    const availableVehicles = allVehicles.filter(vehicle => {
+      if (!vehicle.badges) return true;
+      
+      // Se badges è una stringa, convertila in array
+      const badges = typeof vehicle.badges === 'string' 
+        ? JSON.parse(vehicle.badges as string) 
+        : vehicle.badges;
+        
+      return !Array.isArray(badges) || !badges.includes("Assegnato");
+    });
+    
+    // Estrai ID delle categorie con veicoli disponibili
+    const activeCategoryIds = [...new Set(availableVehicles.map(v => v.categoryId))];
+    
+    // Ottiene tutte le categorie
+    const allCategories = await this.getCategories();
+    
+    // Filtra le categorie in base agli ID attivi
+    return allCategories.filter(category => activeCategoryIds.includes(category.id));
   }
   
   async getCategory(id: number): Promise<Category | undefined> {

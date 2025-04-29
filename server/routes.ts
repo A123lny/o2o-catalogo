@@ -84,6 +84,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error fetching categories" });
     }
   });
+  
+  // Get active categories (con veicoli disponibili)
+  app.get("/api/categories/active", async (req, res) => {
+    try {
+      const categories = await storage.getActiveCategories();
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching active categories" });
+    }
+  });
 
   // Get all brands
   app.get("/api/brands", async (req, res) => {
@@ -92,6 +102,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(brands);
     } catch (error) {
       res.status(500).json({ message: "Error fetching brands" });
+    }
+  });
+  
+  // Get active brands (con veicoli disponibili)
+  app.get("/api/brands/active", async (req, res) => {
+    try {
+      const brands = await storage.getActiveBrands();
+      res.json(brands);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching active brands" });
     }
   });
 
