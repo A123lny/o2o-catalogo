@@ -553,6 +553,7 @@ export default function VehicleEditPage() {
                                     control={form.control}
                                     name="badges"
                                     render={({ field }) => {
+                                      // Utilizziamo l'ID come valore per salvare/visualizzare in modo coerente
                                       const isChecked = field.value?.includes(badge.id);
                                       return (
                                         <FormItem
