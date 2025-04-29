@@ -1,4 +1,9 @@
-import { Brand, Category, InsertBrand, InsertCategory, InsertRentalOption, InsertRequest, InsertUser, InsertVehicle, RentalOption, Request, User, Vehicle } from "@shared/schema";
+import { 
+  Brand, Category, InsertBrand, InsertCategory, InsertRentalOption, 
+  InsertRequest, InsertUser, InsertVehicle, RentalOption, Request, 
+  User, Vehicle, InsertPromoSettings, PromoSettings, 
+  InsertFeaturedPromo, FeaturedPromo
+} from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
@@ -6,7 +11,7 @@ import { pool } from "./db";
 import { eq, and, like, lte, sql, desc, asc, inArray } from "drizzle-orm";
 import { 
   users, brands, categories, vehicles, 
-  rentalOptions, requests 
+  rentalOptions, requests, promoSettings, featuredPromos
 } from "@shared/schema";
 
 // PostgreSQL session store
@@ -62,6 +67,15 @@ export interface IStorage {
   
   // Stats
   getStats(): Promise<any>;
+  
+  // Promo Management
+  getPromoSettings(): Promise<PromoSettings | undefined>;
+  updatePromoSettings(settings: InsertPromoSettings): Promise<PromoSettings>;
+  getFeaturedPromos(): Promise<FeaturedPromo[]>;
+  getFeaturedPromoVehicles(): Promise<Array<Vehicle & { displayOrder: number }>>;
+  addVehicleToPromo(vehicleId: number, displayOrder?: number): Promise<FeaturedPromo>;
+  removeVehicleFromPromo(vehicleId: number): Promise<void>;
+  updatePromoOrder(promos: { vehicleId: number, displayOrder: number }[]): Promise<FeaturedPromo[]>;
   
   // Session
   sessionStore: any;
