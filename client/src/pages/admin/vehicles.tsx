@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -188,7 +189,11 @@ export default function VehiclesPage() {
     const matchesBrand = filterBrand === "" || filterBrand === "all" || vehicle.brandId === parseInt(filterBrand);
     const matchesCategory = filterCategory === "" || filterCategory === "all" || vehicle.categoryId === parseInt(filterCategory);
     
-    return matchesSearch && matchesBrand && matchesCategory;
+    // Filtra per lo stato "Assegnato" se l'opzione è selezionata
+    const matchesAssigned = !showOnlyAssigned || 
+      (Array.isArray(vehicle.badges) && vehicle.badges.includes("Assegnato"));
+    
+    return matchesSearch && matchesBrand && matchesCategory && matchesAssigned;
   });
 
   return (
@@ -212,7 +217,7 @@ export default function VehiclesPage() {
           
           {/* Filters */}
           <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="relative">
                 <Search className="absolute top-3 left-3 h-4 w-4 text-neutral-400" />
                 <Input
@@ -250,6 +255,21 @@ export default function VehiclesPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="showOnlyAssigned"
+                checked={showOnlyAssigned}
+                onCheckedChange={(checked) => setShowOnlyAssigned(checked === true)}
+              />
+              <label
+                htmlFor="showOnlyAssigned"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center"
+              >
+                <ArchiveIcon className="h-4 w-4 mr-1 text-red-600" />
+                Mostra solo veicoli assegnati
+              </label>
             </div>
           </div>
           

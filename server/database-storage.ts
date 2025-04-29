@@ -203,7 +203,24 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    return query;
+    // Esegui la query
+    let result = await query;
+    
+    // Filtra i veicoli con il badge "Assegnato", a meno che non sia esplicitamente richiesto di visualizzarli
+    if (!filters?.includeAssigned) {
+      result = result.filter(vehicle => {
+        if (!vehicle.badges) return true;
+        
+        // Se badges è una stringa, convertila in array
+        const badges = typeof vehicle.badges === 'string' 
+          ? JSON.parse(vehicle.badges as string) 
+          : vehicle.badges;
+          
+        return !Array.isArray(badges) || !badges.includes("Assegnato");
+      });
+    }
+    
+    return result;
   }
   
   async getFeaturedVehicles(): Promise<Vehicle[]> {
@@ -211,7 +228,23 @@ export class DatabaseStorage implements IStorage {
     await db.update(vehicles).set({ featured: true }).where(eq(vehicles.id, 1));
     await db.update(vehicles).set({ featured: true }).where(eq(vehicles.id, 2));
     await db.update(vehicles).set({ featured: true }).where(eq(vehicles.id, 3));
-    return db.select().from(vehicles).where(eq(vehicles.featured, true));
+    
+    // Ottieni tutti i veicoli in evidenza
+    let featuredVehicles = await db.select().from(vehicles).where(eq(vehicles.featured, true));
+    
+    // Filtra i veicoli con il badge "Assegnato"
+    featuredVehicles = featuredVehicles.filter(vehicle => {
+      if (!vehicle.badges) return true;
+      
+      // Se badges è una stringa, convertila in array
+      const badges = typeof vehicle.badges === 'string' 
+        ? JSON.parse(vehicle.badges as string) 
+        : vehicle.badges;
+        
+      return !Array.isArray(badges) || !badges.includes("Assegnato");
+    });
+    
+    return featuredVehicles;
   }
   
   async getVehicle(id: number): Promise<Vehicle | undefined> {
@@ -228,7 +261,7 @@ export class DatabaseStorage implements IStorage {
     if (!vehicle) return [];
     
     // Get vehicles of the same category or brand, but not the same vehicle
-    const relatedVehicles = await db.select()
+    let relatedVehicles = await db.select()
       .from(vehicles)
       .where(
         and(
@@ -236,9 +269,22 @@ export class DatabaseStorage implements IStorage {
           sql`(${vehicles.categoryId} = ${vehicle.categoryId} OR ${vehicles.brandId} = ${vehicle.brandId})`
         )
       )
-      .limit(3);
+      .limit(6); // Aumentiamo il limite per avere abbastanza veicoli dopo il filtro
     
-    return relatedVehicles;
+    // Filtra i veicoli con il badge "Assegnato"
+    relatedVehicles = relatedVehicles.filter(vehicle => {
+      if (!vehicle.badges) return true;
+      
+      // Se badges è una stringa, convertila in array
+      const badges = typeof vehicle.badges === 'string' 
+        ? JSON.parse(vehicle.badges as string) 
+        : vehicle.badges;
+        
+      return !Array.isArray(badges) || !badges.includes("Assegnato");
+    });
+    
+    // Limita a 3 veicoli
+    return relatedVehicles.slice(0, 3);
   }
   
   async createVehicle(vehicle: InsertVehicle): Promise<Vehicle> {
