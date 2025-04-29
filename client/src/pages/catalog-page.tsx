@@ -43,12 +43,13 @@ export default function CatalogPage() {
     queryKey: ['/api/vehicles', filters],
   });
   
+  // Utilizzare i brand e le categorie attive, che hanno veicoli associati
   const { data: brands } = useQuery<Brand[]>({
-    queryKey: ['/api/brands'],
+    queryKey: ['/api/brands/active'],
   });
   
   const { data: categories } = useQuery<Category[]>({
-    queryKey: ['/api/categories'],
+    queryKey: ['/api/categories/active'],
   });
   
   const handleFilterChange = (newFilters: any) => {
