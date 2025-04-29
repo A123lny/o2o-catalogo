@@ -75,10 +75,18 @@ const vehicleFormSchema = insertVehicleSchema.extend({
 type VehicleFormValues = z.infer<typeof vehicleFormSchema>;
 
 const badgeOptions = [
-  { id: "promo", label: "Promo" },
-  { id: "new", label: "Nuovo" },
-  { id: "sold", label: "Venduto" },
-  { id: "reserved", label: "Riservato" },
+  { id: "Premium", label: "Premium" },
+  { id: "SUV", label: "SUV" },
+  { id: "Berlina", label: "Berlina" },
+  { id: "Coupé", label: "Coupé" },
+  { id: "2Life", label: "2Life" },
+  { id: "Elettrico", label: "Elettrico" },
+  { id: "Zero Emissioni", label: "Zero Emissioni" },
+  { id: "Sportiva", label: "Sportiva" },
+  { id: "Hot Hatch", label: "Hot Hatch" },
+  { id: "Luxury", label: "Luxury" },
+  { id: "Compatta", label: "Compatta" },
+  { id: "Economica", label: "Economica" },
 ];
 
 export default function VehicleEditPage() {
@@ -543,7 +551,9 @@ export default function VehicleEditPage() {
                               <div className="mb-4">
                                 <FormLabel className="text-base">Badge</FormLabel>
                                 <FormDescription>
-                                  Seleziona i badge da associare al veicolo
+                                  Seleziona i badge da associare al veicolo.
+                                  Il badge '2Life' viene assegnato automaticamente a veicoli con più di 1000 km.
+                                  I badge SUV, Berlina, Coupé ecc. si basano sulla tipologia di veicolo.
                                 </FormDescription>
                               </div>
                               <div className="grid grid-cols-2 gap-3">

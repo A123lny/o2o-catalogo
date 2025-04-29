@@ -270,15 +270,27 @@ export default function VehiclesPage() {
                             <span
                               key={idx}
                               className={`inline-flex items-center px-2 py-1 text-xs rounded-full mr-1 font-medium ${
-                                badge === 'promo' 
-                                  ? 'bg-secondary/10 text-secondary' 
-                                  : badge === 'new' 
+                                badge === 'Premium' 
+                                  ? 'bg-purple-100 text-purple-800' 
+                                  : badge === 'SUV' 
                                   ? 'bg-blue-100 text-blue-800'
+                                  : badge === '2Life' 
+                                  ? 'bg-green-100 text-green-800'
+                                  : badge === 'Elettrico' || badge === 'Zero Emissioni'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : badge === 'Sportiva' || badge === 'Hot Hatch'
+                                  ? 'bg-red-100 text-red-800'
+                                  : badge === 'Luxury'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : badge === 'Berlina' || badge === 'Coupé'
+                                  ? 'bg-indigo-100 text-indigo-800'
+                                  : badge === 'Compatta' || badge === 'Economica'
+                                  ? 'bg-cyan-100 text-cyan-800'
                                   : 'bg-neutral-100 text-neutral-800'
                               }`}
                             >
                               <Badge className="h-3 w-3 mr-1" />
-                              {badge.toUpperCase()}
+                              {badge}
                             </span>
                           ))}
                         </TableCell>
