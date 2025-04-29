@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { insertUserSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,16 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   const { user, loginMutation, registerMutation, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
+  
+  // Fetch general settings to get site name
+  const { data: generalSettings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['/api/settings/general'],
+    queryFn: async () => {
+      const response = await fetch('/api/settings/general');
+      if (!response.ok) throw new Error('Errore nel recupero delle impostazioni generali');
+      return response.json();
+    }
+  });
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -91,7 +102,27 @@ export default function AuthPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-2xl text-center">
-              <span className="text-primary font-bold">AUTO<span className="text-secondary">PRESTIGE</span></span>
+              {isLoadingSettings ? (
+                <div className="flex items-center justify-center">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <span>Caricamento...</span>
+                </div>
+              ) : (
+                <span className="text-primary font-bold">
+                  {generalSettings?.siteName ? (
+                    <>
+                      {generalSettings.siteName.split(' ')[0]}
+                      {generalSettings.siteName.split(' ').length > 1 && (
+                        <span className="text-secondary">
+                          {' '}{generalSettings.siteName.split(' ').slice(1).join(' ')}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>o2o <span className="text-secondary">Mobility</span></>
+                  )}
+                </span>
+              )}
             </CardTitle>
             <CardDescription className="text-center">
               Accedi o registrati per gestire il tuo account
@@ -262,7 +293,9 @@ export default function AuthPage() {
           />
         </div>
         <div className="relative z-20 text-white text-center max-w-lg p-6">
-          <h1 className="text-4xl font-bold mb-4">AutoPrestige</h1>
+          <h1 className="text-4xl font-bold mb-4">
+            {generalSettings?.siteName || "o2o Mobility"}
+          </h1>
           <p className="text-xl mb-6">La tua piattaforma premium per il mondo delle auto di lusso. Accedi per scoprire il nostro esclusivo catalogo.</p>
           <div className="flex flex-wrap justify-center gap-4">
             <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg">
