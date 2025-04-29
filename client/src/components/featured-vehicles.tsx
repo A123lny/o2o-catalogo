@@ -54,10 +54,9 @@ export default function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
           .slice(0, 8);
       case "featured":
       default:
-        // Mostra veicoli in evidenza (Promo)
-        return vehicles
-          .filter(v => hasBadge(v, "Promo"))
-          .slice(0, 16);
+        // Mostra veicoli in evidenza 
+        // Non filtriamo perché questi veicoli sono già stati filtrati dal backend
+        return vehicles.slice(0, 16);
     }
   })();
 
