@@ -20,6 +20,7 @@ interface SearchFilterProps {
     year: string;
     fuelType: string;
     condition: string;
+    contractType: string;
   };
   onFilterChange: (filters: any) => void;
 }

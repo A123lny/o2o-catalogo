@@ -15,6 +15,7 @@ export default function CatalogPage() {
     year: "",
     fuelType: "",
     condition: "",
+    contractType: "",
   });
   
   const { data: vehicles, isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
@@ -40,6 +41,7 @@ export default function CatalogPage() {
       year: "",
       fuelType: "",
       condition: "",
+      contractType: "",
     });
   };
 

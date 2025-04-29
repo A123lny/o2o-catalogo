@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Brand, Category } from "@shared/schema";
+import { Brand, Category, Vehicle } from "@shared/schema";
 import { 
   Select, 
   SelectContent, 
@@ -17,23 +17,53 @@ export default function HeroSection() {
   const [filters, setFilters] = useState({
     brandId: "",
     modelId: "",
-    condition: "",
+    contractType: "",
     year: ""
   });
+  
+  const [uniqueYears, setUniqueYears] = useState<number[]>([]);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
 
-  const { data: brands } = useQuery<Brand[]>({
-    queryKey: ['/api/brands'],
+  // Utilizziamo le API per ottenere solo marchi attivi
+  const { data: activeBrands } = useQuery<Brand[]>({
+    queryKey: ['/api/brands/active'],
   });
 
-  const { data: categories } = useQuery<Category[]>({
-    queryKey: ['/api/categories'],
+  const { data: activeCategories } = useQuery<Category[]>({
+    queryKey: ['/api/categories/active'],
   });
+  
+  // Otteniamo i veicoli per sapere gli anni disponibili
+  const { data: allVehicles } = useQuery<Vehicle[]>({
+    queryKey: ['/api/vehicles'],
+  });
+  
+  // Estrai gli anni unici dai veicoli disponibili
+  useEffect(() => {
+    if (allVehicles) {
+      const years = [...new Set(allVehicles.map(vehicle => vehicle.year))];
+      setUniqueYears(years.sort((a, b) => b - a)); // Ordina dal più recente
+      
+      // Estrai modelli disponibili 
+      if (filters.brandId && filters.brandId !== "all") {
+        const brandId = parseInt(filters.brandId);
+        const models = [...new Set(
+          allVehicles
+            .filter(v => v.brandId === brandId)
+            .map(v => v.model)
+        )];
+        setAvailableModels(models.sort());
+      } else {
+        setAvailableModels([]);
+      }
+    }
+  }, [allVehicles, filters.brandId]);
 
   const handleSearch = () => {
     // Convert filters to query params
     const queryParams = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
+      if (value && value !== "all") {
         queryParams.append(key, value);
       }
     });
@@ -43,25 +73,28 @@ export default function HeroSection() {
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    // Se stiamo cambiando marca, resettiamo il modello
+    if (key === 'brandId') {
+      setFilters(prev => ({ ...prev, [key]: value, modelId: "" }));
+    } else {
+      setFilters(prev => ({ ...prev, [key]: value }));
+    }
   };
 
-  // Price options
-  const priceOptions = [
-    { value: "", label: "Nessun limite" },
-    { value: "30000", label: "€ 30.000" },
-    { value: "50000", label: "€ 50.000" },
-    { value: "100000", label: "€ 100.000" },
-    { value: "200000", label: "€ 200.000" }
+  // Opzioni per i tipi di contratto
+  const contractTypeOptions = [
+    { value: "all", label: "Tutti i contratti" },
+    { value: "NLT", label: "Solo Noleggio a Lungo Termine" },
+    { value: "RTB", label: "Solo Rent to Buy" },
+    { value: "NLTRTB", label: "NLT e RTB" }
   ];
 
-  // Year options
-  const currentYear = new Date().getFullYear();
+  // Year options basati sui veicoli disponibili
   const yearOptions = [
     { value: "", label: "Tutti gli anni" },
-    ...Array.from({ length: 5 }, (_, i) => ({ 
-      value: (currentYear - i).toString(), 
-      label: (currentYear - i).toString() 
+    ...uniqueYears.map(year => ({ 
+      value: year.toString(), 
+      label: year.toString() 
     }))
   ];
 
@@ -94,7 +127,7 @@ export default function HeroSection() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tutte le marche</SelectItem>
-                    {brands?.map(brand => (
+                    {activeBrands?.map(brand => (
                       <SelectItem key={brand.id} value={brand.id.toString()}>
                         {brand.name}
                       </SelectItem>
@@ -107,14 +140,18 @@ export default function HeroSection() {
                 <Select
                   value={filters.modelId || "all"}
                   onValueChange={(value) => handleFilterChange('modelId', value)}
-                  disabled={!filters.brandId}
+                  disabled={!filters.brandId || filters.brandId === "all" || availableModels.length === 0}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Tutti i modelli" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tutti i modelli</SelectItem>
-                    {/* Would populate with models based on selected brand */}
+                    {availableModels.map(model => (
+                      <SelectItem key={model} value={model}>
+                        {model}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -131,7 +168,7 @@ export default function HeroSection() {
                   </SelectTrigger>
                   <SelectContent>
                     {yearOptions.map(option => (
-                      <SelectItem key={option.value || "default-year"} value={option.value || "default-year"}>
+                      <SelectItem key={option.value || "default-year"} value={option.value || "all"}>
                         {option.label}
                       </SelectItem>
                     ))}
@@ -139,19 +176,20 @@ export default function HeroSection() {
                 </Select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-neutral-600 mb-1">Condizione</label>
+                <label className="block text-sm font-medium text-neutral-600 mb-1">Tipo Contratto</label>
                 <Select
-                  value={filters.condition || "all"}
-                  onValueChange={(value) => handleFilterChange('condition', value)}
+                  value={filters.contractType || "all"}
+                  onValueChange={(value) => handleFilterChange('contractType', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Tutte le condizioni" />
+                    <SelectValue placeholder="Tutti i contratti" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tutte le condizioni</SelectItem>
-                    <SelectItem value="new">Nuovo</SelectItem>
-                    <SelectItem value="used">Usato</SelectItem>
-                    <SelectItem value="certified">Certificato</SelectItem>
+                    {contractTypeOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
