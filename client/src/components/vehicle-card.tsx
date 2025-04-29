@@ -20,6 +20,10 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
   const hasRTB = rentalOptions?.some(option => option.type === 'RTB');
   const isPromo = vehicle.id % 5 === 0; // Simuliamo la promo per la demo
   
+  // Determina lo stato dell'auto in base al chilometraggio
+  const isNew = vehicle.mileage < 1000;
+  const is2Life = vehicle.mileage > 1000;
+  
   // Calcola il prezzo mensile più basso dalle opzioni di noleggio disponibili
   const lowestPrice = rentalOptions?.length 
     ? Math.min(...rentalOptions.map(option => option.monthlyPrice))
@@ -36,10 +40,13 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           />
         </Link>
         
-        {/* Badge NLT e PROMO sul lato sinistro */}
+        {/* Badge sul lato sinistro */}
         <div className="absolute top-0 left-0 mt-3 ml-3 flex flex-col gap-2">
           {hasNLT && (
             <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded">NLT</span>
+          )}
+          {hasRTB && (
+            <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded">RTB</span>
           )}
           {isPromo && (
             <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded">PROMO</span>
@@ -58,6 +65,16 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       
       <div className="p-4">
         <h3 className="font-bold text-lg mb-2">{vehicle.title}</h3>
+        
+        {/* Badge per stato veicolo (Nuova/2Life) */}
+        <div className="flex gap-2 mb-3">
+          {isNew && (
+            <span className="bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded">Nuova</span>
+          )}
+          {is2Life && (
+            <span className="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded">2Life</span>
+          )}
+        </div>
         
         <div className="flex items-center text-sm text-neutral-600 mb-3">
           <div className="flex items-center mr-4">
