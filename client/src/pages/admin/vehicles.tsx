@@ -209,7 +209,7 @@ export default function VehiclesPage() {
                       <TableHead>Marca</TableHead>
                       <TableHead>Categoria</TableHead>
                       <TableHead>Anno</TableHead>
-                      <TableHead>Prezzo</TableHead>
+                      <TableHead>Condizione</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Azioni</TableHead>
                     </TableRow>
@@ -243,14 +243,18 @@ export default function VehiclesPage() {
                         <TableCell>{getCategoryName(vehicle.categoryId)}</TableCell>
                         <TableCell>{vehicle.year}</TableCell>
                         <TableCell>
-                          {vehicle.discountPrice ? (
-                            <div>
-                              <span className="line-through text-neutral-400">€{vehicle.price.toLocaleString()}</span>
-                              <span className="block font-medium text-primary">€{vehicle.discountPrice.toLocaleString()}</span>
-                            </div>
-                          ) : (
-                            <span>€{vehicle.price.toLocaleString()}</span>
-                          )}
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            vehicle.condition === "new" || vehicle.mileage < 1000 
+                              ? "bg-red-100 text-red-800" 
+                              : "bg-green-100 text-green-800"
+                          }`}>
+                            {vehicle.condition === "new" || vehicle.mileage < 1000 ? "Nuova" : "2Life"}
+                          </span>
+                          {vehicle.mileage > 0 && 
+                            <span className="text-xs text-neutral-500 ml-2">
+                              {vehicle.mileage.toLocaleString('it-IT')} km
+                            </span>
+                          }
                         </TableCell>
                         <TableCell>
                           {vehicle.badges && (vehicle.badges as string[]).map((badge, idx) => (
