@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import { useAuth } from "@/hooks/use-auth";
-import ProvincesTab from "@/components/admin/provinces-tab";
+import { SimpleProvincesTab } from "@/components/admin/simple-provinces-tab";
 import {
   Card,
   CardContent,
@@ -509,7 +509,7 @@ export default function SettingsPage() {
             
             {/* Province Settings */}
             <TabsContent value="provinces">
-              <ProvincesTab />
+              <SimpleProvincesTab />
             </TabsContent>
             
             {/* Security Settings */}
