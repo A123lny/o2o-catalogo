@@ -15,8 +15,8 @@ import { Search } from "lucide-react";
 export default function HeroSection() {
   const [location, setLocation] = useLocation();
   const [filters, setFilters] = useState({
-    brandId: "",
-    modelId: "",
+    brandIds: [] as string[],
+    categoryIds: [] as string[],
     contractType: "",
     year: ""
   });
@@ -49,9 +49,9 @@ export default function HeroSection() {
       const years = Array.from(yearsSet);
       setUniqueYears(years.sort((a, b) => b - a)); // Ordina dal più recente
       
-      // Estrai modelli disponibili 
-      if (filters.brandId && filters.brandId !== "all") {
-        const brandId = parseInt(filters.brandId);
+      // Estrai modelli disponibili - modifica per supportare selezione multipla
+      if (filters.brandIds && filters.brandIds.length === 1) {
+        const brandId = parseInt(filters.brandIds[0]);
         const modelsSet = new Set<string>();
         
         allVehicles
@@ -65,7 +65,7 @@ export default function HeroSection() {
         setAvailableModels([]);
       }
     }
-  }, [allVehicles, filters.brandId]);
+  }, [allVehicles, filters.brandIds]);
 
   const handleSearch = () => {
     // Convert filters to query params

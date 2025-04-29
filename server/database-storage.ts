@@ -230,11 +230,43 @@ export class DatabaseStorage implements IStorage {
     let query = db.select().from(vehicles);
     
     if (filters) {
-      if (filters.brandId) {
+      // Gestisci array di brandIds (selezione multipla)
+      if (filters.brandIds) {
+        try {
+          // Se è una stringa (dal querystring), dividi per virgole
+          const brandIds = typeof filters.brandIds === 'string' 
+            ? filters.brandIds.split(',').map(id => parseInt(id))
+            : filters.brandIds.map((id: string) => parseInt(id));
+          
+          if (brandIds.length > 0) {
+            query = query.where(inArray(vehicles.brandId, brandIds));
+          }
+        } catch (error) {
+          console.error('Errore nella gestione dei brandIds:', error);
+        }
+      } 
+      // Compatibilità retroattiva con vecchio formato
+      else if (filters.brandId) {
         query = query.where(eq(vehicles.brandId, parseInt(filters.brandId)));
       }
       
-      if (filters.categoryId) {
+      // Gestisci array di categoryIds (selezione multipla)
+      if (filters.categoryIds) {
+        try {
+          // Se è una stringa (dal querystring), dividi per virgole
+          const categoryIds = typeof filters.categoryIds === 'string' 
+            ? filters.categoryIds.split(',').map(id => parseInt(id))
+            : filters.categoryIds.map((id: string) => parseInt(id));
+          
+          if (categoryIds.length > 0) {
+            query = query.where(inArray(vehicles.categoryId, categoryIds));
+          }
+        } catch (error) {
+          console.error('Errore nella gestione dei categoryIds:', error);
+        }
+      }
+      // Compatibilità retroattiva con vecchio formato
+      else if (filters.categoryId) {
         query = query.where(eq(vehicles.categoryId, parseInt(filters.categoryId)));
       }
       

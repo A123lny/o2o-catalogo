@@ -37,10 +37,21 @@ export const getQueryFn: <T>(options: {
     if (params && Object.keys(params).length > 0) {
       const queryParams = new URLSearchParams();
       
-      // Aggiungi solo parametri non vuoti
+      // Aggiungi solo parametri non vuoti, gestendo anche array
       Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          queryParams.append(key, String(value));
+        if (value !== undefined && value !== null) {
+          // Gestisci array (come brandIds e categoryIds)
+          if (Array.isArray(value)) {
+            // Aggiungi solo array non vuoti
+            if (value.length > 0) {
+              // Usa lo stesso parametro una volta con tutti i valori separati da virgola
+              queryParams.append(key, value.join(','));
+            }
+          } 
+          // Gestisci valori singoli
+          else if (value !== "") {
+            queryParams.append(key, String(value));
+          }
         }
       });
       
