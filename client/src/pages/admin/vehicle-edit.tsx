@@ -53,6 +53,16 @@ import {
   Image,
   X,
   ArrowLeft,
+  Car,
+  Calendar,
+  Repeat,
+  CreditCard,
+  Check,
+  Euro,
+  ListChecks,
+  ChevronDown,
+  ChevronUp,
+  Edit,
 } from "lucide-react";
 
 // Extended schema for the form with validation
@@ -84,6 +94,9 @@ export default function VehicleEditPage() {
   const [imagesPreview, setImagesPreview] = useState<string[]>([]);
   const [imagesFiles, setImagesFiles] = useState<File[]>([]);
   const [activeTab, setActiveTab] = useState("details");
+  const [showNewContractForm, setShowNewContractForm] = useState(false);
+  const [editingContractId, setEditingContractId] = useState<number | null>(null);
+  const [tempContracts, setTempContracts] = useState<any[]>([]);
 
   // Fetch vehicle data if in edit mode
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery({
@@ -94,8 +107,15 @@ export default function VehicleEditPage() {
   // Fetch rental options if in edit mode
   const { data: rentalOptions } = useQuery({
     queryKey: [`/api/vehicles/${vehicleId}/rental-options`],
-    enabled: isEditMode,
+    enabled: isEditMode
   });
+  
+  // Initialize tempContracts when component mounts
+  useEffect(() => {
+    if (!isEditMode) {
+      setTempContracts([]);
+    }
+  }, [isEditMode]);
 
   // Fetch brands and categories
   const { data: brands } = useQuery({
@@ -230,6 +250,48 @@ export default function VehicleEditPage() {
     setImagesFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Create rental option mutation
+  const rentalOptionMutation = useMutation({
+    mutationFn: async (data: { vehicleId: number; contractData: any }) => {
+      return await apiRequest("POST", `/api/admin/vehicles/${data.vehicleId}/rental-options`, data.contractData);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${variables.vehicleId}/rental-options`] });
+      toast({
+        title: "Contratto aggiunto",
+        description: "Il contratto è stato aggiunto con successo.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Si è verificato un errore durante l'aggiunta del contratto.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete rental option mutation
+  const deleteRentalOptionMutation = useMutation({
+    mutationFn: async (data: { vehicleId: number; optionId: number }) => {
+      return await apiRequest("DELETE", `/api/admin/vehicles/${data.vehicleId}/rental-options/${data.optionId}`);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${variables.vehicleId}/rental-options`] });
+      toast({
+        title: "Contratto eliminato",
+        description: "Il contratto è stato eliminato con successo.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Si è verificato un errore durante l'eliminazione del contratto.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = async (values: VehicleFormValues) => {
     const formData = new FormData();
     
@@ -245,17 +307,28 @@ export default function VehicleEditPage() {
     try {
       const response = await mutation.mutateAsync(formData);
       
-      // If we have additional images and we're in edit mode or have a response with id
-      if (imagesFiles.length > 0) {
-        const vehicleId = isEditMode ? parseInt(params!.id) : (response as any)?.id;
+      const newVehicleId = isEditMode ? vehicleId! : (response as any)?.id;
+      
+      // If we have additional images and we have a vehicle id
+      if (imagesFiles.length > 0 && newVehicleId) {
+        const imagesFormData = new FormData();
+        imagesFiles.forEach((file) => {
+          imagesFormData.append('images', file);
+        });
         
-        if (vehicleId) {
-          const imagesFormData = new FormData();
-          imagesFiles.forEach((file) => {
-            imagesFormData.append('images', file);
+        await imagesMutation.mutateAsync({ id: newVehicleId, formData: imagesFormData });
+      }
+      
+      // If we're creating a new vehicle and have temporary contracts, add them to the new vehicle
+      if (!isEditMode && tempContracts.length > 0 && newVehicleId) {
+        for (const contract of tempContracts) {
+          await rentalOptionMutation.mutateAsync({
+            vehicleId: newVehicleId,
+            contractData: {
+              ...contract,
+              vehicleId: newVehicleId
+            }
           });
-          
-          await imagesMutation.mutateAsync({ id: vehicleId, formData: imagesFormData });
         }
       }
     } catch (error) {
@@ -881,6 +954,439 @@ export default function VehicleEditPage() {
                       </CardContent>
                     </Card>
                   </div>
+                </TabsContent>
+                
+                {/* Contracts Tab */}
+                <TabsContent value="contracts">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle>Opzioni di Noleggio</CardTitle>
+                        <CardDescription>
+                          Gestisci i contratti di noleggio disponibili per questo veicolo
+                        </CardDescription>
+                      </div>
+                      
+                      {!showNewContractForm && (
+                        <Button
+                          onClick={() => setShowNewContractForm(true)}
+                          className="flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" /> Nuovo Contratto
+                        </Button>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      {isEditMode && rentalOptions && rentalOptions.length === 0 && !showNewContractForm && (
+                        <div className="text-center py-8">
+                          <Car className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-1">Nessun contratto configurato</h3>
+                          <p className="text-gray-500 mb-4">Questo veicolo non ha opzioni di noleggio configurate</p>
+                          <Button
+                            onClick={() => setShowNewContractForm(true)}
+                            className="flex items-center gap-2 mx-auto"
+                          >
+                            <Plus className="h-4 w-4" /> Aggiungi il primo contratto
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {!isEditMode && tempContracts.length === 0 && !showNewContractForm && (
+                        <div className="text-center py-8">
+                          <Car className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-1">Nessun contratto configurato</h3>
+                          <p className="text-gray-500 mb-4">Aggiungi contratti di noleggio per questo veicolo</p>
+                          <Button
+                            onClick={() => setShowNewContractForm(true)}
+                            className="flex items-center gap-2 mx-auto"
+                          >
+                            <Plus className="h-4 w-4" /> Aggiungi il primo contratto
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {/* Form to add a new contract */}
+                      {showNewContractForm && (
+                        <div className="border rounded-lg p-4 mb-6">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium">Nuovo Contratto</h3>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => {
+                                setShowNewContractForm(false);
+                                setEditingContractId(null);
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label htmlFor="contract-type" className="block text-sm font-medium text-gray-700 mb-1">
+                                  Tipo Contratto*
+                                </label>
+                                <select 
+                                  id="contract-type"
+                                  className="w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring-primary text-sm"
+                                  defaultValue=""
+                                  required
+                                >
+                                  <option value="" disabled>Seleziona tipo</option>
+                                  <option value="NLT">Noleggio Lungo Termine (NLT)</option>
+                                  <option value="RTB">Rent to Buy (RTB)</option>
+                                </select>
+                              </div>
+                              
+                              <div>
+                                <label htmlFor="contract-duration" className="block text-sm font-medium text-gray-700 mb-1">
+                                  Durata (mesi)*
+                                </label>
+                                <select 
+                                  id="contract-duration"
+                                  className="w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring-primary text-sm"
+                                  defaultValue=""
+                                  required
+                                >
+                                  <option value="" disabled>Seleziona durata</option>
+                                  <option value="12">12 mesi</option>
+                                  <option value="24">24 mesi</option>
+                                  <option value="36">36 mesi</option>
+                                  <option value="48">48 mesi</option>
+                                  <option value="60">60 mesi</option>
+                                </select>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <label htmlFor="monthly-price" className="block text-sm font-medium text-gray-700 mb-1">
+                                  Canone Mensile (€)*
+                                </label>
+                                <input 
+                                  type="number" 
+                                  id="monthly-price"
+                                  className="w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring-primary text-sm"
+                                  placeholder="Es. 299"
+                                  required
+                                  min="0"
+                                />
+                              </div>
+                              
+                              <div>
+                                <label htmlFor="deposit" className="block text-sm font-medium text-gray-700 mb-1">
+                                  Anticipo (€)*
+                                </label>
+                                <input 
+                                  type="number" 
+                                  id="deposit"
+                                  className="w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring-primary text-sm"
+                                  placeholder="Es. 3000"
+                                  required
+                                  min="0"
+                                />
+                              </div>
+                              
+                              <div>
+                                <label htmlFor="caution" className="block text-sm font-medium text-gray-700 mb-1">
+                                  Deposito Cauzionale (€)
+                                </label>
+                                <input 
+                                  type="number" 
+                                  id="caution"
+                                  className="w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring-primary text-sm"
+                                  placeholder="Es. 500"
+                                  min="0"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <label htmlFor="annual-mileage" className="block text-sm font-medium text-gray-700 mb-1">
+                                  Km Annuali
+                                </label>
+                                <input 
+                                  type="number" 
+                                  id="annual-mileage"
+                                  className="w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring-primary text-sm"
+                                  placeholder="Es. 15000"
+                                  min="0"
+                                />
+                              </div>
+                              
+                              <div>
+                                <label htmlFor="setup-fee" className="block text-sm font-medium text-gray-700 mb-1">
+                                  Spese Istruttoria (€)
+                                </label>
+                                <input 
+                                  type="number" 
+                                  id="setup-fee"
+                                  className="w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring-primary text-sm"
+                                  placeholder="Es. 300"
+                                  min="0"
+                                />
+                              </div>
+                              
+                              <div>
+                                <label htmlFor="final-payment" className="block text-sm font-medium text-gray-700 mb-1">
+                                  Maxirata Finale (€)
+                                </label>
+                                <input 
+                                  type="number" 
+                                  id="final-payment"
+                                  className="w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring-primary text-sm"
+                                  placeholder="Solo per RTB"
+                                  min="0"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Servizi Inclusi
+                              </label>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                {[
+                                  "Assicurazione RCA",
+                                  "Manutenzione Ordinaria",
+                                  "Manutenzione Straordinaria",
+                                  "Assistenza Stradale",
+                                  "Cambio Pneumatici",
+                                  "Sostituzione Veicolo",
+                                  "Soccorso Stradale",
+                                  "Copertura Kasko",
+                                  "Copertura Furto e Incendio"
+                                ].map((service, index) => (
+                                  <div key={index} className="flex items-center">
+                                    <input 
+                                      type="checkbox" 
+                                      id={`service-${index}`}
+                                      className="h-4 w-4 text-primary focus:ring-primary rounded border-gray-300"
+                                    />
+                                    <label htmlFor={`service-${index}`} className="ml-2 block text-sm text-gray-900">
+                                      {service}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center">
+                              <input 
+                                type="checkbox" 
+                                id="is-default"
+                                className="h-4 w-4 text-primary focus:ring-primary rounded border-gray-300"
+                              />
+                              <label htmlFor="is-default" className="ml-2 block text-sm text-gray-900">
+                                Imposta come contratto predefinito
+                              </label>
+                            </div>
+                            
+                            <div className="flex justify-end gap-2 mt-4">
+                              <Button 
+                                variant="outline" 
+                                onClick={() => {
+                                  setShowNewContractForm(false);
+                                  setEditingContractId(null);
+                                }}
+                              >
+                                Annulla
+                              </Button>
+                              <Button 
+                                onClick={() => {
+                                  // Get all the values from the form
+                                  const type = (document.getElementById('contract-type') as HTMLSelectElement).value;
+                                  const duration = parseInt((document.getElementById('contract-duration') as HTMLSelectElement).value);
+                                  const monthlyPrice = parseInt((document.getElementById('monthly-price') as HTMLInputElement).value);
+                                  const deposit = parseInt((document.getElementById('deposit') as HTMLInputElement).value);
+                                  const caution = parseInt((document.getElementById('caution') as HTMLInputElement).value) || null;
+                                  const annualMileage = parseInt((document.getElementById('annual-mileage') as HTMLInputElement).value) || null;
+                                  const setupFee = parseInt((document.getElementById('setup-fee') as HTMLInputElement).value) || null;
+                                  const finalPayment = parseInt((document.getElementById('final-payment') as HTMLInputElement).value) || null;
+                                  const isDefault = (document.getElementById('is-default') as HTMLInputElement).checked;
+                                  
+                                  // Get all selected services
+                                  const includedServices = [
+                                    "Assicurazione RCA",
+                                    "Manutenzione Ordinaria",
+                                    "Manutenzione Straordinaria",
+                                    "Assistenza Stradale",
+                                    "Cambio Pneumatici",
+                                    "Sostituzione Veicolo",
+                                    "Soccorso Stradale",
+                                    "Copertura Kasko",
+                                    "Copertura Furto e Incendio"
+                                  ].filter((_, index) => (document.getElementById(`service-${index}`) as HTMLInputElement).checked);
+                                  
+                                  const newContract = {
+                                    type,
+                                    duration,
+                                    monthlyPrice,
+                                    deposit,
+                                    caution,
+                                    annualMileage,
+                                    setupFee,
+                                    finalPayment,
+                                    isDefault,
+                                    includedServices
+                                  };
+                                  
+                                  if (isEditMode && vehicleId) {
+                                    // If we're editing an existing vehicle, add the contract to the database
+                                    rentalOptionMutation.mutate({
+                                      vehicleId,
+                                      contractData: {
+                                        ...newContract,
+                                        vehicleId
+                                      }
+                                    }, {
+                                      onSuccess: () => {
+                                        setShowNewContractForm(false);
+                                        setEditingContractId(null);
+                                      }
+                                    });
+                                  } else {
+                                    // If we're creating a new vehicle, add the contract to the temporary list
+                                    setTempContracts([...tempContracts, newContract]);
+                                    setShowNewContractForm(false);
+                                    setEditingContractId(null);
+                                  }
+                                }}
+                              >
+                                Salva Contratto
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* List of existing contracts */}
+                      {isEditMode && rentalOptions && rentalOptions.length > 0 && !showNewContractForm && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {rentalOptions.map((option) => (
+                            <Card key={option.id} className={`border-l-4 ${option.type === 'NLT' ? 'border-l-blue-500' : 'border-l-orange-500'}`}>
+                              <CardContent className="p-4">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <span className={`inline-block text-xs font-semibold text-white px-2 py-1 rounded mb-2 ${option.type === 'NLT' ? 'bg-blue-500' : 'bg-orange-500'}`}>
+                                      {option.type}
+                                    </span>
+                                    <h4 className="font-semibold">
+                                      {option.type === 'NLT' ? 'Noleggio' : 'Rent to Buy'} {option.duration} mesi
+                                    </h4>
+                                  </div>
+                                  {option.isDefault && (
+                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Default</span>
+                                  )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-1 text-sm mb-3">
+                                  <div className="text-gray-600">Canone:</div>
+                                  <div className="font-medium">€ {option.monthlyPrice}/mese</div>
+                                  <div className="text-gray-600">Anticipo:</div>
+                                  <div className="font-medium">€ {option.deposit}</div>
+                                  {option.finalPayment && (
+                                    <>
+                                      <div className="text-gray-600">Maxirata:</div>
+                                      <div className="font-medium">€ {option.finalPayment}</div>
+                                    </>
+                                  )}
+                                </div>
+                                {option.includedServices && Array.isArray(option.includedServices) && option.includedServices.length > 0 && (
+                                  <div className="mt-3 text-xs text-gray-500">
+                                    <p className="font-medium text-gray-600 mb-1">Servizi inclusi: {option.includedServices.length}</p>
+                                  </div>
+                                )}
+                                <div className="flex mt-4 gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="flex-1"
+                                    onClick={() => setLocation(`/admin/vehicles/${vehicleId}/rental-options/${option.id}`)}
+                                  >
+                                    <Edit className="h-4 w-4 mr-1" /> Modifica
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    onClick={() => {
+                                      if (confirm("Sei sicuro di voler eliminare questo contratto?")) {
+                                        deleteRentalOptionMutation.mutate({
+                                          vehicleId: vehicleId!,
+                                          optionId: option.id
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* List of temporary contracts for new vehicles */}
+                      {!isEditMode && tempContracts.length > 0 && !showNewContractForm && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {tempContracts.map((option, index) => (
+                            <Card key={index} className={`border-l-4 ${option.type === 'NLT' ? 'border-l-blue-500' : 'border-l-orange-500'}`}>
+                              <CardContent className="p-4">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <span className={`inline-block text-xs font-semibold text-white px-2 py-1 rounded mb-2 ${option.type === 'NLT' ? 'bg-blue-500' : 'bg-orange-500'}`}>
+                                      {option.type}
+                                    </span>
+                                    <h4 className="font-semibold">
+                                      {option.type === 'NLT' ? 'Noleggio' : 'Rent to Buy'} {option.duration} mesi
+                                    </h4>
+                                  </div>
+                                  {option.isDefault && (
+                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Default</span>
+                                  )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-1 text-sm mb-3">
+                                  <div className="text-gray-600">Canone:</div>
+                                  <div className="font-medium">€ {option.monthlyPrice}/mese</div>
+                                  <div className="text-gray-600">Anticipo:</div>
+                                  <div className="font-medium">€ {option.deposit}</div>
+                                  {option.finalPayment && (
+                                    <>
+                                      <div className="text-gray-600">Maxirata:</div>
+                                      <div className="font-medium">€ {option.finalPayment}</div>
+                                    </>
+                                  )}
+                                </div>
+                                {option.includedServices && Array.isArray(option.includedServices) && option.includedServices.length > 0 && (
+                                  <div className="mt-3 text-xs text-gray-500">
+                                    <p className="font-medium text-gray-600 mb-1">Servizi inclusi: {option.includedServices.length}</p>
+                                  </div>
+                                )}
+                                <div className="flex mt-4 gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    onClick={() => {
+                                      if (confirm("Sei sicuro di voler eliminare questo contratto?")) {
+                                        setTempContracts(tempContracts.filter((_, i) => i !== index));
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-1" /> Elimina
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </TabsContent>
               </Tabs>
               
