@@ -9,7 +9,11 @@ import {
   insertCategorySchema, 
   insertRequestSchema, 
   insertRentalOptionSchema,
-  insertPromoSettingsSchema
+  insertPromoSettingsSchema,
+  insertGeneralSettingsSchema,
+  insertSecuritySettingsSchema,
+  insertProvinceSchema,
+  insertActivityLogSchema
 } from "@shared/schema";
 
 // Configure multer for in-memory storage
@@ -587,7 +591,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/admin/provinces", isAdmin, async (req, res) => {
     try {
-      const province = await storage.createProvince(req.body);
+      const validatedData = insertProvinceSchema.parse(req.body);
+      const province = await storage.createProvince(validatedData);
       
       // Registra l'attività
       await storage.createActivityLog({
@@ -679,7 +684,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.patch("/api/admin/settings/general", isAdmin, async (req, res) => {
     try {
-      const settings = await storage.updateGeneralSettings(req.body);
+      const validatedData = insertGeneralSettingsSchema.parse(req.body);
+      const settings = await storage.updateGeneralSettings(validatedData);
       
       // Registra l'attività
       await storage.createActivityLog({
@@ -708,7 +714,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.patch("/api/admin/settings/security", isAdmin, async (req, res) => {
     try {
-      const settings = await storage.updateSecuritySettings(req.body);
+      const validatedData = insertSecuritySettingsSchema.parse(req.body);
+      const settings = await storage.updateSecuritySettings(validatedData);
       
       // Registra l'attività
       await storage.createActivityLog({
