@@ -1,6 +1,8 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import AdminLayout from "@/components/admin/layout";
+import { useAuth } from "@/hooks/use-auth";
+import AdminSidebar from "@/components/admin/sidebar";
+import AdminHeader from "@/components/admin/header";
 import { 
   Car, 
   Users, 
@@ -78,13 +80,25 @@ function StatCard({
 }
 
 export default function AdminDashboard() {
+  const { user } = useAuth();
   const { data: stats, isLoading } = useQuery({
     queryKey: ["/api/admin/stats"],
     retry: false,
   });
 
   return (
-    <AdminLayout title="Dashboard">
+    <div className="flex h-screen bg-neutral-100">
+      <AdminSidebar />
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <AdminHeader user={user || null} />
+        
+        <main className="flex-1 overflow-y-auto p-4">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-neutral-800">Dashboard</h1>
+            <p className="text-neutral-500">Panoramica e statistiche del sistema</p>
+          </div>
+      
       {isLoading ? (
         <div className="space-y-6">
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
@@ -256,6 +270,8 @@ export default function AdminDashboard() {
           </Tabs>
         </div>
       )}
-    </AdminLayout>
+        </main>
+      </div>
+    </div>
   );
 }
