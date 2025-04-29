@@ -825,4 +825,240 @@ export class DatabaseStorage implements IStorage {
     // Ritorna tutte le promozioni nell'ordine aggiornato
     return this.getFeaturedPromos();
   }
+
+  // METODI PER GESTIONE PROVINCE
+
+  async getProvinces(): Promise<Province[]> {
+    return db.select().from(provinces).orderBy(provinces.displayOrder);
+  }
+
+  async getActiveProvinces(): Promise<Province[]> {
+    return db.select().from(provinces)
+      .where(eq(provinces.isActive, true))
+      .orderBy(provinces.displayOrder);
+  }
+
+  async getProvince(id: number): Promise<Province | undefined> {
+    const [province] = await db.select().from(provinces).where(eq(provinces.id, id));
+    return province;
+  }
+
+  async createProvince(province: InsertProvince): Promise<Province> {
+    const [newProvince] = await db.insert(provinces).values(province).returning();
+    return newProvince;
+  }
+
+  async updateProvince(id: number, province: InsertProvince): Promise<Province> {
+    const [updatedProvince] = await db
+      .update(provinces)
+      .set(province)
+      .where(eq(provinces.id, id))
+      .returning();
+    return updatedProvince;
+  }
+
+  async deleteProvince(id: number): Promise<void> {
+    await db.delete(provinces).where(eq(provinces.id, id));
+  }
+
+  async updateProvincesStatus(ids: number[], isActive: boolean): Promise<void> {
+    await db.update(provinces)
+      .set({ isActive })
+      .where(inArray(provinces.id, ids));
+  }
+
+  // METODI PER GENERAL SETTINGS
+
+  async getGeneralSettings(): Promise<GeneralSettings | undefined> {
+    const [settings] = await db.select().from(generalSettings).limit(1);
+    return settings;
+  }
+
+  async updateGeneralSettings(settings: InsertGeneralSettings): Promise<GeneralSettings> {
+    // Prima verifica se esiste già un record
+    const existingSettings = await this.getGeneralSettings();
+    
+    if (existingSettings) {
+      // Aggiorna il record esistente
+      const [updatedSettings] = await db
+        .update(generalSettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(generalSettings.id, existingSettings.id))
+        .returning();
+      return updatedSettings;
+    } else {
+      // Crea un nuovo record se non esiste
+      const [newSettings] = await db
+        .insert(generalSettings)
+        .values(settings)
+        .returning();
+      return newSettings;
+    }
+  }
+
+  // METODI PER SECURITY SETTINGS
+
+  async getSecuritySettings(): Promise<SecuritySettings | undefined> {
+    const [settings] = await db.select().from(securitySettings).limit(1);
+    return settings;
+  }
+
+  async updateSecuritySettings(settings: InsertSecuritySettings): Promise<SecuritySettings> {
+    // Prima verifica se esiste già un record
+    const existingSettings = await this.getSecuritySettings();
+    
+    if (existingSettings) {
+      // Aggiorna il record esistente
+      const [updatedSettings] = await db
+        .update(securitySettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(securitySettings.id, existingSettings.id))
+        .returning();
+      return updatedSettings;
+    } else {
+      // Crea un nuovo record se non esiste
+      const [newSettings] = await db
+        .insert(securitySettings)
+        .values(settings)
+        .returning();
+      return newSettings;
+    }
+  }
+
+  // METODI PER ACTIVITY LOGS
+
+  async getActivityLogs(limit: number = 100): Promise<ActivityLog[]> {
+    return db.select().from(activityLogs)
+      .orderBy(desc(activityLogs.createdAt))
+      .limit(limit);
+  }
+
+  async getActivityLogsByUser(userId: number, limit: number = 100): Promise<ActivityLog[]> {
+    return db.select().from(activityLogs)
+      .where(eq(activityLogs.userId, userId))
+      .orderBy(desc(activityLogs.createdAt))
+      .limit(limit);
+  }
+
+  async getActivityLogsByEntity(entityType: string, entityId: number, limit: number = 100): Promise<ActivityLog[]> {
+    return db.select().from(activityLogs)
+      .where(and(
+        eq(activityLogs.entityType, entityType),
+        eq(activityLogs.entityId, entityId)
+      ))
+      .orderBy(desc(activityLogs.createdAt))
+      .limit(limit);
+  }
+
+  async createActivityLog(log: InsertActivityLog): Promise<ActivityLog> {
+    const [newLog] = await db.insert(activityLogs).values(log).returning();
+    return newLog;
+  }
+
+  // METODI PER PASSWORD HISTORY
+
+  async getPasswordHistory(userId: number): Promise<PasswordHistory[]> {
+    return db.select().from(passwordHistory)
+      .where(eq(passwordHistory.userId, userId))
+      .orderBy(desc(passwordHistory.createdAt));
+  }
+
+  async addPasswordToHistory(userId: number, passwordHash: string): Promise<PasswordHistory> {
+    const [entry] = await db.insert(passwordHistory)
+      .values({ userId, passwordHash })
+      .returning();
+    return entry;
+  }
+
+  async cleanupPasswordHistory(userId: number, keep: number): Promise<void> {
+    // Ottiene tutti i record di password per l'utente
+    const allPasswords = await this.getPasswordHistory(userId);
+    
+    // Se ci sono più record di quelli da mantenere
+    if (allPasswords.length > keep) {
+      // Identifica gli ID da eliminare (i più vecchi oltre il numero da mantenere)
+      const idsToDelete = allPasswords
+        .slice(keep)
+        .map(entry => entry.id);
+      
+      // Elimina i record vecchi
+      if (idsToDelete.length > 0) {
+        await db.delete(passwordHistory)
+          .where(inArray(passwordHistory.id, idsToDelete));
+      }
+    }
+  }
+
+  // METODI PER ACCOUNT LOCKOUTS
+
+  async getAccountLockout(userId: number): Promise<AccountLockout | undefined> {
+    const [lockout] = await db.select().from(accountLockouts)
+      .where(eq(accountLockouts.userId, userId));
+    return lockout;
+  }
+
+  async createOrUpdateAccountLockout(userId: number, data: Partial<InsertAccountLockout>): Promise<AccountLockout> {
+    const existingLockout = await this.getAccountLockout(userId);
+    
+    if (existingLockout) {
+      // Aggiorna il record esistente
+      const [updatedLockout] = await db
+        .update(accountLockouts)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(accountLockouts.userId, userId))
+        .returning();
+      return updatedLockout;
+    } else {
+      // Crea un nuovo record
+      const [newLockout] = await db
+        .insert(accountLockouts)
+        .values({ userId, ...data })
+        .returning();
+      return newLockout;
+    }
+  }
+
+  async deleteAccountLockout(userId: number): Promise<void> {
+    await db.delete(accountLockouts)
+      .where(eq(accountLockouts.userId, userId));
+  }
+
+  // METODI PER PASSWORD RESET
+
+  async createPasswordReset(userId: number, token: string, expiresAt: Date): Promise<PasswordReset> {
+    // Prima invalida tutti i reset precedenti per questo utente
+    await db.update(passwordResets)
+      .set({ isUsed: true })
+      .where(eq(passwordResets.userId, userId));
+    
+    // Poi crea un nuovo token
+    const [reset] = await db.insert(passwordResets)
+      .values({ userId, token, expiresAt, isUsed: false })
+      .returning();
+    return reset;
+  }
+
+  async getPasswordResetByToken(token: string): Promise<PasswordReset | undefined> {
+    const [reset] = await db.select().from(passwordResets)
+      .where(and(
+        eq(passwordResets.token, token),
+        eq(passwordResets.isUsed, false)
+      ));
+    return reset;
+  }
+
+  async markPasswordResetUsed(id: number): Promise<void> {
+    await db.update(passwordResets)
+      .set({ isUsed: true })
+      .where(eq(passwordResets.id, id));
+  }
+
+  async cleanupExpiredPasswordResets(): Promise<void> {
+    // Elimina i token scaduti più vecchi di 7 giorni
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    await db.delete(passwordResets)
+      .where(lt(passwordResets.expiresAt, sevenDaysAgo));
+  }
 }

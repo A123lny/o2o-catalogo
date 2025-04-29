@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, jsonb, boolean, date, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, jsonb, boolean, date, timestamp, real, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -115,6 +115,91 @@ export const featuredPromosRelations = relations(featuredPromos, ({ one }) => ({
   }),
 }));
 
+// NUOVE TABELLE PER LE IMPOSTAZIONI
+
+// Gestione delle province
+export const provinces = pgTable("provinces", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  isActive: boolean("is_active").default(true).notNull(),
+  displayOrder: integer("display_order").notNull(),
+});
+
+// Impostazioni generali del sito
+export const generalSettings = pgTable("general_settings", {
+  id: serial("id").primaryKey(),
+  siteName: text("site_name").notNull().default("O2O Mobility"),
+  logoPath: text("logo_path"),
+  primaryColor: text("primary_color").default("#3b82f6"),
+  secondaryColor: text("secondary_color").default("#f97316"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  address: text("address"),
+  vatNumber: text("vat_number"),
+  socialFacebook: text("social_facebook"),
+  socialInstagram: text("social_instagram"),
+  socialLinkedin: text("social_linkedin"),
+  footerText: text("footer_text"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Impostazioni di sicurezza
+export const securitySettings = pgTable("security_settings", {
+  id: serial("id").primaryKey(),
+  passwordExpiryDays: integer("password_expiry_days").default(90),
+  minPasswordLength: integer("min_password_length").default(8),
+  requireUppercase: boolean("require_uppercase").default(true),
+  requireLowercase: boolean("require_lowercase").default(true),
+  requireNumber: boolean("require_number").default(true),
+  requireSpecialChar: boolean("require_special_char").default(true),
+  passwordHistoryCount: integer("password_history_count").default(5),
+  enable2FA: boolean("enable_2fa").default(false),
+  failedLoginAttempts: integer("failed_login_attempts").default(5),
+  lockoutDurationMinutes: integer("lockout_duration_minutes").default(30),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Storico delle password per controllare il riutilizzo
+export const passwordHistory = pgTable("password_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Registro delle attività degli utenti (audit log)
+export const activityLogs = pgTable("activity_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  action: text("action").notNull(),
+  entityType: text("entity_type").notNull(), // vehicle, brand, category, user, etc.
+  entityId: integer("entity_id"), // ID dell'entità coinvolta (può essere null)
+  details: jsonb("details"), // Dettagli aggiuntivi in formato JSON
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Blocco degli account dopo tentativi falliti
+export const accountLockouts = pgTable("account_lockouts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  failedAttempts: integer("failed_attempts").default(0).notNull(),
+  lockedUntil: timestamp("locked_until"),
+  lastFailedAttempt: timestamp("last_failed_attempt"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Tabella per le richieste di reset password
+export const passwordResets = pgTable("password_resets", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  isUsed: boolean("is_used").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // SCHEMAS
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -194,5 +279,62 @@ export type PromoSettings = typeof promoSettings.$inferSelect;
 
 export type InsertFeaturedPromo = z.infer<typeof insertFeaturedPromoSchema>;
 export type FeaturedPromo = typeof featuredPromos.$inferSelect;
+
+// Schemi per le nuove tabelle
+export const insertProvinceSchema = createInsertSchema(provinces).omit({
+  id: true,
+});
+
+export const insertGeneralSettingsSchema = createInsertSchema(generalSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertSecuritySettingsSchema = createInsertSchema(securitySettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPasswordHistorySchema = createInsertSchema(passwordHistory).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAccountLockoutSchema = createInsertSchema(accountLockouts).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertPasswordResetSchema = createInsertSchema(passwordResets).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Tipi per le nuove tabelle
+export type InsertProvince = z.infer<typeof insertProvinceSchema>;
+export type Province = typeof provinces.$inferSelect;
+
+export type InsertGeneralSettings = z.infer<typeof insertGeneralSettingsSchema>;
+export type GeneralSettings = typeof generalSettings.$inferSelect;
+
+export type InsertSecuritySettings = z.infer<typeof insertSecuritySettingsSchema>;
+export type SecuritySettings = typeof securitySettings.$inferSelect;
+
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+export type ActivityLog = typeof activityLogs.$inferSelect;
+
+export type InsertPasswordHistory = z.infer<typeof insertPasswordHistorySchema>;
+export type PasswordHistory = typeof passwordHistory.$inferSelect;
+
+export type InsertAccountLockout = z.infer<typeof insertAccountLockoutSchema>;
+export type AccountLockout = typeof accountLockouts.$inferSelect;
+
+export type InsertPasswordReset = z.infer<typeof insertPasswordResetSchema>;
+export type PasswordReset = typeof passwordResets.$inferSelect;
 
 export type LoginData = Pick<InsertUser, 'username' | 'password'>;
