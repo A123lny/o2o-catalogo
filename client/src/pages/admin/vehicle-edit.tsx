@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { z } from "zod";
-import { insertVehicleSchema } from "@shared/schema";
+import { insertVehicleSchema, insertRentalOptionSchema, RentalOption } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import AdminSidebar from "@/components/admin/sidebar";
@@ -328,86 +328,8 @@ export default function VehicleEditPage() {
                   <TabsTrigger value="specifications">Specifiche</TabsTrigger>
                   <TabsTrigger value="features">Caratteristiche</TabsTrigger>
                   <TabsTrigger value="images">Immagini</TabsTrigger>
+                  <TabsTrigger value="contracts">Contratti</TabsTrigger>
                 </TabsList>
-                
-                {isEditMode && (
-                  <div className="space-y-4 mb-6">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium">Opzioni di Noleggio</h3>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setLocation(`/admin/vehicles/${vehicleId}/rental-options/new`)}
-                        className="flex items-center gap-2"
-                      >
-                        <Plus className="h-4 w-4" /> Aggiungi Opzione di Noleggio
-                      </Button>
-                    </div>
-                    
-                    {rentalOptions && rentalOptions.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {rentalOptions.map((option) => (
-                          <Card key={option.id} className={`border-l-4 ${option.type === 'NLT' ? 'border-l-blue-500' : 'border-l-orange-500'}`}>
-                            <CardContent className="p-4">
-                              <div className="flex justify-between items-start mb-2">
-                                <div>
-                                  <span className={`inline-block text-xs font-semibold text-white px-2 py-1 rounded mb-2 ${option.type === 'NLT' ? 'bg-blue-500' : 'bg-orange-500'}`}>
-                                    {option.type}
-                                  </span>
-                                  <h4 className="font-semibold">
-                                    {option.type === 'NLT' ? 'Noleggio' : 'Rent to Buy'} {option.duration} mesi
-                                  </h4>
-                                </div>
-                                {option.isDefault && (
-                                  <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Default</span>
-                                )}
-                              </div>
-                              <div className="grid grid-cols-2 gap-1 text-sm mb-3">
-                                <div className="text-gray-600">Canone:</div>
-                                <div className="font-medium">€ {option.monthlyPrice}/mese</div>
-                                <div className="text-gray-600">Anticipo:</div>
-                                <div className="font-medium">€ {option.deposit}</div>
-                                {option.finalPayment && (
-                                  <>
-                                    <div className="text-gray-600">Maxirata:</div>
-                                    <div className="font-medium">€ {option.finalPayment}</div>
-                                  </>
-                                )}
-                              </div>
-                              {option.includedServices && Array.isArray(option.includedServices) && option.includedServices.length > 0 && (
-                                <div className="mt-3 text-xs text-gray-500">
-                                  <p className="font-medium text-gray-600 mb-1">Servizi inclusi: {option.includedServices.length}</p>
-                                </div>
-                              )}
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="w-full mt-2"
-                                onClick={() => setLocation(`/admin/vehicles/${vehicleId}/rental-options/${option.id}`)}
-                              >
-                                Modifica
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : (
-                      <Card>
-                        <CardContent className="p-6 text-center">
-                          <div className="text-gray-500 mb-4">
-                            Nessuna opzione di noleggio configurata per questo veicolo.
-                          </div>
-                          <Button 
-                            variant="outline"
-                            onClick={() => setLocation(`/admin/vehicles/${vehicleId}/rental-options/new`)}
-                            className="flex items-center gap-2 mx-auto"
-                          >
-                            <Plus className="h-4 w-4" /> Aggiungi Opzione di Noleggio
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                )}
                 
                 {/* Details Tab */}
                 <TabsContent value="details">
