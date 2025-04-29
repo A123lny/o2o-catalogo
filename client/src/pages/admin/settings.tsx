@@ -214,25 +214,24 @@ export default function SettingsPage() {
     }
   }, [securitySettings, securityForm]);
 
-  // Toggle province selection
-  const toggleProvinceSelection = (id: number) => {
-    setSelectedProvinces(prev => 
-      prev.includes(id) 
-        ? prev.filter(provinceId => provinceId !== id) 
-        : [...prev, id]
-    );
+  // Funzione per selezionare/deselezionare una provincia
+  const handleSelectProvince = (id: number, isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedProvinces(prev => [...prev, id]);
+    } else {
+      setSelectedProvinces(prev => prev.filter(provinceId => provinceId !== id));
+    }
   };
 
-  // Toggle select all provinces
-  const toggleAllProvinces = () => {
-    if (selectedAllProvinces || (provinces && provinces.length > 0 && selectedProvinces.length === provinces.length)) {
-      setSelectedProvinces([]);
-      setSelectedAllProvinces(false);
-    } else if (provinces && provinces.length > 0) {
-      // Assicuriamoci che provinces esista e che abbia degli elementi prima di usare map
-      const provinceIds = provinces.map((province) => province.id || 0).filter(id => id > 0);
+  // Funzione per selezionare/deselezionare tutte le province
+  const handleSelectAllProvinces = (isChecked: boolean) => {
+    if (isChecked && provinces && provinces.length > 0) {
+      const provinceIds = provinces.map(province => province.id || 0).filter(id => id > 0);
       setSelectedProvinces(provinceIds);
       setSelectedAllProvinces(true);
+    } else {
+      setSelectedProvinces([]);
+      setSelectedAllProvinces(false);
     }
   };
 
