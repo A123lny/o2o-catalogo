@@ -80,7 +80,7 @@ const badgeOptions = [
   { id: "Economica", label: "Economica" },
   { id: "Zero Emissioni", label: "Zero Emissioni" },
   { id: "Riservato", label: "Riservato" },
-  { id: "Venduta", label: "Venduta" },
+  { id: "Assegnato", label: "Assegnato" },
   { id: "2Life", label: "2Life" },
 ];
 
@@ -552,7 +552,7 @@ export default function VehicleEditPage() {
                                   • Economica: Per veicoli a basso costo
                                   • Zero Emissioni: Per veicoli elettrici o eco-friendly
                                   • Riservato: Per veicoli già prenotati
-                                  • Venduta: Per veicoli non più disponibili
+                                  • Assegnato: Per veicoli temporaneamente assegnati (non visibili nel catalogo)
                                   • 2Life: Per veicoli usati (assegnato automaticamente sopra i 1000 km)
                                 </FormDescription>
                               </div>

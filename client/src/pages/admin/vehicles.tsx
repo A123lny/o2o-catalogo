@@ -53,6 +53,9 @@ import {
   Badge,
   TagIcon,
   Car,
+  Archive as ArchiveIcon,
+  RefreshCcw,
+  Check,
 } from "lucide-react";
 
 export default function VehiclesPage() {
@@ -64,6 +67,7 @@ export default function VehiclesPage() {
   const [filterCategory, setFilterCategory] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState<number | null>(null);
+  const [showOnlyAssigned, setShowOnlyAssigned] = useState(false);
 
   const { data: vehicles, isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
     queryKey: ['/api/admin/vehicles'],
@@ -116,6 +120,53 @@ export default function VehiclesPage() {
     if (vehicleToDelete) {
       deleteMutation.mutate(vehicleToDelete);
     }
+  };
+  
+  const toggleAssignedMutation = useMutation({
+    mutationFn: async ({ id, assigned }: { id: number; assigned: boolean }) => {
+      const vehicle = vehicles?.find(v => v.id === id);
+      if (!vehicle) return;
+      
+      // Creiamo una copia dei badge correnti o un array vuoto se non esistono
+      const currentBadges = Array.isArray(vehicle.badges) ? [...vehicle.badges] : [];
+      
+      // Aggiungiamo o rimuoviamo il badge "Assegnato"
+      let updatedBadges;
+      if (assigned) {
+        updatedBadges = currentBadges.includes("Assegnato") 
+          ? currentBadges 
+          : [...currentBadges, "Assegnato"];
+      } else {
+        updatedBadges = currentBadges.filter(badge => badge !== "Assegnato");
+      }
+      
+      // Inviamo la richiesta di aggiornamento
+      const formData = new FormData();
+      formData.append('data', JSON.stringify({
+        ...vehicle,
+        badges: updatedBadges
+      }));
+      
+      return await apiRequest("PUT", `/api/admin/vehicles/${id}`, formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/vehicles'] });
+      toast({
+        title: "Veicolo aggiornato",
+        description: "Lo stato del veicolo è stato aggiornato con successo.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Si è verificato un errore durante l'aggiornamento del veicolo.",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const handleToggleAssigned = (id: number, assigned: boolean) => {
+    toggleAssignedMutation.mutate({ id, assigned });
   };
 
   const getBrandName = (brandId: number) => {
@@ -280,7 +331,7 @@ export default function VehiclesPage() {
                                   ? 'bg-emerald-100 text-emerald-800'
                                   : badge === 'Riservato'
                                   ? 'bg-amber-100 text-amber-800'
-                                  : badge === 'Venduta'
+                                  : badge === 'Assegnato'
                                   ? 'bg-red-100 text-red-800'
                                   : badge === 'Economica'
                                   ? 'bg-cyan-100 text-cyan-800'
@@ -308,6 +359,15 @@ export default function VehiclesPage() {
                               <DropdownMenuItem onClick={() => setLocation(`/admin/vehicles/${vehicle.id}/edit`)}>
                                 <Edit className="h-4 w-4 mr-2" /> Modifica
                               </DropdownMenuItem>
+                              {!vehicle.badges?.includes("Assegnato") ? (
+                                <DropdownMenuItem onClick={() => handleToggleAssigned(vehicle.id, true)}>
+                                  <ArchiveIcon className="h-4 w-4 mr-2" /> Segna come Assegnato
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onClick={() => handleToggleAssigned(vehicle.id, false)}>
+                                  <RefreshCcw className="h-4 w-4 mr-2" /> Rimuovi da Assegnato
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem onClick={() => handleDeleteClick(vehicle.id)}>
                                 <Trash2 className="h-4 w-4 mr-2" /> Elimina
                               </DropdownMenuItem>
