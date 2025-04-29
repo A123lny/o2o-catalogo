@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Brand, Category } from "@shared/schema";
+import { useState, useEffect } from "react";
+import { Brand, Category, Vehicle } from "@shared/schema";
 import {
   Accordion,
   AccordionContent,
@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
+import { useQuery } from "@tanstack/react-query";
 
 interface SearchFilterProps {
   brands: Brand[];
@@ -26,24 +27,63 @@ interface SearchFilterProps {
 }
 
 export default function SearchFilter({ brands, categories, filters, onFilterChange }: SearchFilterProps) {
+  // Ottieni tutti i veicoli per creare filtri dinamici
+  const { data: allVehicles } = useQuery<Vehicle[]>({
+    queryKey: ['/api/vehicles'],
+  });
   
-  // Fuel type options
+  // Stati per i filtri disponibili
+  const [availableFuelTypes, setAvailableFuelTypes] = useState<string[]>([]);
+  const [availableConditions, setAvailableConditions] = useState<string[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [availableContractTypes, setAvailableContractTypes] = useState<string[]>([]);
+  
+  // Aggiorna i filtri disponibili quando cambiano i dati dei veicoli
+  useEffect(() => {
+    if (allVehicles && allVehicles.length > 0) {
+      // Estrai tipi di carburante unici
+      const fuelTypesSet = new Set<string>();
+      allVehicles.forEach(v => {
+        if (v.fuelType) fuelTypesSet.add(v.fuelType);
+      });
+      setAvailableFuelTypes(Array.from(fuelTypesSet).sort());
+      
+      // Estrai condizioni uniche
+      const conditionsSet = new Set<string>();
+      allVehicles.forEach(v => {
+        if (v.condition) conditionsSet.add(v.condition);
+      });
+      setAvailableConditions(Array.from(conditionsSet).sort());
+      
+      // Estrai anni unici
+      const yearsSet = new Set<number>();
+      allVehicles.forEach(v => {
+        if (v.year) yearsSet.add(v.year);
+      });
+      setAvailableYears(Array.from(yearsSet).sort((a, b) => b - a)); // Ordina più recenti prima
+      
+      // Per i tipi di contratto, dobbiamo ottenere anche i dati di rental-options
+      // I tipi NLT/RTB vengono filtrati lato server
+      setAvailableContractTypes(['NLT', 'RTB', 'NLTRTB']);
+    }
+  }, [allVehicles]);
+  
+  // Opzioni di filtro dinamiche
   const fuelTypes = [
     { value: "", label: "Tutti i tipi" },
-    { value: "Benzina", label: "Benzina" },
-    { value: "Diesel", label: "Diesel" },
-    { value: "Ibrida", label: "Ibrida" },
-    { value: "Elettrica", label: "Elettrica" },
+    ...availableFuelTypes.map(type => ({ value: type, label: type }))
   ];
   
-  // Condition options
+  // Opzioni di condizione dinamiche
   const conditions = [
     { value: "", label: "Tutte le condizioni" },
-    { value: "Nuovo", label: "Nuovo" },
-    { value: "2Life", label: "2Life (Usato)" },
+    ...availableConditions.map(cond => ({ 
+      value: cond, 
+      label: cond === "2Life" ? "2Life (Usato)" : cond 
+    }))
   ];
   
-  // Contract type options
+  // Opzioni di contratto
   const contractTypes = [
     { value: "", label: "Tutti i contratti" },
     { value: "NLT", label: "Noleggio a Lungo Termine" },
@@ -51,13 +91,12 @@ export default function SearchFilter({ brands, categories, filters, onFilterChan
     { value: "NLTRTB", label: "NLT e RTB" },
   ];
   
-  // Year options (current year down to 10 years ago)
-  const currentYear = new Date().getFullYear();
+  // Opzioni anni dinamici
   const years = [
     { value: "", label: "Tutti gli anni" },
-    ...Array.from({ length: 10 }, (_, i) => ({ 
-      value: (currentYear - i).toString(), 
-      label: (currentYear - i).toString() 
+    ...availableYears.map(year => ({ 
+      value: year.toString(), 
+      label: year.toString() 
     }))
   ];
 
