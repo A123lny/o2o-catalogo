@@ -87,13 +87,13 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="flex h-screen bg-neutral-100">
+    <div className="flex h-full min-h-screen bg-neutral-100">
       <AdminSidebar />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col pl-64 pb-16">
         <AdminHeader user={user || null} />
         
-        <main className="flex-1 overflow-y-auto p-4">
+        <main className="flex-1 p-4">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-neutral-800">Dashboard</h1>
             <p className="text-neutral-500">Panoramica e statistiche del sistema</p>
