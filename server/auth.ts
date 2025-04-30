@@ -39,6 +39,7 @@ declare global {
 
 export function setupAuth(app: Express) {
   const sessionSecret = process.env.SESSION_SECRET || "auto_prestige_secret_key";
+  const baseUrl = process.env.BASE_URL || "http://localhost:5000";
   
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret,
@@ -111,6 +112,80 @@ export function setupAuth(app: Express) {
       done(error);
     }
   });
+  
+  // Configurazione delle strategie OAuth per i social login
+  
+  // Funzione helper per gestire il processo di login/registrazione da OAuth
+  async function handleSocialAuth(
+    provider: string,
+    profileId: string,
+    email: string,
+    displayName: string,
+    done: any
+  ) {
+    try {
+      // Prima, cerca un utente con questo profileId e provider
+      let user = await storage.getUserByProfileId(profileId, provider);
+      
+      // Se non esiste, cerca per email se disponibile
+      if (!user && email) {
+        user = await storage.getUserByEmail(email);
+      }
+      
+      // Se l'utente esiste già
+      if (user) {
+        // Se l'utente esiste ma non ha profileId/provider, aggiorniamo il suo profilo
+        if (!user.profileId || !user.provider) {
+          user = await storage.updateUserSocialProfile(user.id, {
+            profileId,
+            provider
+          });
+        }
+        return done(null, user);
+      }
+      
+      // Se l'utente non esiste, lo creiamo
+      // Generiamo un username unico basato sul nome visualizzato o email
+      let username = displayName ? displayName.replace(/\s+/g, '_').toLowerCase() : '';
+      if (!username && email) {
+        username = email.split('@')[0];
+      }
+      
+      // Aggiungiamo un numero casuale per evitare duplicati
+      username = `${username}_${Date.now().toString().slice(-4)}`;
+      
+      // Generiamo una password casuale sicura (l'utente non la userà direttamente)
+      const randomPassword = Math.random().toString(36).slice(-10) + 
+                            Math.random().toString(36).toUpperCase().slice(-2) + 
+                            '!2@';
+      
+      // Creiamo il nuovo utente
+      const newUser = await storage.createUser({
+        username,
+        email: email || '',
+        password: await hashPassword(randomPassword),
+        fullName: displayName || username,
+        role: 'user',
+        profileId,
+        provider
+      });
+      
+      // Registra l'attività
+      await storage.createActivityLog({
+        userId: newUser.id,
+        action: 'register',
+        entityType: 'auth',
+        details: `Registrazione tramite ${provider}`,
+        ipAddress: '',
+        userAgent: ''
+      });
+      
+      return done(null, newUser);
+    } catch (error) {
+      console.error(`Error in ${provider} authentication:`, error);
+      return done(error);
+    }
+  }
 
   app.post("/api/register", async (req, res, next) => {
     try {

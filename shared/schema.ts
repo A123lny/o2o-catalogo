@@ -11,6 +11,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   fullName: text("full_name").notNull(),
   role: text("role").notNull().default("user"),
+  profileId: text("profile_id"),  // ID del profilo sui social (Google ID, Facebook ID, etc)
+  provider: text("provider"),     // Provider di autenticazione (google, facebook, github)
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -283,6 +285,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   fullName: true,
   role: true,
+  profileId: true,
+  provider: true,
 });
 
 export const insertBrandSchema = createInsertSchema(brands).pick({

@@ -31,8 +31,10 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByProfileId(profileId: string, provider: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserPassword(id: number, newPasswordHash: string): Promise<User | undefined>;
+  updateUserSocialProfile(userId: number, data: { profileId: string, provider: string }): Promise<User>;
   getUsers(): Promise<User[]>;
   
   // Brands
