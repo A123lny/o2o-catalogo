@@ -346,13 +346,13 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex h-screen bg-neutral-100">
+    <div className="flex h-screen bg-neutral-100 overflow-hidden">
       <AdminSidebar />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-auto">
         <AdminHeader user={user} />
         
-        <main className="flex-1 overflow-y-auto p-4">
+        <main className="flex-1 p-4">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-neutral-800">Impostazioni</h1>
             <p className="text-neutral-500">Configura le impostazioni del sistema</p>
