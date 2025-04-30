@@ -27,11 +27,11 @@ export default function TwoFactorSetupPage() {
   // Verifica se l'utente è autenticato
   useEffect(() => {
     if (!user) {
-      navigate('/auth');
+      setLocation('/auth');
     } else {
       generateSetup();
     }
-  }, [user, navigate]);
+  }, [user, setLocation]);
 
   // Genera la configurazione 2FA
   const generateSetup = async () => {
@@ -111,7 +111,7 @@ export default function TwoFactorSetupPage() {
       description: "L'autenticazione a due fattori è stata attivata con successo.",
     });
     
-    navigate('/admin/settings');
+    setLocation('/admin/settings');
   };
 
   return (
@@ -126,7 +126,7 @@ export default function TwoFactorSetupPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/admin/settings')}
+              onClick={() => setLocation('/admin/settings')}
               className="mr-2"
             >
               <ArrowLeft className="h-4 w-4 mr-1" /> Torna alle impostazioni
@@ -246,7 +246,7 @@ export default function TwoFactorSetupPage() {
                   <>
                     <Button 
                       variant="outline" 
-                      onClick={() => navigate('/admin/settings')}
+                      onClick={() => setLocation('/admin/settings')}
                     >
                       Annulla
                     </Button>
