@@ -10,7 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 
 // Tipo per la risposta di login quando è richiesto 2FA
 type TwoFactorLoginResponse = {
-  requiresTwoFactor: true;
+  requiresTwoFactor?: boolean;
+  requiresTwoFactorSetup?: boolean;
   userId: number;
   username: string;
 };
@@ -34,6 +35,7 @@ type AuthContextType = {
     pendingUserId: number | null;
     pendingUsername: string | null;
     requiresTwoFactor: boolean;
+    requiresTwoFactorSetup: boolean;
   };
 };
 
@@ -45,10 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     pendingUserId: number | null;
     pendingUsername: string | null;
     requiresTwoFactor: boolean;
+    requiresTwoFactorSetup: boolean;
   }>({
     pendingUserId: null,
     pendingUsername: null,
-    requiresTwoFactor: false
+    requiresTwoFactor: false,
+    requiresTwoFactorSetup: false
   });
   
   const {
@@ -84,18 +88,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: (responseData: User | TwoFactorLoginResponse) => {
-      // Controlla se l'autenticazione richiede 2FA
-      if ('requiresTwoFactor' in responseData) {
+      // Controlla se l'autenticazione richiede 2FA o setup 2FA
+      if ('requiresTwoFactor' in responseData && responseData.requiresTwoFactor) {
         // Se richiede 2FA, imposta lo stato per la verifica 2FA
         setTwoFactorState({
           pendingUserId: responseData.userId,
           pendingUsername: responseData.username,
-          requiresTwoFactor: true
+          requiresTwoFactor: true,
+          requiresTwoFactorSetup: false
         });
         
         toast({
           title: "Verifica richiesta",
           description: "È necessaria la verifica con autenticazione a due fattori",
+        });
+      } else if ('requiresTwoFactorSetup' in responseData && responseData.requiresTwoFactorSetup) {
+        // Se richiede il setup di 2FA, imposta lo stato per il setup
+        setTwoFactorState({
+          pendingUserId: responseData.userId,
+          pendingUsername: responseData.username,
+          requiresTwoFactor: false,
+          requiresTwoFactorSetup: true
+        });
+        
+        toast({
+          title: "Setup 2FA richiesto",
+          description: "È necessario configurare l'autenticazione a due fattori",
         });
       } else {
         // Se non richiede 2FA, procedi con il login normale
@@ -105,7 +123,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTwoFactorState({
           pendingUserId: null,
           pendingUsername: null,
-          requiresTwoFactor: false
+          requiresTwoFactor: false,
+          requiresTwoFactorSetup: false
         });
         
         toast({

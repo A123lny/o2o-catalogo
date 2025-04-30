@@ -132,20 +132,41 @@ export function setupAuth(app: Express) {
       }
       
       try {
-        // Controlla se l'utente ha 2FA abilitato
-        const twoFactorAuth = await storage.getUserTwoFactorAuth(user.id);
+        // Controlla se 2FA è attivo globalmente dalle impostazioni di sicurezza
+        const securitySettings = await storage.getSecuritySettings();
+        const is2FARequired = securitySettings?.enable2FA || false;
         
-        if (twoFactorAuth && twoFactorAuth.isVerified) {
-          // Se 2FA è abilitato, rispondi con un flag che indica che è necessario 2FA
-          // e un ID utente temporaneo per la verifica
-          return res.status(200).json({ 
-            requiresTwoFactor: true,
-            userId: user.id,
-            username: user.username
-          });
+        if (is2FARequired) {
+          // Controlla se l'utente ha già configurato il 2FA
+          const twoFactorAuth = await storage.getUserTwoFactorAuth(user.id);
+          
+          if (twoFactorAuth) {
+            if (twoFactorAuth.isVerified) {
+              // Se 2FA è configurato e verificato, richiedi il codice 2FA
+              return res.status(200).json({ 
+                requiresTwoFactor: true,
+                userId: user.id,
+                username: user.username
+              });
+            } else {
+              // Se 2FA è iniziato ma non è stato verificato, richiedi di completare la configurazione
+              return res.status(200).json({ 
+                requiresTwoFactorSetup: true,
+                userId: user.id,
+                username: user.username
+              });
+            }
+          } else {
+            // Se 2FA è richiesto ma l'utente non ha iniziato la configurazione, mostra la pagina di setup
+            return res.status(200).json({ 
+              requiresTwoFactorSetup: true,
+              userId: user.id,
+              username: user.username
+            });
+          }
         }
         
-        // Se non è richiesto 2FA, procedi con il login normalmente
+        // Se 2FA non è richiesto o disattivato globalmente, procedi con il login normalmente
         req.login(user, (loginErr) => {
           if (loginErr) {
             return next(loginErr);
