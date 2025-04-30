@@ -71,6 +71,7 @@ const securitySettingsSchema = z.object({
   passwordExpiryDays: z.number().min(0).max(365),
   passwordHistoryCount: z.number().min(0).max(20),
   enable2FA: z.boolean(),
+  twoFaActive: z.boolean(), // Attivazione globale del 2FA
   failedLoginAttempts: z.number().min(1).max(10),
   lockoutDurationMinutes: z.number().min(1).max(1440),
 });
@@ -260,6 +261,7 @@ export default function SettingsPage() {
       passwordExpiryDays: 90,
       passwordHistoryCount: 5,
       enable2FA: false,
+      twoFaActive: false, // Stato predefinito per l'attivazione globale del 2FA
       failedLoginAttempts: 5,
       lockoutDurationMinutes: 30,
     },
@@ -277,6 +279,7 @@ export default function SettingsPage() {
         passwordExpiryDays: securitySettings.passwordExpiryDays || 90,
         passwordHistoryCount: securitySettings.passwordHistoryCount || 5,
         enable2FA: securitySettings.enable2FA || false,
+        twoFaActive: securitySettings.twoFaActive || false, // Caricamento dallo stato del server
         failedLoginAttempts: securitySettings.failedLoginAttempts || 5,
         lockoutDurationMinutes: securitySettings.lockoutDurationMinutes || 30,
       });
