@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { insertUserSchema } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
+import { FaGoogle, FaFacebook, FaGithub } from "react-icons/fa";
 
 // Components
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import PageTitle from "@/components/page-title";
 import { TwoFactorVerify } from "@/components/two-factor-verify";
+import { Separator } from "@/components/ui/separator";
 
 // Validazione
 const loginSchema = z.object({
@@ -62,6 +64,16 @@ export default function LoginPage() {
       return response.json();
     }
   });
+  
+  // Fetch active social login providers
+  const { data: socialProviders = [], isLoading: isLoadingSocialProviders } = useQuery({
+    queryKey: ['/api/auth/social-providers'],
+    queryFn: async () => {
+      const response = await fetch('/api/auth/social-providers');
+      if (!response.ok) throw new Error('Errore nel recupero dei provider di login social');
+      return response.json();
+    }
+  });
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -98,6 +110,33 @@ export default function LoginPage() {
   function onRegisterSubmit(data: RegisterFormValues) {
     const { confirmPassword, ...registerData } = data;
     registerMutation.mutate(registerData);
+  }
+  
+  // Funzione per gestire il login social
+  const handleSocialLogin = (provider: string) => {
+    console.log(`Login con ${provider}`);
+    alert(`La funzionalità di login con ${provider} sarà implementata presto!`);
+    // In un'implementazione reale, qui redirigeremo l'utente all'endpoint di autenticazione OAuth
+  }
+  
+  // Funzione per ottenere l'icona del provider
+  const getSocialIcon = (provider: string) => {
+    switch(provider) {
+      case 'google': return <FaGoogle className="mr-2" />;
+      case 'facebook': return <FaFacebook className="mr-2" />;
+      case 'github': return <FaGithub className="mr-2" />;
+      default: return null;
+    }
+  }
+  
+  // Funzione per ottenere il nome leggibile del provider
+  const getSocialProviderName = (provider: string) => {
+    switch(provider) {
+      case 'google': return 'Google';
+      case 'facebook': return 'Facebook';
+      case 'github': return 'GitHub';
+      default: return provider;
+    }
   }
 
   // Funzione per gestire la verifica 2FA completata
@@ -275,6 +314,37 @@ export default function LoginPage() {
                         "Accedi"
                       )}
                     </Button>
+                    
+                    {/* Social Login Options */}
+                    {socialProviders.length > 0 && (
+                      <div className="mt-6">
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <Separator className="w-full" />
+                          </div>
+                          <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">
+                              Oppure accedi con
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 grid gap-2">
+                          {socialProviders.map((provider: any) => (
+                            <Button
+                              key={provider.provider}
+                              variant="outline"
+                              type="button"
+                              className="w-full"
+                              onClick={() => handleSocialLogin(provider.provider)}
+                            >
+                              {getSocialIcon(provider.provider)}
+                              {getSocialProviderName(provider.provider)}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </form>
                 </Form>
               </TabsContent>
@@ -366,6 +436,37 @@ export default function LoginPage() {
                         "Registrati"
                       )}
                     </Button>
+                    
+                    {/* Social Login Options */}
+                    {socialProviders.length > 0 && (
+                      <div className="mt-6">
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <Separator className="w-full" />
+                          </div>
+                          <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">
+                              Oppure registrati con
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 grid gap-2">
+                          {socialProviders.map((provider: any) => (
+                            <Button
+                              key={provider.provider}
+                              variant="outline"
+                              type="button"
+                              className="w-full"
+                              onClick={() => handleSocialLogin(provider.provider)}
+                            >
+                              {getSocialIcon(provider.provider)}
+                              {getSocialProviderName(provider.provider)}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </form>
                 </Form>
               </TabsContent>

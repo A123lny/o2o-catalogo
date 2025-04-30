@@ -1199,6 +1199,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint pubblico per ottenere i provider di social login attivi
+  app.get("/api/auth/social-providers", async (req, res) => {
+    try {
+      const socialLoginConfigs = await storage.getSocialLoginConfigs();
+      
+      // Restituisci solo i provider attivi e le informazioni pubbliche (client ID)
+      const activeProviders = socialLoginConfigs
+        .filter(config => config.enabled)
+        .map(config => ({
+          provider: config.provider,
+          clientId: config.clientId,
+        }));
+      
+      res.json(activeProviders);
+    } catch (error) {
+      console.error("Error getting social login providers:", error);
+      res.status(500).json({ message: "Error retrieving social login providers" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
