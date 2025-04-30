@@ -126,6 +126,37 @@ export default function LoginPage() {
       </div>
     );
   }
+  
+  // Se è richiesto il setup iniziale del 2FA, reindirizza alla pagina di configurazione
+  if (twoFactorState.requiresTwoFactorSetup && twoFactorState.pendingUserId) {
+    return (
+      <div className="flex min-h-screen bg-gray-100 items-center justify-center p-6">
+        <PageTitle title="Configurazione 2FA" />
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Configurazione Richiesta</CardTitle>
+            <CardDescription>
+              È necessario configurare l'autenticazione a due fattori per continuare.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-muted-foreground">
+              Per motivi di sicurezza, è richiesto configurare l'autenticazione a due fattori (2FA) per il tuo account.
+              Questo processo richiederà di scansionare un codice QR con un'app di autenticazione sul tuo telefono.
+            </p>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={handleCancel2FA}>
+              Annulla
+            </Button>
+            <Button onClick={() => setLocation('/admin/two-factor-setup-new')}>
+              Configura 2FA
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-100">
