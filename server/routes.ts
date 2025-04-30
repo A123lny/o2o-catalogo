@@ -843,7 +843,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Se è una richiesta di verifica durante il login, non dovremmo fare nulla qui
         // Perché l'utente deve ancora essere autenticato tramite il flusso di login
         
-        res.json({ success: true });
+        // Ottieni i codici di backup per mostrarli all'utente
+        const twoFactorAuth = await storage.getUserTwoFactorAuth(userId);
+        
+        if (twoFactorAuth && twoFactorAuth.backupCodes) {
+          res.json({ 
+            success: true,
+            backupCodes: twoFactorAuth.backupCodes 
+          });
+        } else {
+          res.json({ success: true });
+        }
       } else {
         res.status(400).json({ message: "Token non valido" });
       }
