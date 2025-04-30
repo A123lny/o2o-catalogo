@@ -115,7 +115,7 @@ export const featuredPromosRelations = relations(featuredPromos, ({ one }) => ({
   }),
 }));
 
-// NUOVE TABELLE PER LE IMPOSTAZIONI
+// TABELLE PER LE IMPOSTAZIONI
 
 // Tabella per la 2FA
 export const twoFactorAuth = pgTable("two_factor_auth", {
@@ -213,6 +213,68 @@ export const passwordResets = pgTable("password_resets", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// TABELLE PER LE INTEGRAZIONI
+
+// Configurazione Email (SMTP o SendGrid)
+export const emailConfig = pgTable("email_config", {
+  id: serial("id").primaryKey(),
+  enabled: boolean("enabled").notNull().default(false),
+  provider: text("provider").notNull().default("smtp"),
+  host: text("host"),
+  port: integer("port").default(587),
+  secure: boolean("secure").default(false),
+  username: text("username"),
+  password: text("password"),
+  from: text("from"),
+  sendgridApiKey: text("sendgrid_api_key"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Template Email
+export const emailTemplates = pgTable("email_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Configurazione Twilio per SMS
+export const twilioConfig = pgTable("twilio_config", {
+  id: serial("id").primaryKey(),
+  enabled: boolean("enabled").notNull().default(false),
+  accountSid: text("account_sid"),
+  authToken: text("auth_token"),
+  verifyServiceSid: text("verify_service_sid"),
+  fromNumber: text("from_number"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Configurazione Social Login
+export const socialLoginConfig = pgTable("social_login_config", {
+  id: serial("id").primaryKey(),
+  provider: text("provider").notNull().unique(), // google, facebook, github
+  enabled: boolean("enabled").notNull().default(false),
+  clientId: text("client_id"),
+  clientSecret: text("client_secret"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Configurazione Pagamenti
+export const paymentConfig = pgTable("payment_config", {
+  id: serial("id").primaryKey(),
+  provider: text("provider").notNull().unique(), // stripe, paypal
+  enabled: boolean("enabled").notNull().default(false),
+  publicKey: text("public_key"),
+  secretKey: text("secret_key"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // SCHEMAS
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -256,26 +318,6 @@ export const insertRequestSchema = createInsertSchema(requests).pick({
   message: true,
 });
 
-// TYPES
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
-
-export type InsertBrand = z.infer<typeof insertBrandSchema>;
-export type Brand = typeof brands.$inferSelect;
-
-export type InsertCategory = z.infer<typeof insertCategorySchema>;
-export type Category = typeof categories.$inferSelect;
-
-export type InsertVehicle = z.infer<typeof insertVehicleSchema>;
-export type Vehicle = typeof vehicles.$inferSelect;
-
-export type InsertRentalOption = z.infer<typeof insertRentalOptionSchema>;
-export type RentalOption = typeof rentalOptions.$inferSelect;
-
-export type InsertRequest = z.infer<typeof insertRequestSchema>;
-export type Request = typeof requests.$inferSelect;
-
 export const insertPromoSettingsSchema = createInsertSchema(promoSettings).omit({
   id: true,
   updatedAt: true,
@@ -286,12 +328,6 @@ export const insertFeaturedPromoSchema = createInsertSchema(featuredPromos).omit
   createdAt: true,
   updatedAt: true,
 });
-
-export type InsertPromoSettings = z.infer<typeof insertPromoSettingsSchema>;
-export type PromoSettings = typeof promoSettings.$inferSelect;
-
-export type InsertFeaturedPromo = z.infer<typeof insertFeaturedPromoSchema>;
-export type FeaturedPromo = typeof featuredPromos.$inferSelect;
 
 // Schemi per le nuove tabelle
 export const insertProvinceSchema = createInsertSchema(provinces).omit({
@@ -335,94 +371,6 @@ export const insertTwoFactorAuthSchema = createInsertSchema(twoFactorAuth).omit(
   updatedAt: true,
 });
 
-// Tipi per le nuove tabelle
-export type InsertProvince = z.infer<typeof insertProvinceSchema>;
-export type Province = typeof provinces.$inferSelect;
-
-export type InsertGeneralSettings = z.infer<typeof insertGeneralSettingsSchema>;
-export type GeneralSettings = typeof generalSettings.$inferSelect;
-
-export type InsertSecuritySettings = z.infer<typeof insertSecuritySettingsSchema>;
-export type SecuritySettings = typeof securitySettings.$inferSelect;
-
-export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
-export type ActivityLog = typeof activityLogs.$inferSelect;
-
-export type InsertPasswordHistory = z.infer<typeof insertPasswordHistorySchema>;
-export type PasswordHistory = typeof passwordHistory.$inferSelect;
-
-export type InsertAccountLockout = z.infer<typeof insertAccountLockoutSchema>;
-export type AccountLockout = typeof accountLockouts.$inferSelect;
-
-export type InsertPasswordReset = z.infer<typeof insertPasswordResetSchema>;
-export type PasswordReset = typeof passwordResets.$inferSelect;
-
-export type InsertTwoFactorAuth = z.infer<typeof insertTwoFactorAuthSchema>;
-export type TwoFactorAuth = typeof twoFactorAuth.$inferSelect;
-
-export type LoginData = Pick<InsertUser, 'username' | 'password'>;
-
-// Dati per la verifica 2FA
-export type Verify2FAData = {
-  token: string;
-};
-
-// Integrations tables
-export const emailConfig = pgTable("email_config", {
-  id: serial("id").primaryKey(),
-  enabled: boolean("enabled").notNull().default(false),
-  provider: text("provider").notNull().default("smtp"),
-  host: text("host"),
-  port: integer("port").default(587),
-  secure: boolean("secure").default(false),
-  username: text("username"),
-  password: text("password"),
-  from: text("from"),
-  sendgridApiKey: text("sendgrid_api_key"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const emailTemplates = pgTable("email_templates", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-  subject: text("subject").notNull(),
-  body: text("body").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const twilioConfig = pgTable("twilio_config", {
-  id: serial("id").primaryKey(),
-  enabled: boolean("enabled").notNull().default(false),
-  accountSid: text("account_sid"),
-  authToken: text("auth_token"),
-  verifyServiceSid: text("verify_service_sid"),
-  fromNumber: text("from_number"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const socialLoginConfig = pgTable("social_login_config", {
-  id: serial("id").primaryKey(),
-  provider: text("provider").notNull().unique(), // google, facebook, github
-  enabled: boolean("enabled").notNull().default(false),
-  clientId: text("client_id"),
-  clientSecret: text("client_secret"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const paymentConfig = pgTable("payment_config", {
-  id: serial("id").primaryKey(),
-  provider: text("provider").notNull().unique(), // stripe, paypal
-  enabled: boolean("enabled").notNull().default(false),
-  publicKey: text("public_key"),
-  secretKey: text("secret_key"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
 // Insert schemas for integrations
 export const insertEmailConfigSchema = createInsertSchema(emailConfig).omit({
   id: true,
@@ -454,6 +402,57 @@ export const insertPaymentConfigSchema = createInsertSchema(paymentConfig).omit(
   updatedAt: true,
 });
 
+// TYPES
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+export type InsertBrand = z.infer<typeof insertBrandSchema>;
+export type Brand = typeof brands.$inferSelect;
+
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type Category = typeof categories.$inferSelect;
+
+export type InsertVehicle = z.infer<typeof insertVehicleSchema>;
+export type Vehicle = typeof vehicles.$inferSelect;
+
+export type InsertRentalOption = z.infer<typeof insertRentalOptionSchema>;
+export type RentalOption = typeof rentalOptions.$inferSelect;
+
+export type InsertRequest = z.infer<typeof insertRequestSchema>;
+export type Request = typeof requests.$inferSelect;
+
+export type InsertPromoSettings = z.infer<typeof insertPromoSettingsSchema>;
+export type PromoSettings = typeof promoSettings.$inferSelect;
+
+export type InsertFeaturedPromo = z.infer<typeof insertFeaturedPromoSchema>;
+export type FeaturedPromo = typeof featuredPromos.$inferSelect;
+
+// Tipi per le nuove tabelle
+export type InsertProvince = z.infer<typeof insertProvinceSchema>;
+export type Province = typeof provinces.$inferSelect;
+
+export type InsertGeneralSettings = z.infer<typeof insertGeneralSettingsSchema>;
+export type GeneralSettings = typeof generalSettings.$inferSelect;
+
+export type InsertSecuritySettings = z.infer<typeof insertSecuritySettingsSchema>;
+export type SecuritySettings = typeof securitySettings.$inferSelect;
+
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+export type ActivityLog = typeof activityLogs.$inferSelect;
+
+export type InsertPasswordHistory = z.infer<typeof insertPasswordHistorySchema>;
+export type PasswordHistory = typeof passwordHistory.$inferSelect;
+
+export type InsertAccountLockout = z.infer<typeof insertAccountLockoutSchema>;
+export type AccountLockout = typeof accountLockouts.$inferSelect;
+
+export type InsertPasswordReset = z.infer<typeof insertPasswordResetSchema>;
+export type PasswordReset = typeof passwordResets.$inferSelect;
+
+export type InsertTwoFactorAuth = z.infer<typeof insertTwoFactorAuthSchema>;
+export type TwoFactorAuth = typeof twoFactorAuth.$inferSelect;
+
 // Export types for integrations
 export type InsertEmailConfig = z.infer<typeof insertEmailConfigSchema>;
 export type EmailConfig = typeof emailConfig.$inferSelect;
@@ -469,3 +468,10 @@ export type SocialLoginConfig = typeof socialLoginConfig.$inferSelect;
 
 export type InsertPaymentConfig = z.infer<typeof insertPaymentConfigSchema>;
 export type PaymentConfig = typeof paymentConfig.$inferSelect;
+
+export type LoginData = Pick<InsertUser, 'username' | 'password'>;
+
+// Dati per la verifica 2FA
+export type Verify2FAData = {
+  token: string;
+};
