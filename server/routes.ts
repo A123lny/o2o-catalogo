@@ -15,7 +15,7 @@ import {
   insertProvinceSchema,
   insertActivityLogSchema
 } from "@shared/schema";
-import { setupTwoFactorRoutes } from "./routes/two-factor-routes";
+import { setupTwoFactorRoutes } from "./routes/new-two-factor-routes";
 
 // Configure multer for in-memory storage
 const upload = multer({ 
