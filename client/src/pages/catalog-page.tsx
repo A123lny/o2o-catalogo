@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import SearchFilter from "@/components/search-filter";
@@ -21,6 +21,10 @@ export default function CatalogPage() {
     contractType: "",
     isPromo: false,
   });
+  
+  // Stato per il lazy loading
+  const [visibleItems, setVisibleItems] = useState(12); // Numero iniziale di veicoli da mostrare
+  const observerTarget = useRef<HTMLDivElement>(null);
   
   // Leggi i parametri URL quando la pagina viene caricata
   useEffect(() => {
@@ -50,8 +54,12 @@ export default function CatalogPage() {
     if (Object.values(initialFilters).some(v => Array.isArray(v) ? v.length > 0 : v !== "")) {
       setFilters(initialFilters);
     }
+    
+    // Reset visibleItems quando cambiano i filtri
+    setVisibleItems(12);
   }, [location]);
   
+  // Query per caricare i veicoli
   const { data: vehicles, isLoading: isLoadingVehicles } = useQuery<Vehicle[]>({
     queryKey: ['/api/vehicles', filters],
   });
@@ -65,8 +73,43 @@ export default function CatalogPage() {
     queryKey: ['/api/categories/active'],
   });
   
+  // Funzione di callback per gestire l'intersection observer per infinite scroll
+  const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
+    const [target] = entries;
+    if (target.isIntersecting && vehicles) {
+      // Se ci sono ancora più veicoli da mostrare, aumenta il numero di elementi visibili
+      if (visibleItems < vehicles.length) {
+        // Aggiungi un piccolo ritardo per dare tempo al browser di renderizzare i veicoli attuali
+        setTimeout(() => {
+          setVisibleItems(prev => Math.min(prev + 6, vehicles.length)); // Carica altri 6 veicoli
+        }, 300);
+      }
+    }
+  }, [vehicles, visibleItems]);
+  
+  // Configurazione dell'intersection observer per l'infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: '20px',
+      threshold: 0.1
+    });
+    
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+    
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [handleObserver]);
+  
   const handleFilterChange = (newFilters: any) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
+    // Reset del numero di elementi visibili quando cambiano i filtri
+    setVisibleItems(12);
   };
   
   const clearFilters = () => {
@@ -79,6 +122,8 @@ export default function CatalogPage() {
       contractType: "",
       isPromo: false,
     });
+    // Reset del numero di elementi visibili quando vengono cancellati i filtri
+    setVisibleItems(12);
   };
 
   return (
@@ -124,11 +169,35 @@ export default function CatalogPage() {
                   <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 </div>
               ) : vehicles && vehicles.length > 0 ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {vehicles.map(vehicle => (
-                    <VehicleCard key={vehicle.id} vehicle={vehicle} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {vehicles.slice(0, visibleItems).map(vehicle => (
+                      <VehicleCard key={vehicle.id} vehicle={vehicle} />
+                    ))}
+                  </div>
+                  
+                  {/* Elemento osservatore per l'infinite scroll */}
+                  {visibleItems < (vehicles?.length || 0) && (
+                    <div 
+                      ref={observerTarget}
+                      className="flex justify-center my-8 py-4"
+                    >
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  )}
+                  
+                  {/* Pulsante "Carica altri" alternativo */}
+                  {visibleItems < (vehicles?.length || 0) && (
+                    <div className="flex justify-center mt-4 mb-8">
+                      <Button 
+                        variant="outline"
+                        onClick={() => setVisibleItems(prev => Math.min(prev + 6, vehicles.length))}
+                      >
+                        Carica altri veicoli ({vehicles.length - visibleItems} rimanenti)
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center bg-white p-12 rounded-lg shadow-sm">
                   <h3 className="text-xl font-semibold mb-2">Nessun veicolo trovato</h3>
