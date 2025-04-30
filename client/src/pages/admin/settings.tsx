@@ -867,27 +867,7 @@ export default function SettingsPage() {
                         )}
                       />
                       
-                      {/* Componente Configurazione 2FA personale */}
-                      {user && (
-                        <div className="border rounded-md p-4 mb-4">
-                          <h3 className="text-lg font-medium mb-2">Configurazione 2FA personale</h3>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            Configura l'autenticazione a due fattori per il tuo account amministratore
-                          </p>
-                          <Button 
-                            onClick={(e) => {
-                              e.preventDefault(); // Previene la propagazione dell'evento click
-                              e.stopPropagation(); // Ferma la propagazione dell'evento
-                              // Utilizziamo setLocation per la navigazione SPA
-                              setLocation('/admin/two-factor-setup-new');
-                            }}
-                            type="button" // Specificare che è un pulsante e non un submit
-                            variant="outline"
-                          >
-                            Configura 2FA
-                          </Button>
-                        </div>
-                      )}
+
                       
                       <Button 
                         type="submit" 
