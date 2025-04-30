@@ -1703,6 +1703,134 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
+  // Social Login Configuration Methods
+  // Questi metodi sono utilizzati sia per il frontend che per l'autenticazione
+  async getSocialLoginConfigs(): Promise<SocialLoginConfig[]> {
+    try {
+      return await db.select().from(socialLoginConfig);
+    } catch (error) {
+      console.error("Error getting social login configs:", error);
+      return [];
+    }
+  }
+  
+  async getSocialLoginConfig(provider: string): Promise<SocialLoginConfig | undefined> {
+    try {
+      const results = await db
+        .select()
+        .from(socialLoginConfig)
+        .where(eq(socialLoginConfig.provider, provider))
+        .limit(1);
+      
+      return results.length > 0 ? results[0] : undefined;
+    } catch (error) {
+      console.error(`Error getting social login config for ${provider}:`, error);
+      return undefined;
+    }
+  }
+  
+  async saveSocialLoginConfig(config: InsertSocialLoginConfig): Promise<SocialLoginConfig> {
+    try {
+      // Controlla se esiste già una configurazione per questo provider
+      const existingConfig = await this.getSocialLoginConfig(config.provider);
+      
+      if (existingConfig) {
+        // Update existing config
+        const [updatedConfig] = await db
+          .update(socialLoginConfig)
+          .set({
+            ...config,
+            updatedAt: new Date()
+          })
+          .where(eq(socialLoginConfig.id, existingConfig.id))
+          .returning();
+        return updatedConfig;
+      } else {
+        // Create new config
+        const [newConfig] = await db
+          .insert(socialLoginConfig)
+          .values({
+            ...config,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+        return newConfig;
+      }
+    } catch (error) {
+      console.error(`Error saving social login config for ${config.provider}:`, error);
+      throw error;
+    }
+  }
+  
+  // Metodi per gli utenti collegati tramite social login
+  async getUserByProfileId(profileId: string, provider: string): Promise<User | undefined> {
+    try {
+      const results = await db
+        .select()
+        .from(users)
+        .where(and(
+          eq(users.profileId, profileId),
+          eq(users.provider, provider)
+        ))
+        .limit(1);
+      
+      return results.length > 0 ? results[0] : undefined;
+    } catch (error) {
+      console.error(`Error getting user by profile ID ${profileId}:`, error);
+      return undefined;
+    }
+  }
+  
+  async updateUserSocialProfile(userId: number, profileId: string, provider: string): Promise<User> {
+    try {
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          profileId,
+          provider,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      return updatedUser;
+    } catch (error) {
+      console.error(`Error updating user ${userId} social profile:`, error);
+      throw error;
+    }
+  }
+  
+  async createUserFromSocialProfile(userData: {
+    username: string;
+    email: string;
+    fullName: string;
+    profileId: string;
+    provider: string;
+  }): Promise<User> {
+    try {
+      // Crea un nuovo utente con password casuale (non verrà mai usata poiché l'utente accede via OAuth)
+      const randomPassword = randomBytes(16).toString('hex');
+      const hashedPassword = await hashPassword(randomPassword);
+      
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          ...userData,
+          password: hashedPassword,
+          role: 'user', // Ruolo predefinito per gli utenti social
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      
+      return newUser;
+    } catch (error) {
+      console.error(`Error creating user from social profile:`, error);
+      throw error;
+    }
+  }
+  
   async sendSMS(to: string, message: string): Promise<boolean> {
     try {
       const config = await this.getTwilioConfig();
@@ -1753,63 +1881,6 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error checking phone verification:", error);
       return false;
-    }
-  }
-  
-  // Implementazione metodi integrations - Social Login
-  async getSocialLoginConfigs(): Promise<SocialLoginConfig[]> {
-    try {
-      return await db.select().from(socialLoginConfig);
-    } catch (error) {
-      console.error("Error getting social login configs:", error);
-      return [];
-    }
-  }
-  
-  async getSocialLoginConfig(provider: string): Promise<SocialLoginConfig | undefined> {
-    try {
-      const results = await db
-        .select()
-        .from(socialLoginConfig)
-        .where(eq(socialLoginConfig.provider, provider));
-      return results.length > 0 ? results[0] : undefined;
-    } catch (error) {
-      console.error(`Error getting social login config for "${provider}":`, error);
-      return undefined;
-    }
-  }
-  
-  async saveSocialLoginConfig(config: InsertSocialLoginConfig): Promise<SocialLoginConfig> {
-    try {
-      // Controlla se esiste già una configurazione per questo provider
-      const existingConfig = await this.getSocialLoginConfig(config.provider);
-      
-      if (existingConfig) {
-        // Update existing config
-        const [updatedConfig] = await db
-          .update(socialLoginConfig)
-          .set({
-            ...config,
-            updatedAt: new Date()
-          })
-          .where(eq(socialLoginConfig.id, existingConfig.id))
-          .returning();
-        return updatedConfig;
-      } else {
-        // Create new config
-        const [newConfig] = await db
-          .insert(socialLoginConfig)
-          .values({
-            ...config,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          })
-          .returning();
-        return newConfig;
-      }
-    } catch (error) {
-      console.error("Error saving social login config:", error);
-      throw error;
     }
   }
   
