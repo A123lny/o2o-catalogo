@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import { useAuth } from "@/hooks/use-auth";
 import { ProvincesSolution } from "@/components/admin/provinces-solution";
-import { TwoFactorSetupDialog } from "@/components/two-factor-setup-dialog";
 import {
   Card,
   CardContent,
@@ -85,7 +84,6 @@ export default function SettingsPage() {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [provinces, setProvinces] = useState<{[id: number]: string}>({});
-  const [twoFactorDialogOpen, setTwoFactorDialogOpen] = useState(false);
 
   // Fetch general settings
   const { data: generalSettings, isLoading: isLoadingGeneral } = useQuery({
@@ -762,28 +760,13 @@ export default function SettingsPage() {
                             onClick={(e) => {
                               e.preventDefault(); // Previene la propagazione dell'evento click
                               e.stopPropagation(); // Ferma la propagazione dell'evento
-                              setTwoFactorDialogOpen(true);
+                              window.location.href = '/admin/two-factor-setup';
                             }}
                             type="button" // Specificare che è un pulsante e non un submit
                             variant="outline"
                           >
                             Configura 2FA
                           </Button>
-                          
-                          {/* Dialog modale per configurazione 2FA */}
-                          <TwoFactorSetupDialog
-                            open={twoFactorDialogOpen}
-                            onOpenChange={setTwoFactorDialogOpen}
-                            onComplete={() => {
-                              toast({
-                                title: "2FA configurato con successo",
-                                description: "L'autenticazione a due fattori è stata configurata correttamente per il tuo account",
-                                variant: "default",
-                              });
-                              // Aggiorna lo stato 2FA
-                              securityForm.setValue('enable2FA', true);
-                            }}
-                          />
                         </div>
                       )}
                       
