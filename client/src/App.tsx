@@ -23,6 +23,7 @@ import TwoFactorSetupPage from "@/pages/admin/two-factor-setup-page";
 import TwoFactorSetupNewPage from "@/pages/admin/two-factor-setup-new-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
+import { AuthWrapper } from "@/components/auth-wrapper";
 import PageTitle from "@/components/page-title";
 
 function Router() {
@@ -62,7 +63,9 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <AuthWrapper>
+            <Router />
+          </AuthWrapper>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

@@ -349,9 +349,10 @@ export function setupAuth(app: Express) {
       const newPasswordHash = await hashPassword(newPassword);
       
       // Aggiorna la password dell'utente nel database
-      // Nota: questa funzione non esiste attualmente, quindi dobbiamo implementarla
-      // o utilizzare un altro metodo per aggiornare la password
-      // await storage.updateUserPassword(userId, newPasswordHash);
+      const updatedUser = await storage.updateUserPassword(userId, newPasswordHash);
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Errore nell'aggiornamento della password" });
+      }
       
       // Ottieni le impostazioni di sicurezza per la cronologia password
       const securitySettings = await storage.getSecuritySettings();
@@ -374,9 +375,6 @@ export function setupAuth(app: Express) {
         ipAddress: req.ip,
         userAgent: req.headers['user-agent']
       });
-      
-      // Restituisci l'utente senza il flag di password scaduta
-      const updatedUser = await storage.getUser(userId);
       res.json(updatedUser);
     } catch (error) {
       console.error("Error changing password:", error);

@@ -28,6 +28,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserPassword(id: number, newPasswordHash: string): Promise<User | undefined>;
   getUsers(): Promise<User[]>;
   
   // Brands
@@ -167,6 +168,21 @@ export class DatabaseStorage implements IStorage {
       .values(insertUser)
       .returning();
     return user;
+  }
+  
+  async updateUserPassword(id: number, newPasswordHash: string): Promise<User | undefined> {
+    try {
+      const [updatedUser] = await db
+        .update(users)
+        .set({ password: newPasswordHash })
+        .where(eq(users.id, id))
+        .returning();
+      
+      return updatedUser;
+    } catch (error) {
+      console.error('Error updating user password:', error);
+      throw error;
+    }
   }
   
   async getUsers(): Promise<User[]> {
