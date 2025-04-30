@@ -71,11 +71,22 @@ export default function Header() {
           </Link>
         </nav>
 
-        {/* Rimosso il pulsante Area Clienti */}
+        {/* Auth buttons */}
         <div className="hidden md:flex items-center space-x-4">
-          {user?.role === 'admin' && (
-            <Link href="/admin">
-              <Settings className="h-5 w-5 text-neutral-600 hover:text-primary" />
+          {user ? (
+            <>
+              {user.role === 'admin' && (
+                <Link href="/admin">
+                  <Settings className="h-5 w-5 text-neutral-600 hover:text-primary" />
+                </Link>
+              )}
+              <Link href="/logout">
+                <Button variant="outline" size="sm">Logout</Button>
+              </Link>
+            </>
+          ) : (
+            <Link href="/auth">
+              <Button variant="outline" size="sm">Login</Button>
             </Link>
           )}
         </div>
@@ -93,6 +104,17 @@ export default function Header() {
           <Link href="#contact" className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100">
             Contatti
           </Link>
+          
+          {/* Auth mobile menu items */}
+          {user ? (
+            <Link href="/logout" className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100">
+              Logout
+            </Link>
+          ) : (
+            <Link href="/auth" className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100">
+              Login
+            </Link>
+          )}
         </nav>
       </div>
     </header>
