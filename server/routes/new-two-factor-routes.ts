@@ -202,7 +202,7 @@ export function setupTwoFactorRoutes(router: Router) {
         
         if (isBackupCode) {
           // Rimuove il codice di backup utilizzato
-          remainingBackupCodes = backupCodes.filter(code => code !== token);
+          remainingBackupCodes = backupCodes.filter((code: string) => code !== token);
           await storage.updateUserTwoFactorSecret(user.id, {
             backupCodes: JSON.stringify(remainingBackupCodes)
           });
@@ -300,7 +300,7 @@ export function setupTwoFactorRoutes(router: Router) {
       }
       
       // Genera nuovi codici di backup
-      const backupCodes = generateBackupCodes(8);
+      const backupCodes: string[] = generateBackupCodes(8);
       
       // Salva nuovi codici
       await storage.updateUserTwoFactorSecret(userId, {
