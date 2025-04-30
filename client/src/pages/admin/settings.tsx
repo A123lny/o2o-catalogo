@@ -847,28 +847,59 @@ export default function SettingsPage() {
                         </CardContent>
                       </Card>
                       
-                      {/* Impostazione globale 2FA per tutti gli utenti */}
-                      <FormField
-                        control={securityForm.control}
-                        name="enable2FA"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between p-3 rounded-md border">
-                            <div>
-                              <FormLabel>Richiedi 2FA per tutti gli utenti</FormLabel>
-                              <FormDescription>
-                                Se abilitato, tutti gli utenti dovranno configurare l'autenticazione a due fattori
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch 
-                                checked={field.value} 
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {/* Impostazioni globali 2FA */}
+                      <div className="space-y-4 border rounded-lg p-4 mb-4">
+                        <h3 className="text-lg font-medium">Impostazioni globali 2FA</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Configura le opzioni di autenticazione a due fattori per il sistema
+                        </p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={securityForm.control}
+                            name="enable2FA"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center justify-between p-3 rounded-md border">
+                                <div>
+                                  <FormLabel>Richiedi 2FA</FormLabel>
+                                  <FormDescription>
+                                    Richiedi a tutti gli utenti di configurare il 2FA
+                                  </FormDescription>
+                                </div>
+                                <FormControl>
+                                  <Switch 
+                                    checked={field.value} 
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={securityForm.control}
+                            name="twoFaActive"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center justify-between p-3 rounded-md border">
+                                <div>
+                                  <FormLabel>Attiva flusso 2FA</FormLabel>
+                                  <FormDescription>
+                                    Attiva l'autenticazione 2FA nel sistema di login
+                                  </FormDescription>
+                                </div>
+                                <FormControl>
+                                  <Switch 
+                                    checked={field.value} 
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
                       
 
                       

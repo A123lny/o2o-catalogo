@@ -57,6 +57,7 @@ async function initializeMissingTables() {
         "require_special_char" BOOLEAN DEFAULT TRUE,
         "password_history_count" INTEGER DEFAULT 5,
         "enable_2fa" BOOLEAN DEFAULT FALSE,
+        "two_fa_active" BOOLEAN DEFAULT FALSE,
         "failed_login_attempts" INTEGER DEFAULT 5,
         "lockout_duration_minutes" INTEGER DEFAULT 30,
         "updated_at" TIMESTAMP NOT NULL DEFAULT NOW()
@@ -176,6 +177,7 @@ async function initializeMissingTables() {
         requireSpecialChar: true,
         passwordHistoryCount: 5,
         enable2FA: false,
+        twoFaActive: false, // Aggiungiamo il nuovo campo per l'attivazione del flusso 2FA
         failedLoginAttempts: 5,
         lockoutDurationMinutes: 30
       });
