@@ -1,5 +1,8 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as FacebookStrategy } from "passport-facebook";
+import { Strategy as GitHubStrategy } from "passport-github2";
 import { Express } from "express";
 import session from "express-session";
 import { storage } from "./storage";
@@ -28,6 +31,8 @@ declare global {
       fullName: string;
       role: string;
       createdAt: Date;
+      profileId?: string;     // ID del profilo sui social (es. Google ID, Facebook ID)
+      provider?: string;      // Provider di autenticazione (es. google, facebook, github)
     }
   }
 }
