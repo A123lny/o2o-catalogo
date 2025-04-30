@@ -27,10 +27,12 @@ export function TwoFactorSetup({ onComplete, onCancel }: TwoFactorSetupProps) {
   // Inizializza il setup del 2FA (generazione del QR code)
   const setupMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/two-factor/setup");
+      console.log("Avvio inizializzazione 2FA");
+      const response = await apiRequest("POST", "/api/2fa/setup");
       return response.json();
     },
     onSuccess: (data) => {
+      console.log("QR Code ricevuto con successo");
       setQrCode(data.qrCodeUrl);
     },
     onError: (error) => {
@@ -46,7 +48,8 @@ export function TwoFactorSetup({ onComplete, onCancel }: TwoFactorSetupProps) {
   // Verifica il token 2FA
   const verifyMutation = useMutation({
     mutationFn: async (token: string) => {
-      const response = await apiRequest("POST", "/api/two-factor/verify-setup", { token });
+      console.log("Verifica token:", token);
+      const response = await apiRequest("POST", "/api/2fa/verify-setup", { token });
       return response.json();
     },
     onSuccess: (data) => {

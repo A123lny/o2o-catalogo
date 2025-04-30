@@ -15,7 +15,7 @@ import {
   insertProvinceSchema,
   insertActivityLogSchema
 } from "@shared/schema";
-import { setupTwoFactorRoutes } from "./routes/new-two-factor-routes";
+import { setup2FARoutes } from "./2fa-routes";
 
 // Configure multer for in-memory storage
 const upload = multer({ 
@@ -39,7 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up two-factor authentication routes
   const router = express.Router();
-  setupTwoFactorRoutes(router);
+  setup2FARoutes(router);
   app.use(router);
 
   // Public API routes
@@ -779,7 +779,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Registra le rotte per l'autenticazione a due fattori
   const router2FA = express.Router();
-  setupTwoFactorRoutes(router2FA);
+  setup2FARoutes(router2FA);
   app.use(router2FA);
 
   const httpServer = createServer(app);
