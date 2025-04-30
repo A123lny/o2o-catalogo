@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import PageTitle from "@/components/page-title";
+import { TwoFactorVerify } from "@/components/two-factor-verify";
 
 // Validazione
 const loginSchema = z.object({
@@ -42,7 +43,13 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { 
+    user, 
+    loginMutation, 
+    registerMutation, 
+    verifyTwoFactorMutation,
+    twoFactorState
+  } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
   
   // Fetch general settings to get site name
@@ -89,6 +96,33 @@ export default function LoginPage() {
   function onRegisterSubmit(data: RegisterFormValues) {
     const { confirmPassword, ...registerData } = data;
     registerMutation.mutate(registerData);
+  }
+
+  // Funzione per gestire la verifica 2FA completata
+  const handleVerified = () => {
+    // Quando la verifica 2FA è completata con successo, verifyTwoFactorMutation già aggiorna il context
+    // Non serve fare altro qui
+  };
+  
+  // Funzione per annullare la verifica 2FA
+  const handleCancel2FA = () => {
+    // Resetta lo stato di verifica 2FA (non è necessario, ma è per sicurezza)
+    // In un'implementazione reale, potremmo voler comunicare con il server per annullare la sessione
+    window.location.reload();
+  };
+
+  // Se è richiesta la verifica 2FA, mostra il componente di verifica
+  if (twoFactorState.requiresTwoFactor && twoFactorState.pendingUserId) {
+    return (
+      <div className="flex min-h-screen bg-gray-100 items-center justify-center p-6">
+        <PageTitle title="Verifica Autenticazione" />
+        <TwoFactorVerify 
+          userId={twoFactorState.pendingUserId}
+          onVerified={handleVerified}
+          onCancel={handleCancel2FA}
+        />
+      </div>
+    );
   }
 
   return (

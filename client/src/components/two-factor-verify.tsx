@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from '@/lib/queryClient';
-import { LockIcon, KeyIcon } from 'lucide-react';
+import { Loader2, LockIcon, KeyIcon } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 interface TwoFactorVerifyProps {
   userId: number;
@@ -15,13 +15,13 @@ interface TwoFactorVerifyProps {
 
 export function TwoFactorVerify({ userId, onVerified, onCancel }: TwoFactorVerifyProps) {
   const { toast } = useToast();
+  const { verifyTwoFactorMutation } = useAuth();
   const [verificationCode, setVerificationCode] = useState('');
   const [backupCode, setBackupCode] = useState('');
   const [isUsingBackupCode, setIsUsingBackupCode] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
 
   // Verifica codice 2FA
-  const verifyCode = async () => {
+  const verifyCode = () => {
     if (isUsingBackupCode) {
       if (backupCode.length < 8) {
         toast({
@@ -40,43 +40,16 @@ export function TwoFactorVerify({ userId, onVerified, onCancel }: TwoFactorVerif
       return;
     }
 
-    setIsVerifying(true);
-    try {
-      const endpoint = isUsingBackupCode 
-        ? '/api/auth/2fa/verify-backup' 
-        : '/api/auth/2fa/verify';
-
-      const payload = isUsingBackupCode
-        ? { userId, code: backupCode }
-        : { userId, token: verificationCode };
-
-      const response = await apiRequest('POST', endpoint, payload);
-      
-      if (response.ok) {
-        toast({
-          title: "Verifica completata",
-          description: "Autenticazione a due fattori completata con successo",
-          variant: "default",
-        });
+    // Utilizziamo la mutation del context per verificare il codice
+    verifyTwoFactorMutation.mutate({
+      userId,
+      token: isUsingBackupCode ? backupCode : verificationCode,
+      isBackupCode: isUsingBackupCode
+    }, {
+      onSuccess: () => {
         onVerified();
-      } else {
-        const error = await response.text();
-        toast({
-          title: "Codice non valido",
-          description: error || "Il codice inserito non è valido. Riprova.",
-          variant: "destructive",
-        });
       }
-    } catch (error) {
-      console.error('Error verifying 2FA code:', error);
-      toast({
-        title: "Errore di connessione",
-        description: "Impossibile contattare il server. Riprova più tardi.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsVerifying(false);
-    }
+    });
   };
 
   const toggleBackupCode = () => {
@@ -151,9 +124,16 @@ export function TwoFactorVerify({ userId, onVerified, onCancel }: TwoFactorVerif
         </Button>
         <Button 
           onClick={verifyCode} 
-          disabled={isVerifying || (isUsingBackupCode ? backupCode.length < 8 : verificationCode.length !== 6)}
+          disabled={verifyTwoFactorMutation.isPending || (isUsingBackupCode ? backupCode.length < 8 : verificationCode.length !== 6)}
         >
-          {isVerifying ? "Verifica in corso..." : "Verifica"}
+          {verifyTwoFactorMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Verifica in corso...
+            </>
+          ) : (
+            "Verifica"
+          )}
         </Button>
       </CardFooter>
     </Card>
