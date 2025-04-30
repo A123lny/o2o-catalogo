@@ -3,6 +3,7 @@ import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import { useAuth } from "@/hooks/use-auth";
 import { ProvincesSolution } from "@/components/admin/provinces-solution";
+import { TwoFactorSection } from "@/components/admin/two-factor-section";
 import {
   Card,
   CardContent,
@@ -539,14 +540,19 @@ export default function SettingsPage() {
             
             {/* Security Settings */}
             <TabsContent value="security">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Impostazioni di Sicurezza</CardTitle>
-                  <CardDescription>
-                    Configura le impostazioni di sicurezza del sistema
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+              <div className="grid gap-4">
+                {/* Two-Factor Authentication */}
+                <TwoFactorSection />
+                
+                {/* General Security Settings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Impostazioni di Sicurezza</CardTitle>
+                    <CardDescription>
+                      Configura le impostazioni di sicurezza del sistema
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
                   <Form {...securityForm}>
                     <form onSubmit={securityForm.handleSubmit(onSecuritySubmit)} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -786,6 +792,7 @@ export default function SettingsPage() {
                   </Form>
                 </CardContent>
               </Card>
+              </div>
             </TabsContent>
             
             {/* Activity Logs */}
