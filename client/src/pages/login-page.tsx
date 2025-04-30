@@ -198,6 +198,26 @@ export default function LoginPage() {
                       )}
                     />
                     
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox" 
+                          id="remember" 
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <label htmlFor="remember" className="text-sm text-muted-foreground">
+                          Ricordami
+                        </label>
+                      </div>
+                      <button 
+                        type="button" 
+                        className="text-sm font-medium text-primary hover:underline" 
+                        onClick={() => alert("Funzionalità di recupero password in arrivo!")}
+                      >
+                        Password dimenticata?
+                      </button>
+                    </div>
+                    
                     <Button 
                       type="submit" 
                       className="w-full" 
