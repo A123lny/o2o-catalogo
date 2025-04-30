@@ -2,6 +2,10 @@ import { useState } from "react";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import SocialLoginConfig from "@/components/admin/social-login-config";
+import EmailConfig from "@/components/admin/email-config";
+import TwilioConfig from "@/components/admin/twilio-config";
+import { PaymentConfigs } from "@/components/admin/payment-config";
+import EmailTemplateConfig from "@/components/admin/email-template-config";
 import { Cog, Mail, Phone, CreditCard, Users as UsersIcon } from "lucide-react";
 import {
   Card,
@@ -54,18 +58,7 @@ export default function IntegrationsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-4 border rounded-lg mb-4">
-                    <h3 className="text-lg font-medium mb-2">Stato implementazione</h3>
-                    <p className="mb-2">Questa sezione consente di configurare:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li>Attivazione/disattivazione del sistema email</li>
-                      <li>Configurazione provider SMTP o SendGrid</li>
-                      <li>Test dell'invio email con template personalizzati</li>
-                    </ul>
-                    <p className="mt-3 text-muted-foreground">
-                      Il database e le API per la gestione delle email sono implementati e sono funzionanti.
-                    </p>
-                  </div>
+                  <EmailConfig />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -83,18 +76,7 @@ export default function IntegrationsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-4 border rounded-lg mb-4">
-                    <h3 className="text-lg font-medium mb-2">Stato implementazione</h3>
-                    <p className="mb-2">Questa sezione consente di configurare:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li>Integrazione con Twilio per invio SMS</li>
-                      <li>Servizio di verifica numero telefono</li>
-                      <li>Integrazione SMS per l'autenticazione a due fattori</li>
-                    </ul>
-                    <p className="mt-3 text-muted-foreground">
-                      Il database e le API per la gestione degli SMS sono implementati e sono funzionanti.
-                    </p>
-                  </div>
+                  <TwilioConfig />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -134,17 +116,7 @@ export default function IntegrationsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-4 border rounded-lg mb-4">
-                    <h3 className="text-lg font-medium mb-2">Stato implementazione</h3>
-                    <p className="mb-2">Questa sezione consente di configurare:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li>Integrazione con Stripe</li>
-                      <li>Integrazione con PayPal</li>
-                    </ul>
-                    <p className="mt-3 text-muted-foreground">
-                      Il database e le API per la gestione dei pagamenti sono implementati e sono funzionanti.
-                    </p>
-                  </div>
+                  <PaymentConfigs />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -162,19 +134,7 @@ export default function IntegrationsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-4 border rounded-lg mb-4">
-                    <h3 className="text-lg font-medium mb-2">Stato implementazione</h3>
-                    <p className="mb-2">Questa sezione consente di configurare:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li>Templates per email di benvenuto</li>
-                      <li>Templates per reset password</li>
-                      <li>Templates per verifica email</li>
-                      <li>Templates per conferma richieste</li>
-                    </ul>
-                    <p className="mt-3 text-muted-foreground">
-                      Il database e le API per la gestione dei template email sono implementati e sono funzionanti.
-                    </p>
-                  </div>
+                  <EmailTemplateConfig />
                 </CardContent>
               </Card>
             </TabsContent>
