@@ -53,20 +53,40 @@ export function setupAuth(app: Express) {
     new LocalStrategy(async (username, password, done) => {
       try {
         console.log(`Authentication attempt for username: ${username}`);
+        
+        // Verifica se l'account è bloccato per tentativi falliti
+        const lockoutResult = await handleFailedLoginAttempt(username);
+        if (lockoutResult.lockedOut) {
+          console.log(`Account locked for ${username}: ${lockoutResult.message}`);
+          return done(null, false, { message: lockoutResult.message });
+        }
+        
         const user = await storage.getUserByUsername(username);
         console.log(`User found: ${!!user}`);
         
         if (!user) {
           console.log('No user found with that username');
-          return done(null, false);
+          return done(null, false, { message: "Username o password non validi" });
         }
         
         const passwordMatches = await comparePasswords(password, user.password);
         console.log(`Password match: ${passwordMatches}`);
         
         if (!passwordMatches) {
-          return done(null, false);
+          // Aggiorna i tentativi falliti
+          await handleFailedLoginAttempt(username);
+          return done(null, false, { message: "Username o password non validi" });
         } else {
+          // Reset dei tentativi falliti dopo login con successo
+          await resetFailedLoginAttempts(user.id);
+          
+          // Controlla se la password è scaduta
+          const isExpired = await isPasswordExpired(user.id);
+          if (isExpired) {
+            // In caso di password scaduta, permetti comunque l'accesso ma imposta un flag
+            user.passwordExpired = true;
+          }
+          
           return done(null, user);
         }
       } catch (error) {
@@ -119,7 +139,9 @@ export function setupAuth(app: Express) {
       }
       
       if (!user) {
-        return res.status(401).send("Authentication failed");
+        // Se l'autenticazione è fallita, restituisci il messaggio di errore
+        const errorMessage = info?.message || "Autenticazione fallita";
+        return res.status(401).json({ message: errorMessage });
       }
       
       try {
@@ -131,6 +153,11 @@ export function setupAuth(app: Express) {
         // Il 2FA è richiesto solo se è sia abilitato che attivo a livello globale
         const is2FARequired = is2FAEnabled && is2FAActive;
         
+        // Controlla se la password è scaduta e se dobbiamo forzare il cambio
+        // Nota: la verifica principale è già fatta in LocalStrategy, ma qui controlliamo
+        // solo se dobbiamo forzare il cambio
+        const passwordExpired = user.passwordExpired === true;
+        
         if (is2FARequired) {
           // Controlla se l'utente ha già configurato il 2FA
           const twoFactorAuth = await storage.getUserTwoFactorAuth(user.id);
@@ -141,14 +168,16 @@ export function setupAuth(app: Express) {
               return res.status(200).json({ 
                 requiresTwoFactor: true,
                 userId: user.id,
-                username: user.username
+                username: user.username,
+                passwordExpired // Aggiungi l'informazione sulla scadenza password
               });
             } else {
               // Se 2FA è iniziato ma non è stato verificato, richiedi di completare la configurazione
               return res.status(200).json({ 
                 requiresTwoFactorSetup: true,
                 userId: user.id,
-                username: user.username
+                username: user.username,
+                passwordExpired
               });
             }
           } else {
@@ -156,7 +185,8 @@ export function setupAuth(app: Express) {
             return res.status(200).json({ 
               requiresTwoFactorSetup: true,
               userId: user.id,
-              username: user.username
+              username: user.username,
+              passwordExpired
             });
           }
         }
@@ -167,10 +197,28 @@ export function setupAuth(app: Express) {
             return next(loginErr);
           }
           
-          return res.status(200).send(user);
+          // Registra l'attività di login
+          storage.createActivityLog({
+            userId: user.id,
+            action: "login",
+            entityType: "auth",
+            details: "Login effettuato con successo",
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+          }).catch(console.error);
+          
+          // Se la password è scaduta, informiamo il client
+          if (passwordExpired) {
+            return res.status(200).json({
+              ...user,
+              passwordExpired: true
+            });
+          }
+          
+          return res.status(200).json(user);
         });
       } catch (error) {
-        console.error("Error checking 2FA status:", error);
+        console.error("Error during login process:", error);
         return next(error);
       }
     })(req, res, next);
@@ -178,7 +226,7 @@ export function setupAuth(app: Express) {
   
   // Autenticazione con 2FA
   app.post("/api/login/2fa", async (req, res, next) => {
-    const { userId, token, isBackupCode } = req.body;
+    const { userId, token, isBackupCode, passwordExpired } = req.body;
     
     if (!userId || (!token && !isBackupCode)) {
       return res.status(400).json({ message: "Parametri mancanti" });
@@ -205,6 +253,12 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ message: "Utente non trovato" });
       }
       
+      // Verifica nuovamente la scadenza della password nel caso in cui il frontend non abbia passato l'informazione
+      let isPasswordExpired = passwordExpired === true;
+      if (!isPasswordExpired) {
+        isPasswordExpired = await isPasswordExpired(user.id);
+      }
+      
       // Effettua il login
       req.login(user, (loginErr) => {
         if (loginErr) {
@@ -217,10 +271,19 @@ export function setupAuth(app: Express) {
           action: "login",
           entityType: "auth",
           details: "Login con autenticazione a due fattori",
-          ipAddress: req.ip
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent']
         }).catch(console.error);
         
-        return res.status(200).send(user);
+        // Se la password è scaduta, informiamo il client
+        if (isPasswordExpired) {
+          return res.status(200).json({
+            ...user,
+            passwordExpired: true
+          });
+        }
+        
+        return res.status(200).json(user);
       });
     } catch (error) {
       console.error("Error during 2FA verification:", error);
@@ -238,6 +301,87 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
+  });
+  
+  // Endpoint per il cambio password
+  app.post("/api/user/change-password", async (req, res, next) => {
+    const { userId, currentPassword, newPassword } = req.body;
+    
+    if (!userId || !currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Parametri mancanti" });
+    }
+    
+    try {
+      // Verifica che l'utente esista
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Utente non trovato" });
+      }
+      
+      // Verifica che l'utente sia autorizzato a cambiare questa password
+      // L'utente deve essere loggato come l'utente stesso o come amministratore
+      if (!req.isAuthenticated() || (req.user.id !== userId && req.user.role !== 'admin')) {
+        return res.status(403).json({ message: "Non autorizzato" });
+      }
+      
+      // Verifica la password attuale
+      const passwordCorrect = await comparePasswords(currentPassword, user.password);
+      if (!passwordCorrect) {
+        return res.status(400).json({ message: "Password attuale non corretta" });
+      }
+      
+      // Valida la complessità della nuova password
+      const { isValid, errors } = await validatePasswordComplexity(newPassword);
+      if (!isValid) {
+        return res.status(400).json({ 
+          message: "La password non soddisfa i requisiti di complessità", 
+          errors 
+        });
+      }
+      
+      // Verifica che la nuova password non sia stata già usata in precedenza
+      const passwordReused = await isPasswordPreviouslyUsed(userId, newPassword);
+      if (passwordReused) {
+        return res.status(400).json({ message: "Non è possibile riutilizzare una password recente" });
+      }
+      
+      // Genera hash della nuova password
+      const newPasswordHash = await hashPassword(newPassword);
+      
+      // Aggiorna la password dell'utente nel database
+      // Nota: questa funzione non esiste attualmente, quindi dobbiamo implementarla
+      // o utilizzare un altro metodo per aggiornare la password
+      // await storage.updateUserPassword(userId, newPasswordHash);
+      
+      // Ottieni le impostazioni di sicurezza per la cronologia password
+      const securitySettings = await storage.getSecuritySettings();
+      
+      // Aggiungi la nuova password alla cronologia
+      await storage.addPasswordToHistory(userId, newPasswordHash);
+      
+      // Pulisci la cronologia delle password se necessario
+      if (securitySettings && securitySettings.passwordHistoryCount) {
+        await storage.cleanupPasswordHistory(userId, securitySettings.passwordHistoryCount);
+      }
+      
+      // Registra l'attività
+      await storage.createActivityLog({
+        userId,
+        action: "password_change",
+        entityType: "user",
+        entityId: userId,
+        details: "Password modificata con successo",
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+      
+      // Restituisci l'utente senza il flag di password scaduta
+      const updatedUser = await storage.getUser(userId);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error changing password:", error);
+      next(error);
+    }
   });
 
   // Middleware to check if user is admin

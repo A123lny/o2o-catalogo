@@ -8,12 +8,18 @@ import { InsertUser, User, LoginData } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Tipo esteso per l'utente che include il flag di password scaduta
+type UserWithPasswordState = User & {
+  passwordExpired?: boolean;
+};
+
 // Tipo per la risposta di login quando è richiesto 2FA
 type TwoFactorLoginResponse = {
   requiresTwoFactor?: boolean;
   requiresTwoFactorSetup?: boolean;
   userId: number;
   username: string;
+  passwordExpired?: boolean;
 };
 
 // Tipo per la richiesta di verifica 2FA
@@ -21,22 +27,33 @@ type TwoFactorVerifyRequest = {
   userId: number;
   token: string;
   isBackupCode?: boolean;
+  passwordExpired?: boolean;
+};
+
+// Tipo per la richiesta di cambio password
+type PasswordChangeRequest = {
+  userId: number;
+  currentPassword: string;
+  newPassword: string;
 };
 
 type AuthContextType = {
-  user: User | null;
+  user: UserWithPasswordState | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<User | TwoFactorLoginResponse, Error, LoginData>;
+  loginMutation: UseMutationResult<UserWithPasswordState | TwoFactorLoginResponse, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<User, Error, InsertUser>;
-  verifyTwoFactorMutation: UseMutationResult<User, Error, TwoFactorVerifyRequest>;
+  registerMutation: UseMutationResult<UserWithPasswordState, Error, InsertUser>;
+  verifyTwoFactorMutation: UseMutationResult<UserWithPasswordState, Error, TwoFactorVerifyRequest>;
+  changePasswordMutation: UseMutationResult<UserWithPasswordState, Error, PasswordChangeRequest>;
   twoFactorState: {
     pendingUserId: number | null;
     pendingUsername: string | null;
     requiresTwoFactor: boolean;
     requiresTwoFactorSetup: boolean;
   };
+  showPasswordExpiryDialog: boolean;
+  setShowPasswordExpiryDialog: (show: boolean) => void;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -55,13 +72,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     requiresTwoFactorSetup: false
   });
   
+  // Stato per il dialogo di cambio password quando scaduta
+  const [showPasswordExpiryDialog, setShowPasswordExpiryDialog] = useState(false);
+  
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<User | undefined, Error>({
+  } = useQuery<UserWithPasswordState | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    onSuccess: (data) => {
+      // Se l'utente è loggato e la password è scaduta, mostra il dialogo di cambio password
+      if (data && data.passwordExpired) {
+        setShowPasswordExpiryDialog(true);
+      }
+    }
   });
 
   const loginMutation = useMutation({
@@ -87,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    onSuccess: (responseData: User | TwoFactorLoginResponse) => {
+    onSuccess: (responseData: UserWithPasswordState | TwoFactorLoginResponse) => {
       // Controlla se l'autenticazione richiede 2FA o setup 2FA
       if ('requiresTwoFactor' in responseData && responseData.requiresTwoFactor) {
         // Se richiede 2FA, imposta lo stato per la verifica 2FA
@@ -127,10 +153,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           requiresTwoFactorSetup: false
         });
         
-        toast({
-          title: "Login effettuato",
-          description: `Benvenuto, ${responseData.fullName}!`,
-        });
+        // Controlla se la password è scaduta
+        if ('passwordExpired' in responseData && responseData.passwordExpired) {
+          setShowPasswordExpiryDialog(true);
+          
+          toast({
+            title: "Password scaduta",
+            description: "La tua password è scaduta. È necessario cambiarla.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Login effettuato",
+            description: `Benvenuto${responseData.fullName ? ', ' + responseData.fullName : ''}!`,
+          });
+        }
       }
     },
     onError: (error: Error) => {
@@ -144,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   // Mutation per verifica 2FA
   const verifyTwoFactorMutation = useMutation({
-    mutationFn: async ({ userId, token, isBackupCode = false }: TwoFactorVerifyRequest) => {
+    mutationFn: async ({ userId, token, isBackupCode = false, passwordExpired }: TwoFactorVerifyRequest) => {
       try {
         const response = await fetch("/api/login/2fa", {
           method: "POST",
@@ -154,7 +191,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify({ 
             userId, 
             token, 
-            isBackupCode
+            isBackupCode,
+            passwordExpired
           }),
         });
         
@@ -170,7 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    onSuccess: (userData: User) => {
+    onSuccess: (userData: UserWithPasswordState) => {
       // Aggiorna i dati utente
       queryClient.setQueryData(["/api/user"], userData);
       
@@ -182,15 +220,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         requiresTwoFactorSetup: false
       });
       
-      toast({
-        title: "Verifica completata",
-        description: `Benvenuto, ${userData.fullName}!`,
-      });
+      // Controlla se la password è scaduta
+      if (userData.passwordExpired) {
+        setShowPasswordExpiryDialog(true);
+        
+        toast({
+          title: "Password scaduta",
+          description: "La tua password è scaduta. È necessario cambiarla.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Verifica completata",
+          description: `Benvenuto${userData.fullName ? ', ' + userData.fullName : ''}!`,
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
         title: "Verifica fallita",
         description: error.message || "Si è verificato un errore durante la verifica del codice",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation per il cambio password
+  const changePasswordMutation = useMutation({
+    mutationFn: async ({ userId, currentPassword, newPassword }: PasswordChangeRequest) => {
+      try {
+        const response = await apiRequest("POST", "/api/user/change-password", {
+          userId,
+          currentPassword,
+          newPassword
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Cambio password fallito");
+        }
+        
+        const userData = await response.json();
+        return userData;
+      } catch (error: any) {
+        console.error("Password change error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (userData: UserWithPasswordState) => {
+      // Aggiorna i dati utente
+      queryClient.setQueryData(["/api/user"], userData);
+      
+      // Nascondi il dialogo di cambio password
+      setShowPasswordExpiryDialog(false);
+      
+      toast({
+        title: "Password aggiornata",
+        description: "La tua password è stata aggiornata con successo",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Cambio password fallito",
+        description: error.message || "Si è verificato un errore durante il cambio password",
         variant: "destructive",
       });
     },
@@ -219,7 +311,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    onSuccess: (user: User) => {
+    onSuccess: (user: UserWithPasswordState) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registrazione completata",
@@ -255,6 +347,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      
+      // Resetta lo stato di 2FA e cambio password
+      setTwoFactorState({
+        pendingUserId: null,
+        pendingUsername: null,
+        requiresTwoFactor: false,
+        requiresTwoFactorSetup: false
+      });
+      setShowPasswordExpiryDialog(false);
+      
       toast({
         title: "Logout effettuato",
         description: "Hai effettuato il logout con successo.",
@@ -279,7 +381,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logoutMutation,
         registerMutation,
         verifyTwoFactorMutation,
-        twoFactorState
+        changePasswordMutation,
+        twoFactorState,
+        showPasswordExpiryDialog,
+        setShowPasswordExpiryDialog
       }}
     >
       {children}
