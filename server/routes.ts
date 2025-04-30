@@ -911,6 +911,294 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // --- INTEGRATIONS API ENDPOINTS --- //
+  
+  // Get all integrations configuration
+  app.get("/api/admin/integrations", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "admin") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      // Get email configuration
+      const emailConfig = await storage.getEmailConfig() || {
+        enabled: false,
+        provider: "smtp",
+      };
+      
+      // Get email templates
+      const emailTemplates = await storage.getEmailTemplates();
+      const templatesMap = emailTemplates.reduce((acc, template) => {
+        acc[template.name] = {
+          subject: template.subject,
+          body: template.body,
+        };
+        return acc;
+      }, {});
+      
+      // Get Twilio configuration
+      const twilioConfig = await storage.getTwilioConfig() || {
+        enabled: false,
+      };
+      
+      // Get social login configurations
+      const socialLoginConfigs = await storage.getSocialLoginConfigs();
+      let socialLogin = {
+        googleEnabled: false,
+        facebookEnabled: false,
+        githubEnabled: false,
+      };
+      
+      socialLoginConfigs.forEach(config => {
+        if (config.provider === "google") {
+          socialLogin.googleEnabled = config.enabled;
+          socialLogin.googleClientId = config.clientId;
+          socialLogin.googleClientSecret = config.clientSecret;
+        } else if (config.provider === "facebook") {
+          socialLogin.facebookEnabled = config.enabled;
+          socialLogin.facebookAppId = config.clientId;
+          socialLogin.facebookAppSecret = config.clientSecret;
+        } else if (config.provider === "github") {
+          socialLogin.githubEnabled = config.enabled;
+          socialLogin.githubClientId = config.clientId;
+          socialLogin.githubClientSecret = config.clientSecret;
+        }
+      });
+      
+      // Get payment configurations
+      const paymentConfigs = await storage.getPaymentConfigs();
+      let payment = {
+        stripeEnabled: false,
+        paypalEnabled: false,
+      };
+      
+      paymentConfigs.forEach(config => {
+        if (config.provider === "stripe") {
+          payment.stripeEnabled = config.enabled;
+          payment.stripePublicKey = config.publicKey;
+          payment.stripeSecretKey = config.secretKey;
+        } else if (config.provider === "paypal") {
+          payment.paypalEnabled = config.enabled;
+          payment.paypalClientId = config.publicKey;
+          payment.paypalClientSecret = config.secretKey;
+        }
+      });
+      
+      // Return all configurations
+      res.json({
+        email: emailConfig,
+        socialLogin,
+        twilio: twilioConfig,
+        payment,
+        emailTemplates: templatesMap,
+      });
+    } catch (error) {
+      console.error("Error getting integrations config:", error);
+      res.status(500).json({ message: "Error retrieving integrations configuration" });
+    }
+  });
+  
+  // Email configuration
+  app.put("/api/admin/integrations/email", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "admin") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const emailConfig = await storage.saveEmailConfig(req.body);
+      res.json(emailConfig);
+    } catch (error) {
+      console.error("Error saving email config:", error);
+      res.status(500).json({ message: "Error saving email configuration" });
+    }
+  });
+  
+  // Email templates
+  app.put("/api/admin/integrations/email-template", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "admin") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const { name, subject, body } = req.body;
+      
+      if (!name || !subject || !body) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      const template = await storage.saveEmailTemplate({
+        name,
+        subject,
+        body,
+      });
+      
+      res.json(template);
+    } catch (error) {
+      console.error("Error saving email template:", error);
+      res.status(500).json({ message: "Error saving email template" });
+    }
+  });
+  
+  // Test email
+  app.post("/api/admin/integrations/test-email", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "admin") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const { to, templateName } = req.body;
+      
+      if (!to || !templateName) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      const success = await storage.sendEmail(to, templateName, {
+        username: req.user.username,
+        siteName: "o2o Mobility",
+        url: process.env.BASE_URL || "https://o2mobility.com",
+      });
+      
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(500).json({ message: "Failed to send test email" });
+      }
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      res.status(500).json({ message: "Error sending test email" });
+    }
+  });
+  
+  // Twilio configuration
+  app.put("/api/admin/integrations/twilio", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "admin") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const twilioConfig = await storage.saveTwilioConfig(req.body);
+      res.json(twilioConfig);
+    } catch (error) {
+      console.error("Error saving Twilio config:", error);
+      res.status(500).json({ message: "Error saving Twilio configuration" });
+    }
+  });
+  
+  // Test SMS
+  app.post("/api/admin/integrations/test-sms", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "admin") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const { to } = req.body;
+      
+      if (!to) {
+        return res.status(400).json({ message: "Missing phone number" });
+      }
+      
+      const success = await storage.sendSMS(to, "This is a test message from o2o Mobility");
+      
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(500).json({ message: "Failed to send test SMS" });
+      }
+    } catch (error) {
+      console.error("Error sending test SMS:", error);
+      res.status(500).json({ message: "Error sending test SMS" });
+    }
+  });
+  
+  // Social login configuration
+  app.put("/api/admin/integrations/social-login", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "admin") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const { 
+        googleEnabled, googleClientId, googleClientSecret,
+        facebookEnabled, facebookAppId, facebookAppSecret,
+        githubEnabled, githubClientId, githubClientSecret
+      } = req.body;
+      
+      // Update Google config
+      if (googleEnabled !== undefined) {
+        await storage.saveSocialLoginConfig({
+          provider: "google",
+          enabled: googleEnabled,
+          clientId: googleClientId || "",
+          clientSecret: googleClientSecret || "",
+        });
+      }
+      
+      // Update Facebook config
+      if (facebookEnabled !== undefined) {
+        await storage.saveSocialLoginConfig({
+          provider: "facebook",
+          enabled: facebookEnabled,
+          clientId: facebookAppId || "",
+          clientSecret: facebookAppSecret || "",
+        });
+      }
+      
+      // Update GitHub config
+      if (githubEnabled !== undefined) {
+        await storage.saveSocialLoginConfig({
+          provider: "github",
+          enabled: githubEnabled,
+          clientId: githubClientId || "",
+          clientSecret: githubClientSecret || "",
+        });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving social login config:", error);
+      res.status(500).json({ message: "Error saving social login configuration" });
+    }
+  });
+  
+  // Payment configuration
+  app.put("/api/admin/integrations/payment", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "admin") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const { 
+        stripeEnabled, stripePublicKey, stripeSecretKey,
+        paypalEnabled, paypalClientId, paypalClientSecret
+      } = req.body;
+      
+      // Update Stripe config
+      if (stripeEnabled !== undefined) {
+        await storage.savePaymentConfig({
+          provider: "stripe",
+          enabled: stripeEnabled,
+          publicKey: stripePublicKey || "",
+          secretKey: stripeSecretKey || "",
+        });
+      }
+      
+      // Update PayPal config
+      if (paypalEnabled !== undefined) {
+        await storage.savePaymentConfig({
+          provider: "paypal",
+          enabled: paypalEnabled,
+          publicKey: paypalClientId || "",
+          secretKey: paypalClientSecret || "",
+        });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving payment config:", error);
+      res.status(500).json({ message: "Error saving payment configuration" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

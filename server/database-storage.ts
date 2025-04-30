@@ -1477,4 +1477,354 @@ export class DatabaseStorage implements IStorage {
     
     return true;
   }
+
+  // Implementazione metodi integrations - Email
+  async getEmailConfig(): Promise<EmailConfig | undefined> {
+    try {
+      const results = await db.select().from(emailConfig).limit(1);
+      return results.length > 0 ? results[0] : undefined;
+    } catch (error) {
+      console.error("Error getting email config:", error);
+      return undefined;
+    }
+  }
+  
+  async saveEmailConfig(config: InsertEmailConfig): Promise<EmailConfig> {
+    try {
+      // Controlla se esiste già una configurazione
+      const existingConfig = await this.getEmailConfig();
+      
+      if (existingConfig) {
+        // Update existing config
+        const [updatedConfig] = await db
+          .update(emailConfig)
+          .set({
+            ...config,
+            updatedAt: new Date()
+          })
+          .where(eq(emailConfig.id, existingConfig.id))
+          .returning();
+        return updatedConfig;
+      } else {
+        // Create new config
+        const [newConfig] = await db
+          .insert(emailConfig)
+          .values({
+            ...config,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+        return newConfig;
+      }
+    } catch (error) {
+      console.error("Error saving email config:", error);
+      throw error;
+    }
+  }
+  
+  async getEmailTemplates(): Promise<EmailTemplate[]> {
+    try {
+      return await db.select().from(emailTemplates);
+    } catch (error) {
+      console.error("Error getting email templates:", error);
+      return [];
+    }
+  }
+  
+  async getEmailTemplate(name: string): Promise<EmailTemplate | undefined> {
+    try {
+      const results = await db
+        .select()
+        .from(emailTemplates)
+        .where(eq(emailTemplates.name, name));
+      return results.length > 0 ? results[0] : undefined;
+    } catch (error) {
+      console.error(`Error getting email template "${name}":`, error);
+      return undefined;
+    }
+  }
+  
+  async saveEmailTemplate(template: InsertEmailTemplate): Promise<EmailTemplate> {
+    try {
+      // Controlla se il template esiste già
+      const existingTemplate = await this.getEmailTemplate(template.name);
+      
+      if (existingTemplate) {
+        // Update existing template
+        const [updatedTemplate] = await db
+          .update(emailTemplates)
+          .set({
+            ...template,
+            updatedAt: new Date()
+          })
+          .where(eq(emailTemplates.id, existingTemplate.id))
+          .returning();
+        return updatedTemplate;
+      } else {
+        // Create new template
+        const [newTemplate] = await db
+          .insert(emailTemplates)
+          .values({
+            ...template,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+        return newTemplate;
+      }
+    } catch (error) {
+      console.error("Error saving email template:", error);
+      throw error;
+    }
+  }
+  
+  async sendEmail(to: string, templateName: string, data?: Record<string, any>): Promise<boolean> {
+    try {
+      const config = await this.getEmailConfig();
+      if (!config || !config.enabled) {
+        console.warn("Email is not configured or disabled");
+        return false;
+      }
+      
+      const template = await this.getEmailTemplate(templateName);
+      if (!template) {
+        console.warn(`Email template "${templateName}" not found`);
+        return false;
+      }
+      
+      // Sostituisce le variabili nel template (semplice sostituzione a stringa)
+      let subject = template.subject;
+      let body = template.body;
+      
+      if (data) {
+        for (const [key, value] of Object.entries(data)) {
+          const placeholder = `{{${key}}}`;
+          subject = subject.replace(new RegExp(placeholder, 'g'), String(value));
+          body = body.replace(new RegExp(placeholder, 'g'), String(value));
+        }
+      }
+      
+      // In un'implementazione reale, qui ci sarebbe il codice per inviare l'email
+      // tramite nodemailer o SendGrid in base alla configurazione
+      
+      console.log(`[MOCK] Email sent to ${to} with subject "${subject}"`);
+      return true;
+    } catch (error) {
+      console.error("Error sending email:", error);
+      return false;
+    }
+  }
+  
+  // Implementazione metodi integrations - Twilio
+  async getTwilioConfig(): Promise<TwilioConfig | undefined> {
+    try {
+      const results = await db.select().from(twilioConfig).limit(1);
+      return results.length > 0 ? results[0] : undefined;
+    } catch (error) {
+      console.error("Error getting Twilio config:", error);
+      return undefined;
+    }
+  }
+  
+  async saveTwilioConfig(config: InsertTwilioConfig): Promise<TwilioConfig> {
+    try {
+      // Controlla se esiste già una configurazione
+      const existingConfig = await this.getTwilioConfig();
+      
+      if (existingConfig) {
+        // Update existing config
+        const [updatedConfig] = await db
+          .update(twilioConfig)
+          .set({
+            ...config,
+            updatedAt: new Date()
+          })
+          .where(eq(twilioConfig.id, existingConfig.id))
+          .returning();
+        return updatedConfig;
+      } else {
+        // Create new config
+        const [newConfig] = await db
+          .insert(twilioConfig)
+          .values({
+            ...config,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+        return newConfig;
+      }
+    } catch (error) {
+      console.error("Error saving Twilio config:", error);
+      throw error;
+    }
+  }
+  
+  async sendSMS(to: string, message: string): Promise<boolean> {
+    try {
+      const config = await this.getTwilioConfig();
+      if (!config || !config.enabled) {
+        console.warn("Twilio is not configured or disabled");
+        return false;
+      }
+      
+      // In un'implementazione reale, qui ci sarebbe il codice per inviare SMS con Twilio
+      console.log(`[MOCK] SMS sent to ${to}: "${message}"`);
+      return true;
+    } catch (error) {
+      console.error("Error sending SMS:", error);
+      return false;
+    }
+  }
+  
+  async startPhoneVerification(phoneNumber: string): Promise<boolean> {
+    try {
+      const config = await this.getTwilioConfig();
+      if (!config || !config.enabled) {
+        console.warn("Twilio is not configured or disabled");
+        return false;
+      }
+      
+      // In un'implementazione reale, qui ci sarebbe il codice per avviare la verifica con Twilio Verify
+      console.log(`[MOCK] Started phone verification for ${phoneNumber}`);
+      return true;
+    } catch (error) {
+      console.error("Error starting phone verification:", error);
+      return false;
+    }
+  }
+  
+  async checkPhoneVerification(phoneNumber: string, code: string): Promise<boolean> {
+    try {
+      const config = await this.getTwilioConfig();
+      if (!config || !config.enabled) {
+        console.warn("Twilio is not configured or disabled");
+        return false;
+      }
+      
+      // In un'implementazione reale, qui ci sarebbe il codice per verificare il codice con Twilio Verify
+      console.log(`[MOCK] Verified code ${code} for ${phoneNumber}`);
+      
+      // Simulazione di verifica riuscita se il codice è "123456"
+      return code === "123456";
+    } catch (error) {
+      console.error("Error checking phone verification:", error);
+      return false;
+    }
+  }
+  
+  // Implementazione metodi integrations - Social Login
+  async getSocialLoginConfigs(): Promise<SocialLoginConfig[]> {
+    try {
+      return await db.select().from(socialLoginConfig);
+    } catch (error) {
+      console.error("Error getting social login configs:", error);
+      return [];
+    }
+  }
+  
+  async getSocialLoginConfig(provider: string): Promise<SocialLoginConfig | undefined> {
+    try {
+      const results = await db
+        .select()
+        .from(socialLoginConfig)
+        .where(eq(socialLoginConfig.provider, provider));
+      return results.length > 0 ? results[0] : undefined;
+    } catch (error) {
+      console.error(`Error getting social login config for "${provider}":`, error);
+      return undefined;
+    }
+  }
+  
+  async saveSocialLoginConfig(config: InsertSocialLoginConfig): Promise<SocialLoginConfig> {
+    try {
+      // Controlla se esiste già una configurazione per questo provider
+      const existingConfig = await this.getSocialLoginConfig(config.provider);
+      
+      if (existingConfig) {
+        // Update existing config
+        const [updatedConfig] = await db
+          .update(socialLoginConfig)
+          .set({
+            ...config,
+            updatedAt: new Date()
+          })
+          .where(eq(socialLoginConfig.id, existingConfig.id))
+          .returning();
+        return updatedConfig;
+      } else {
+        // Create new config
+        const [newConfig] = await db
+          .insert(socialLoginConfig)
+          .values({
+            ...config,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+        return newConfig;
+      }
+    } catch (error) {
+      console.error("Error saving social login config:", error);
+      throw error;
+    }
+  }
+  
+  // Implementazione metodi integrations - Payment
+  async getPaymentConfigs(): Promise<PaymentConfig[]> {
+    try {
+      return await db.select().from(paymentConfig);
+    } catch (error) {
+      console.error("Error getting payment configs:", error);
+      return [];
+    }
+  }
+  
+  async getPaymentConfig(provider: string): Promise<PaymentConfig | undefined> {
+    try {
+      const results = await db
+        .select()
+        .from(paymentConfig)
+        .where(eq(paymentConfig.provider, provider));
+      return results.length > 0 ? results[0] : undefined;
+    } catch (error) {
+      console.error(`Error getting payment config for "${provider}":`, error);
+      return undefined;
+    }
+  }
+  
+  async savePaymentConfig(config: InsertPaymentConfig): Promise<PaymentConfig> {
+    try {
+      // Controlla se esiste già una configurazione per questo provider
+      const existingConfig = await this.getPaymentConfig(config.provider);
+      
+      if (existingConfig) {
+        // Update existing config
+        const [updatedConfig] = await db
+          .update(paymentConfig)
+          .set({
+            ...config,
+            updatedAt: new Date()
+          })
+          .where(eq(paymentConfig.id, existingConfig.id))
+          .returning();
+        return updatedConfig;
+      } else {
+        // Create new config
+        const [newConfig] = await db
+          .insert(paymentConfig)
+          .values({
+            ...config,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+        return newConfig;
+      }
+    } catch (error) {
+      console.error("Error saving payment config:", error);
+      throw error;
+    }
+  }
 }
