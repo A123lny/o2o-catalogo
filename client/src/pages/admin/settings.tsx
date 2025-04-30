@@ -404,7 +404,7 @@ export default function SettingsPage() {
                           <FormItem>
                             <FormLabel>Email di Contatto</FormLabel>
                             <FormControl>
-                              <Input type="email" {...field} />
+                              <Input type="email" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormDescription>
                               L'indirizzo email utilizzato per ricevere le notifiche dal sito
