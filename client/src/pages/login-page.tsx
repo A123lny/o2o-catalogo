@@ -28,6 +28,7 @@ import { TwoFactorVerify } from "@/components/two-factor-verify";
 const loginSchema = z.object({
   username: z.string().min(3, "Username deve contenere almeno 3 caratteri"),
   password: z.string().min(6, "Password deve contenere almeno 6 caratteri"),
+  rememberMe: z.boolean().optional().default(false)
 });
 
 const registerSchema = insertUserSchema.extend({
@@ -67,6 +68,7 @@ export default function LoginPage() {
     defaultValues: {
       username: "",
       password: "",
+      rememberMe: false
     },
   });
 
@@ -199,16 +201,26 @@ export default function LoginPage() {
                     />
                     
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <input 
-                          type="checkbox" 
-                          id="remember" 
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                        />
-                        <label htmlFor="remember" className="text-sm text-muted-foreground">
-                          Ricordami
-                        </label>
-                      </div>
+                      <FormField
+                        control={loginForm.control}
+                        name="rememberMe"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <input 
+                                type="checkbox" 
+                                checked={field.value}
+                                onChange={field.onChange}
+                                id="rememberMe" 
+                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                              />
+                            </FormControl>
+                            <label htmlFor="rememberMe" className="text-sm text-muted-foreground">
+                              Ricordami
+                            </label>
+                          </FormItem>
+                        )}
+                      />
                       <button 
                         type="button" 
                         className="text-sm font-medium text-primary hover:underline" 

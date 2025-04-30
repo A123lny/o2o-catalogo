@@ -289,7 +289,7 @@ export function TwoFactorSetup({ isFirstLogin = false, onComplete }: TwoFactorSe
 
   if (step === 2) {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="w-full max-w-md mx-auto" data-two-factor-setup="active">
         <CardHeader>
           <CardTitle>Scansiona il codice QR</CardTitle>
           <CardDescription>

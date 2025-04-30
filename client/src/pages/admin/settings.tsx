@@ -757,11 +757,37 @@ export default function SettingsPage() {
                           <p className="text-sm text-muted-foreground mb-4">
                             Configura l'autenticazione a due fattori per il tuo account amministratore
                           </p>
-                          <TwoFactorSetup />
+                          <TwoFactorSetup 
+                            onComplete={() => {
+                              toast({
+                                title: "2FA configurato con successo",
+                                description: "L'autenticazione a due fattori è stata configurata correttamente per il tuo account",
+                                variant: "default",
+                              });
+                              // Aggiorna lo stato 2FA
+                              securityForm.setValue('enable2FA', true);
+                            }}
+                          />
                         </div>
                       )}
                       
-                      <Button type="submit" disabled={isSubmitting}>
+                      <Button 
+                        type="submit" 
+                        disabled={isSubmitting}
+                        onClick={(e) => {
+                          // Se il componente 2FA è aperto e in fase di configurazione,
+                          // mostra un avviso all'utente e impedisci il salvataggio
+                          const twoFactorOpen = document.querySelector('[data-two-factor-setup="active"]');
+                          if (twoFactorOpen) {
+                            e.preventDefault();
+                            toast({
+                              title: "Completare la configurazione 2FA",
+                              description: "Completa o annulla la configurazione dell'autenticazione a due fattori prima di salvare le impostazioni",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
                         {isSubmitting ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvataggio in corso...
