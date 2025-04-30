@@ -946,6 +946,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Email Configuration
+  app.get("/api/integrations/email", isAdmin, async (req, res) => {
+    try {
+      const config = await storage.getEmailConfig();
+      
+      if (!config) {
+        return res.json({
+          enabled: false,
+          provider: "smtp",
+          host: "",
+          port: 587,
+          secure: false,
+          username: "",
+          password: "",
+          from: "",
+          sendgridApiKey: "",
+        });
+      }
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Errore nel caricamento della configurazione email:", error);
+      res.status(500).json({ message: "Errore nel caricamento della configurazione" });
+    }
+  });
+  
+  app.post("/api/integrations/email", isAdmin, async (req, res) => {
+    try {
+      const data = req.body;
+      const config = await storage.saveEmailConfig(data);
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Errore nel salvataggio della configurazione email:", error);
+      res.status(500).json({ message: "Errore nel salvataggio della configurazione" });
+    }
+  });
+  
+  // Twilio (SMS) Configuration
+  app.get("/api/integrations/twilio", isAdmin, async (req, res) => {
+    try {
+      const config = await storage.getTwilioConfig();
+      
+      if (!config) {
+        return res.json({
+          enabled: false,
+          accountSid: "",
+          authToken: "",
+          verifyServiceSid: "",
+          fromNumber: "",
+        });
+      }
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Errore nel caricamento della configurazione Twilio:", error);
+      res.status(500).json({ message: "Errore nel caricamento della configurazione" });
+    }
+  });
+  
+  app.post("/api/integrations/twilio", isAdmin, async (req, res) => {
+    try {
+      const data = req.body;
+      const config = await storage.saveTwilioConfig(data);
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Errore nel salvataggio della configurazione Twilio:", error);
+      res.status(500).json({ message: "Errore nel salvataggio della configurazione" });
+    }
+  });
+  
+  // Payment Configuration
+  app.get("/api/integrations/payment/:provider", isAdmin, async (req, res) => {
+    try {
+      const { provider } = req.params;
+      const config = await storage.getPaymentConfig(provider);
+      
+      if (!config) {
+        return res.json({
+          provider: provider,
+          enabled: false,
+          publicKey: "",
+          secretKey: "",
+        });
+      }
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Errore nel caricamento della configurazione pagamenti:", error);
+      res.status(500).json({ message: "Errore nel caricamento della configurazione" });
+    }
+  });
+  
+  app.post("/api/integrations/payment/:provider", isAdmin, async (req, res) => {
+    try {
+      const { provider } = req.params;
+      const data = req.body;
+      
+      // Assicurati che provider sia nel corpo della richiesta
+      data.provider = provider;
+      
+      const config = await storage.savePaymentConfig(data);
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Errore nel salvataggio della configurazione pagamenti:", error);
+      res.status(500).json({ message: "Errore nel salvataggio della configurazione" });
+    }
+  });
+  
   // Get all integrations configuration
   app.get("/api/admin/integrations", async (req, res) => {
     if (!req.isAuthenticated() || req.user.role !== "admin") {
