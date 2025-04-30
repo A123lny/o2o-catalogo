@@ -5,7 +5,8 @@ import {
   InsertFeaturedPromo, FeaturedPromo, Province, InsertProvince,
   GeneralSettings, InsertGeneralSettings, SecuritySettings, InsertSecuritySettings,
   ActivityLog, InsertActivityLog, PasswordHistory, AccountLockout, InsertAccountLockout,
-  PasswordReset, InsertPasswordReset, InsertPasswordHistory
+  PasswordReset, InsertPasswordReset, InsertPasswordHistory,
+  UserTwoFactorSecret, InsertUserTwoFactorSecret
 } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -16,7 +17,7 @@ import {
   users, brands, categories, vehicles, 
   rentalOptions, requests, promoSettings, featuredPromos,
   provinces, generalSettings, securitySettings, activityLogs,
-  passwordHistory, accountLockouts, passwordResets
+  passwordHistory, accountLockouts, passwordResets, userTwoFactorSecrets
 } from "@shared/schema";
 
 // PostgreSQL session store
@@ -29,6 +30,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getUsers(): Promise<User[]>;
+  updateUser(id: number, data: Partial<User>): Promise<User>;
   
   // Brands
   getBrands(): Promise<Brand[]>;
@@ -125,6 +127,12 @@ export interface IStorage {
   markPasswordResetUsed(id: number): Promise<void>;
   cleanupExpiredPasswordResets(): Promise<void>;
   
+  // Two-Factor Authentication (2FA)
+  getUserTwoFactorSecret(userId: number): Promise<UserTwoFactorSecret | undefined>;
+  createUserTwoFactorSecret(data: InsertUserTwoFactorSecret): Promise<UserTwoFactorSecret>;
+  updateUserTwoFactorSecret(userId: number, data: Partial<InsertUserTwoFactorSecret>): Promise<UserTwoFactorSecret>;
+  deleteUserTwoFactorSecret(userId: number): Promise<void>;
+  
   // Session
   sessionStore: any;
 }
@@ -164,6 +172,57 @@ export class DatabaseStorage implements IStorage {
   
   async getUsers(): Promise<User[]> {
     return db.select().from(users);
+  }
+  
+  async updateUser(id: number, data: Partial<User>): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(data)
+      .where(eq(users.id, id))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error(`User with id ${id} not found`);
+    }
+    
+    return updatedUser;
+  }
+  
+  // Two-Factor Authentication (2FA)
+  async getUserTwoFactorSecret(userId: number): Promise<UserTwoFactorSecret | undefined> {
+    const [secret] = await db
+      .select()
+      .from(userTwoFactorSecrets)
+      .where(eq(userTwoFactorSecrets.userId, userId));
+    return secret;
+  }
+  
+  async createUserTwoFactorSecret(data: InsertUserTwoFactorSecret): Promise<UserTwoFactorSecret> {
+    const [secret] = await db
+      .insert(userTwoFactorSecrets)
+      .values(data)
+      .returning();
+    return secret;
+  }
+  
+  async updateUserTwoFactorSecret(userId: number, data: Partial<InsertUserTwoFactorSecret>): Promise<UserTwoFactorSecret> {
+    const [updatedSecret] = await db
+      .update(userTwoFactorSecrets)
+      .set(data)
+      .where(eq(userTwoFactorSecrets.userId, userId))
+      .returning();
+    
+    if (!updatedSecret) {
+      throw new Error(`Two-factor secret for user with id ${userId} not found`);
+    }
+    
+    return updatedSecret;
+  }
+  
+  async deleteUserTwoFactorSecret(userId: number): Promise<void> {
+    await db
+      .delete(userTwoFactorSecrets)
+      .where(eq(userTwoFactorSecrets.userId, userId));
   }
   
   async getBrands(): Promise<Brand[]> {
