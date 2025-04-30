@@ -59,9 +59,14 @@ export default function TwoFactorSetupNew() {
           const data = await response.json();
           console.log('2FA setup response data:', data);
           
-          if (data && data.qrCode && data.secret) {
-            setQrCode(data.qrCode);
+          if (data && data.secret) {
             setSecret(data.secret);
+            if (data.backupCodes) {
+              setBackupCodes(data.backupCodes);
+            }
+            if (data.qrCode) {
+              setQrCode(data.qrCode);
+            }
             setStep(2);
           } else {
             console.error('Dati mancanti nella risposta:', data);
@@ -253,24 +258,16 @@ export default function TwoFactorSetupNew() {
 
           {step === 2 && (
             <div className="space-y-6">
-              {qrCode ? (
+              {secret ? (
                 <div className="flex justify-center">
                   <div className="p-4 bg-white rounded-lg border">
-                    {qrCode.startsWith('<svg') || qrCode.startsWith('<?xml') ? (
-                      <div dangerouslySetInnerHTML={{ __html: qrCode }} />
-                    ) : qrCode.startsWith('data:image') ? (
-                      <img src={qrCode} alt="QR Code" className="max-w-full h-auto" />
-                    ) : (
-                      <div className="text-center">
-                        <p className="text-red-500 mb-2">Formato QR Code non supportato</p>
-                        <img 
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth://totp/o2o:${encodeURIComponent(user?.username || 'user')}?secret=${encodeURIComponent(secret)}&issuer=o2o%20Mobility`} 
-                          alt="QR Code generato" 
-                          className="mx-auto" 
-                        />
-                        <p className="text-xs mt-2 text-gray-500">QR Code generato alternativamente</p>
-                      </div>
-                    )}
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth://totp/o2o:${encodeURIComponent(user?.username || 'user')}?secret=${encodeURIComponent(secret)}&issuer=o2o%20Mobility`} 
+                      alt="QR Code" 
+                      className="mx-auto" 
+                      width="200"
+                      height="200"
+                    />
                   </div>
                 </div>
               ) : renderError()}

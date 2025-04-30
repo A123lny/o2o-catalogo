@@ -13,9 +13,6 @@ export async function generateSecret(userId: number, username: string) {
 
   // Genera i codici di backup
   const backupCodes = Array(8).fill(0).map(() => generateBackupCode());
-  
-  // Genera il QR code
-  const qrCode = await generateQRCode(secret.otpauth_url || '');
 
   // Salva nel database
   await storage.createTwoFactorAuth({
@@ -25,9 +22,12 @@ export async function generateSecret(userId: number, username: string) {
     backupCodes
   });
 
+  console.log('2FA setup for user:', username);
+  console.log('Secret:', secret.base32);
+  console.log('TOTP URL:', secret.otpauth_url);
+
   return {
     secret: secret.base32,
-    qrCode,
     backupCodes
   };
 }
