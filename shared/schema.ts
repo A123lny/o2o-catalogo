@@ -166,6 +166,7 @@ export const securitySettings = pgTable("security_settings", {
   requireSpecialChar: boolean("require_special_char").default(true),
   passwordHistoryCount: integer("password_history_count").default(5),
   enable2FA: boolean("enable_2fa").default(false),
+  require2FA: boolean("require_2fa").default(false),
   failedLoginAttempts: integer("failed_login_attempts").default(5),
   lockoutDurationMinutes: integer("lockout_duration_minutes").default(30),
   autoLogoutMinutes: integer("auto_logout_minutes").default(30),

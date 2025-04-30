@@ -71,6 +71,7 @@ const securitySettingsSchema = z.object({
   passwordExpiryDays: z.number().min(0).max(365),
   passwordHistoryCount: z.number().min(0).max(20),
   enable2FA: z.boolean(),
+  require2FA: z.boolean().optional().default(false),
   failedLoginAttempts: z.number().min(1).max(10),
   lockoutDurationMinutes: z.number().min(1).max(1440),
   autoLogoutMinutes: z.number().min(0).max(1440),
@@ -193,6 +194,7 @@ export default function SettingsPage() {
       passwordExpiryDays: 90,
       passwordHistoryCount: 5,
       enable2FA: false,
+      require2FA: false,
       failedLoginAttempts: 5,
       lockoutDurationMinutes: 30,
       autoLogoutMinutes: 30,
@@ -211,6 +213,7 @@ export default function SettingsPage() {
         passwordExpiryDays: securitySettings.passwordExpiryDays || 90,
         passwordHistoryCount: securitySettings.passwordHistoryCount || 5,
         enable2FA: securitySettings.enable2FA || false,
+        require2FA: securitySettings.require2FA || false,
         failedLoginAttempts: securitySettings.failedLoginAttempts || 5,
         lockoutDurationMinutes: securitySettings.lockoutDurationMinutes || 30,
         autoLogoutMinutes: securitySettings.autoLogoutMinutes || 30,
@@ -542,7 +545,14 @@ export default function SettingsPage() {
             <TabsContent value="security">
               <div className="grid gap-4">
                 {/* Two-Factor Authentication */}
-                <TwoFactorSection />
+                <TwoFactorSection 
+                  securitySettings={securitySettings}
+                  onUpdateSettings={(values) => {
+                    securityForm.setValue("enable2FA", values.enable2FA);
+                    securityForm.setValue("require2FA", values.require2FA);
+                    onSecuritySubmit(securityForm.getValues());
+                  }}
+                />
                 
                 {/* General Security Settings */}
                 <Card>
