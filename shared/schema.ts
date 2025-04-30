@@ -11,6 +11,17 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   fullName: text("full_name").notNull(),
   role: text("role").notNull().default("user"),
+  twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
+  twoFactorVerified: boolean("two_factor_verified").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Tabella per i segreti TOTP per 2FA
+export const userTwoFactorSecrets = pgTable("user_two_factor_secrets", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  secret: text("secret").notNull(),
+  backupCodes: jsonb("backup_codes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -317,9 +328,17 @@ export const insertPasswordResetSchema = createInsertSchema(passwordResets).omit
   createdAt: true,
 });
 
+export const insertUserTwoFactorSecretSchema = createInsertSchema(userTwoFactorSecrets).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Tipi per le nuove tabelle
 export type InsertProvince = z.infer<typeof insertProvinceSchema>;
 export type Province = typeof provinces.$inferSelect;
+
+export type InsertUserTwoFactorSecret = z.infer<typeof insertUserTwoFactorSecretSchema>;
+export type UserTwoFactorSecret = typeof userTwoFactorSecrets.$inferSelect;
 
 export type InsertGeneralSettings = z.infer<typeof insertGeneralSettingsSchema>;
 export type GeneralSettings = typeof generalSettings.$inferSelect;
