@@ -40,7 +40,7 @@ export default function AdminSidebar() {
   };
 
   return (
-    <div className="w-64 bg-sidebar flex flex-col h-screen text-sidebar-foreground fixed top-0 left-0">
+    <div className="w-64 bg-sidebar flex flex-col h-full min-h-screen text-sidebar-foreground fixed top-0 left-0">
       <div className="p-4 bg-primary">
         <div className="flex items-center">
           <Link href="/">
