@@ -71,7 +71,14 @@ export async function disable2FA(userId: number) {
 // Genera un QR code da un URL
 async function generateQRCode(otpauthUrl: string): Promise<string> {
   try {
-    return await QRCode.toDataURL(otpauthUrl);
+    // Prima prova a generare un SVG per compatibilità migliore
+    try {
+      return await QRCode.toString(otpauthUrl, { type: 'svg' });
+    } catch (svgError) {
+      console.warn('SVG generation failed, falling back to data URL:', svgError);
+      // Fallback a URL dei dati se SVG fallisce
+      return await QRCode.toDataURL(otpauthUrl);
+    }
   } catch (error) {
     console.error('Error generating QR code:', error);
     throw new Error('Failed to generate QR code');
