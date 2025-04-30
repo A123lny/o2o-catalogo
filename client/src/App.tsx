@@ -21,7 +21,6 @@ import SettingsPage from "@/pages/admin/settings";
 import PromoManagementPage from "@/pages/admin/promo-management";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
-import { AutoLogoutProvider } from "@/components/auto-logout-provider";
 import PageTitle from "@/components/page-title";
 
 function Router() {
@@ -57,12 +56,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AutoLogoutProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </AutoLogoutProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

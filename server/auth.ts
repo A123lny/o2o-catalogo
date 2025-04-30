@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express, Request, Response, NextFunction } from "express";
+import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -20,16 +20,6 @@ declare global {
       fullName: string;
       role: string;
       createdAt: Date;
-      passwordExpired?: boolean; // Flag per indicare se la password è scaduta
-      twoFactorEnabled?: boolean; // Flag per indicare se l'utente ha abilitato il 2FA
-      twoFactorVerified?: boolean; // Flag per indicare se l'utente ha completato la configurazione 2FA
-    }
-  }
-  
-  // Estende l'interfaccia di session per twoFactorUserId
-  namespace Express.Session {
-    interface SessionData {
-      twoFactorUserId?: number;
     }
   }
 }
@@ -130,117 +120,23 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", async (req, res, next) => {
-    passport.authenticate("local", async (err: Error, user: User, info: any) => {
+  app.post("/api/login", (req, res, next) => {
+    passport.authenticate("local", (err, user, info) => {
       if (err) {
         return next(err);
       }
       
       if (!user) {
-        return res.status(401).json({ success: false, message: "Credenziali non valide" });
+        return res.status(401).send("Authentication failed");
       }
       
-      try {
-        // Verifica se la password è scaduta in base alle impostazioni
-        const securitySettings = await storage.getSecuritySettings();
-        
-        if (securitySettings && securitySettings.passwordExpiryDays && securitySettings.passwordExpiryDays > 0) {
-          // Verifica se è disponibile l'ultima modifica della password
-          const latestPasswordHistory = await storage.getLatestPasswordHistory(user.id);
-          
-          if (latestPasswordHistory) {
-            const passwordChangedDate = new Date(latestPasswordHistory.createdAt);
-            const today = new Date();
-            
-            // Calcola i giorni trascorsi dall'ultimo cambio password
-            const daysSinceChange = Math.floor(
-              (today.getTime() - passwordChangedDate.getTime()) / (1000 * 60 * 60 * 24)
-            );
-            
-            // Se sono passati più giorni del limite, imposta un flag di password scaduta
-            if (daysSinceChange >= securitySettings.passwordExpiryDays) {
-              user.passwordExpired = true;
-            }
-          } else {
-            // Se non c'è storico, considera la data di creazione dell'utente
-            const userCreatedDate = new Date(user.createdAt);
-            const today = new Date();
-            
-            const daysSinceCreation = Math.floor(
-              (today.getTime() - userCreatedDate.getTime()) / (1000 * 60 * 60 * 24)
-            );
-            
-            if (daysSinceCreation >= securitySettings.passwordExpiryDays) {
-              user.passwordExpired = true;
-            }
-          }
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          return next(loginErr);
         }
         
-        // Verifica se l'autenticazione a due fattori è richiesta
-        if (user.twoFactorEnabled && user.twoFactorVerified) {
-          console.log(`2FA richiesto per l'utente ${user.username}`);
-          
-          // Salviamo l'ID utente nella sessione per il processo 2FA
-          req.session.twoFactorUserId = user.id;
-          
-          // Non effettuiamo il login completo, ma indichiamo che è necessario il 2FA
-          return res.json({
-            success: true,
-            requireTwoFactor: true,
-            message: "Inserisci il codice di autenticazione a due fattori"
-          });
-        }
-        
-        // Verifica se il 2FA è obbligatorio in base alle impostazioni di sicurezza
-        // ma l'utente non lo ha ancora configurato
-        if (securitySettings?.require2FA && !user.twoFactorEnabled) {
-          // Effettuiamo il login ma indichiamo che è necessario configurare il 2FA
-          req.login(user, (loginErr) => {
-            if (loginErr) {
-              return next(loginErr);
-            }
-            
-            return res.status(200).json({
-              success: true,
-              user,
-              setupTwoFactor: true,
-              message: "È necessario configurare l'autenticazione a due fattori"
-            });
-          });
-          return;
-        }
-        
-        // Login normale se non è richiesto il 2FA
-        req.login(user, (loginErr) => {
-          if (loginErr) {
-            return next(loginErr);
-          }
-          
-          // Registra il login nel log delle attività
-          storage.createActivityLog({
-            userId: user.id,
-            action: "USER_LOGIN",
-            entityType: "user",
-            entityId: user.id,
-            details: JSON.stringify({
-              message: "Login effettuato con successo"
-            }),
-            ipAddress: req.ip || "",
-            userAgent: req.headers["user-agent"] || ""
-          }).catch(e => console.error("Errore registrazione log:", e));
-          
-          return res.status(200).json({
-            success: true,
-            user
-          });
-        });
-      } catch (error) {
-        console.error("Error during login:", error);
-        return res.status(500).json({ 
-          success: false, 
-          message: "Errore durante il login" 
-        });
-      }
+        return res.status(200).send(user);
+      });
     })(req, res, next);
   });
 

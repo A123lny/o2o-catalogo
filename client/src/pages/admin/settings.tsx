@@ -3,7 +3,6 @@ import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import { useAuth } from "@/hooks/use-auth";
 import { ProvincesSolution } from "@/components/admin/provinces-solution";
-import { TwoFactorSection } from "@/components/admin/two-factor-section";
 import {
   Card,
   CardContent,
@@ -71,10 +70,8 @@ const securitySettingsSchema = z.object({
   passwordExpiryDays: z.number().min(0).max(365),
   passwordHistoryCount: z.number().min(0).max(20),
   enable2FA: z.boolean(),
-  require2FA: z.boolean().optional().default(false),
   failedLoginAttempts: z.number().min(1).max(10),
   lockoutDurationMinutes: z.number().min(1).max(1440),
-  autoLogoutMinutes: z.number().min(0).max(1440),
 });
 
 type GeneralSettingsValues = z.infer<typeof generalSettingsSchema>;
@@ -194,10 +191,8 @@ export default function SettingsPage() {
       passwordExpiryDays: 90,
       passwordHistoryCount: 5,
       enable2FA: false,
-      require2FA: false,
       failedLoginAttempts: 5,
       lockoutDurationMinutes: 30,
-      autoLogoutMinutes: 30,
     },
   });
   
@@ -213,10 +208,8 @@ export default function SettingsPage() {
         passwordExpiryDays: securitySettings.passwordExpiryDays || 90,
         passwordHistoryCount: securitySettings.passwordHistoryCount || 5,
         enable2FA: securitySettings.enable2FA || false,
-        require2FA: securitySettings.require2FA || false,
         failedLoginAttempts: securitySettings.failedLoginAttempts || 5,
         lockoutDurationMinutes: securitySettings.lockoutDurationMinutes || 30,
-        autoLogoutMinutes: securitySettings.autoLogoutMinutes || 30,
       });
     }
   }, [securitySettings, securityForm]);
@@ -404,7 +397,7 @@ export default function SettingsPage() {
                           <FormItem>
                             <FormLabel>Email di Contatto</FormLabel>
                             <FormControl>
-                              <Input type="email" {...field} value={field.value || ""} />
+                              <Input type="email" {...field} />
                             </FormControl>
                             <FormDescription>
                               L'indirizzo email utilizzato per ricevere le notifiche dal sito
@@ -543,26 +536,14 @@ export default function SettingsPage() {
             
             {/* Security Settings */}
             <TabsContent value="security">
-              <div className="grid gap-4">
-                {/* Two-Factor Authentication */}
-                <TwoFactorSection 
-                  securitySettings={securitySettings}
-                  onUpdateSettings={(values) => {
-                    securityForm.setValue("enable2FA", values.enable2FA);
-                    securityForm.setValue("require2FA", values.require2FA);
-                    onSecuritySubmit(securityForm.getValues());
-                  }}
-                />
-                
-                {/* General Security Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Impostazioni di Sicurezza</CardTitle>
-                    <CardDescription>
-                      Configura le impostazioni di sicurezza del sistema
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Impostazioni di Sicurezza</CardTitle>
+                  <CardDescription>
+                    Configura le impostazioni di sicurezza del sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   <Form {...securityForm}>
                     <form onSubmit={securityForm.handleSubmit(onSecuritySubmit)} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -637,41 +618,22 @@ export default function SettingsPage() {
                         />
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={securityForm.control}
-                          name="lockoutDurationMinutes"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Durata blocco (minuti)</FormLabel>
-                              <FormControl>
-                                <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
-                              </FormControl>
-                              <FormDescription>
-                                Durata del blocco dell'account dopo i tentativi falliti
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={securityForm.control}
-                          name="autoLogoutMinutes"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Logout automatico (minuti)</FormLabel>
-                              <FormControl>
-                                <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
-                              </FormControl>
-                              <FormDescription>
-                                Tempo di inattività prima del logout automatico (0 = disabilitato)
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      <FormField
+                        control={securityForm.control}
+                        name="lockoutDurationMinutes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Durata blocco (minuti)</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                            </FormControl>
+                            <FormDescription>
+                              Durata del blocco dell'account dopo i tentativi falliti
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
@@ -802,7 +764,6 @@ export default function SettingsPage() {
                   </Form>
                 </CardContent>
               </Card>
-              </div>
             </TabsContent>
             
             {/* Activity Logs */}

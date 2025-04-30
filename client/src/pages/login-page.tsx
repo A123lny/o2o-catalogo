@@ -16,14 +16,29 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 import PageTitle from "@/components/page-title";
+
+// Validazione
+const loginSchema = z.object({
+  username: z.string().min(3, "Username deve contenere almeno 3 caratteri"),
+  password: z.string().min(6, "Password deve contenere almeno 6 caratteri"),
+});
+
+const registerSchema = insertUserSchema.extend({
+  password: z.string().min(8, "Password deve contenere almeno 8 caratteri"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Le password non corrispondono",
+  path: ["confirmPassword"],
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
@@ -39,54 +54,9 @@ export default function LoginPage() {
       return response.json();
     }
   });
-  
-  // Fetch security settings for password validation
-  const { data: securitySettings, isLoading: isLoadingSecurity } = useQuery({
-    queryKey: ['/api/admin/settings/security'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/settings/security');
-      if (!response.ok) throw new Error('Errore nel recupero delle impostazioni di sicurezza');
-      return response.json();
-    }
-  });
-  
-  // Crea schemi di validazione dinamici basati sulle impostazioni di sicurezza
-  const getLoginSchema = () => {
-    return z.object({
-      username: z.string().min(3, "Username deve contenere almeno 3 caratteri"),
-      password: z.string().min(
-        securitySettings?.minPasswordLength || 6, 
-        `Password deve contenere almeno ${securitySettings?.minPasswordLength || 6} caratteri`
-      ),
-    });
-  };
-
-  const getRegisterSchema = () => {
-    const schema = insertUserSchema.pick({
-      username: true,
-      email: true,
-      fullName: true,
-      role: true,
-    }).extend({
-      password: z.string().min(
-        securitySettings?.minPasswordLength || 8, 
-        `Password deve contenere almeno ${securitySettings?.minPasswordLength || 8} caratteri`
-      ),
-      confirmPassword: z.string(),
-    }).refine((data) => data.password === data.confirmPassword, {
-      message: "Le password non corrispondono",
-      path: ["confirmPassword"],
-    });
-    
-    return schema;
-  };
-
-  // Definisci i tipi
-  type LoginFormValues = z.infer<ReturnType<typeof getLoginSchema>>;
-  type RegisterFormValues = z.infer<ReturnType<typeof getRegisterSchema>>;
 
   const loginForm = useForm<LoginFormValues>({
-    resolver: zodResolver(getLoginSchema()),
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       username: "",
       password: "",
@@ -94,7 +64,7 @@ export default function LoginPage() {
   });
 
   const registerForm = useForm<RegisterFormValues>({
-    resolver: zodResolver(getRegisterSchema()),
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       username: "",
       email: "",
@@ -104,14 +74,6 @@ export default function LoginPage() {
       role: "user",
     },
   });
-  
-  // Aggiorna i form quando cambiano le impostazioni di sicurezza
-  useEffect(() => {
-    if (securitySettings) {
-      loginForm.reset(loginForm.getValues());
-      registerForm.reset(registerForm.getValues());
-    }
-  }, [securitySettings]);
 
   useEffect(() => {
     // If user is already logged in, redirect to home
@@ -128,40 +90,6 @@ export default function LoginPage() {
     const { confirmPassword, ...registerData } = data;
     registerMutation.mutate(registerData);
   }
-  
-  // Mostra le informazioni sui requisiti della password
-  const renderPasswordRequirements = () => {
-    if (!securitySettings) return null;
-    
-    const requirements = [];
-    
-    if (securitySettings.requireUppercase) {
-      requirements.push("una lettera maiuscola");
-    }
-    
-    if (securitySettings.requireLowercase) {
-      requirements.push("una lettera minuscola");
-    }
-    
-    if (securitySettings.requireNumber) {
-      requirements.push("un numero");
-    }
-    
-    if (securitySettings.requireSpecialChar) {
-      requirements.push("un carattere speciale");
-    }
-    
-    if (requirements.length === 0) return null;
-    
-    return (
-      <Alert variant="info" className="my-2">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          La password deve contenere almeno {requirements.join(", ")}.
-        </AlertDescription>
-      </Alert>
-    );
-  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -235,8 +163,6 @@ export default function LoginPage() {
                         </FormItem>
                       )}
                     />
-                    
-                    {renderPasswordRequirements()}
                     
                     <Button 
                       type="submit" 
@@ -314,8 +240,6 @@ export default function LoginPage() {
                         </FormItem>
                       )}
                     />
-                    
-                    {renderPasswordRequirements()}
                     
                     <FormField
                       control={registerForm.control}

@@ -11,19 +11,6 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   fullName: text("full_name").notNull(),
   role: text("role").notNull().default("user"),
-  twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
-  twoFactorVerified: boolean("two_factor_verified").default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-// Tabella per i segreti TOTP per 2FA
-export const userTwoFactorSecrets = pgTable("user_two_factor_secrets", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique(),
-  secret: text("secret").notNull(),
-  uri: text("uri").notNull(), // Aggiunto campo URI per il QR code
-  verified: boolean("verified").default(false).notNull(),
-  backupCodes: jsonb("backup_codes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -168,10 +155,8 @@ export const securitySettings = pgTable("security_settings", {
   requireSpecialChar: boolean("require_special_char").default(true),
   passwordHistoryCount: integer("password_history_count").default(5),
   enable2FA: boolean("enable_2fa").default(false),
-  require2FA: boolean("require_2fa").default(false),
   failedLoginAttempts: integer("failed_login_attempts").default(5),
   lockoutDurationMinutes: integer("lockout_duration_minutes").default(30),
-  autoLogoutMinutes: integer("auto_logout_minutes").default(30),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
@@ -331,17 +316,9 @@ export const insertPasswordResetSchema = createInsertSchema(passwordResets).omit
   createdAt: true,
 });
 
-export const insertUserTwoFactorSecretSchema = createInsertSchema(userTwoFactorSecrets).omit({
-  id: true,
-  createdAt: true,
-});
-
 // Tipi per le nuove tabelle
 export type InsertProvince = z.infer<typeof insertProvinceSchema>;
 export type Province = typeof provinces.$inferSelect;
-
-export type InsertUserTwoFactorSecret = z.infer<typeof insertUserTwoFactorSecretSchema>;
-export type UserTwoFactorSecret = typeof userTwoFactorSecrets.$inferSelect;
 
 export type InsertGeneralSettings = z.infer<typeof insertGeneralSettingsSchema>;
 export type GeneralSettings = typeof generalSettings.$inferSelect;
