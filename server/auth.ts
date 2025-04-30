@@ -37,7 +37,7 @@ declare global {
   }
 }
 
-export function setupAuth(app: Express) {
+export async function setupAuth(app: Express) {
   const sessionSecret = process.env.SESSION_SECRET || "auto_prestige_secret_key";
   const baseUrl = process.env.BASE_URL || "http://localhost:5000";
   
@@ -114,6 +114,108 @@ export function setupAuth(app: Express) {
   });
   
   // Configurazione delle strategie OAuth per i social login
+  
+  // Configurazione Google OAuth
+  try {
+    const googleConfig = await storage.getSocialLoginConfig('google');
+    if (googleConfig && googleConfig.enabled && googleConfig.clientId && googleConfig.clientSecret) {
+      passport.use(new GoogleStrategy({
+        clientID: googleConfig.clientId,
+        clientSecret: googleConfig.clientSecret,
+        callbackURL: `${baseUrl}/auth/google/callback`,
+        scope: ['profile', 'email']
+      }, (accessToken, refreshToken, profile, done) => {
+        // Ottieni dati dall'oggetto del profilo Google
+        const profileId = profile.id;
+        const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : '';
+        const displayName = profile.displayName || '';
+        
+        // Usa la funzione helper per gestire l'autenticazione
+        handleSocialAuth('google', profileId, email, displayName, done);
+      }));
+      
+      // Definisci le rotte per l'autenticazione Google
+      app.get('/auth/google', passport.authenticate('google', {
+        scope: ['profile', 'email']
+      }));
+      
+      app.get('/auth/google/callback', passport.authenticate('google', {
+        failureRedirect: '/auth'
+      }), (req, res) => {
+        res.redirect('/');
+      });
+    }
+  } catch (error) {
+    console.error("Errore durante la configurazione di Google OAuth:", error);
+  }
+  
+  // Configurazione Facebook OAuth
+  try {
+    const facebookConfig = await storage.getSocialLoginConfig('facebook');
+    if (facebookConfig && facebookConfig.enabled && facebookConfig.clientId && facebookConfig.clientSecret) {
+      passport.use(new FacebookStrategy({
+        clientID: facebookConfig.clientId,
+        clientSecret: facebookConfig.clientSecret,
+        callbackURL: `${baseUrl}/auth/facebook/callback`,
+        profileFields: ['id', 'emails', 'name', 'displayName']
+      }, (accessToken, refreshToken, profile, done) => {
+        // Ottieni dati dall'oggetto del profilo Facebook
+        const profileId = profile.id;
+        const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : '';
+        const displayName = profile.displayName || '';
+        
+        // Usa la funzione helper per gestire l'autenticazione
+        handleSocialAuth('facebook', profileId, email, displayName, done);
+      }));
+      
+      // Definisci le rotte per l'autenticazione Facebook
+      app.get('/auth/facebook', passport.authenticate('facebook', {
+        scope: ['email']
+      }));
+      
+      app.get('/auth/facebook/callback', passport.authenticate('facebook', {
+        failureRedirect: '/auth'
+      }), (req, res) => {
+        res.redirect('/');
+      });
+    }
+  } catch (error) {
+    console.error("Errore durante la configurazione di Facebook OAuth:", error);
+  }
+  
+  // Configurazione GitHub OAuth
+  try {
+    const githubConfig = await storage.getSocialLoginConfig('github');
+    if (githubConfig && githubConfig.enabled && githubConfig.clientId && githubConfig.clientSecret) {
+      passport.use(new GitHubStrategy({
+        clientID: githubConfig.clientId,
+        clientSecret: githubConfig.clientSecret,
+        callbackURL: `${baseUrl}/auth/github/callback`,
+        scope: ['user:email']
+      }, (accessToken, refreshToken, profile, done) => {
+        // Ottieni dati dall'oggetto del profilo GitHub
+        const profileId = profile.id;
+        const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : '';
+        const displayName = profile.displayName || profile.username || '';
+        
+        // Usa la funzione helper per gestire l'autenticazione
+        handleSocialAuth('github', profileId, email, displayName, done);
+      }));
+      
+      // Definisci le rotte per l'autenticazione GitHub
+      app.get('/auth/github', passport.authenticate('github', {
+        scope: ['user:email']
+      }));
+      
+      app.get('/auth/github/callback', passport.authenticate('github', {
+        failureRedirect: '/auth'
+      }), (req, res) => {
+        res.redirect('/');
+      });
+    }
+  } catch (error) {
+    console.error("Errore durante la configurazione di GitHub OAuth:", error);
+  }
   
   // Funzione helper per gestire il processo di login/registrazione da OAuth
   async function handleSocialAuth(

@@ -193,12 +193,52 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
   
+  async getUserByProfileId(profileId: string, provider: string): Promise<User | undefined> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.profileId, profileId),
+            eq(users.provider, provider)
+          )
+        );
+      return user;
+    } catch (error) {
+      console.error(`Error getting user by profile ID: ${profileId}`, error);
+      return undefined;
+    }
+  }
+  
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(insertUser)
       .returning();
     return user;
+  }
+  
+  async updateUserSocialProfile(userId: number, data: { profileId: string, provider: string }): Promise<User> {
+    try {
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          profileId: data.profileId,
+          provider: data.provider
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      if (!updatedUser) {
+        throw new Error(`User with id ${userId} not found`);
+      }
+      
+      return updatedUser;
+    } catch (error) {
+      console.error(`Error updating user social profile: ${userId}`, error);
+      throw error;
+    }
   }
   
   async updateUserPassword(id: number, newPasswordHash: string): Promise<User | undefined> {

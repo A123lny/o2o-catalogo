@@ -111,17 +111,10 @@ export default function IntegrationsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-4 border rounded-lg mb-4">
-                    <h3 className="text-lg font-medium mb-2">Stato implementazione</h3>
-                    <p className="mb-2">Questa sezione consente di configurare:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li>Login con Google</li>
-                      <li>Login con Facebook</li>
-                      <li>Login con GitHub</li>
-                    </ul>
-                    <p className="mt-3 text-muted-foreground">
-                      Il database e le API per la gestione degli accessi social sono implementati e sono funzionanti.
-                    </p>
+                  <div className="space-y-6">
+                    <SocialLoginConfig provider="google" />
+                    <SocialLoginConfig provider="facebook" />
+                    <SocialLoginConfig provider="github" />
                   </div>
                 </CardContent>
               </Card>
