@@ -1,516 +1,550 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { queryClient, apiRequest } from "@/lib/queryClient";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Mail, MessageSquare, CreditCard, Send, ExternalLink, Facebook, Github } from "lucide-react";
+import * as z from "zod";
+import {
+  Cog,
+  Mail,
+  Phone,
+  Facebook,
+  Github,
+  CreditCard,
+  Send,
+  Loader2,
+  Save,
+  AlertTriangle,
+  CheckCircle,
+  DollarSign,
+} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label";
+import { FaGoogle } from "react-icons/fa";
 
-// Definizione dello schema di integrazione per l'invio email
+// Schema per la configurazione email
 const emailConfigSchema = z.object({
   enabled: z.boolean().default(false),
-  provider: z.enum(["smtp", "sendgrid"]).default("smtp"),
+  provider: z.string().default("smtp"),
   host: z.string().optional(),
-  port: z.coerce.number().optional(),
-  secure: z.boolean().default(false),
+  port: z.string().optional(),
   username: z.string().optional(),
   password: z.string().optional(),
-  from: z.string().email("Indirizzo email non valido").optional(),
+  from: z.string().optional(),
+  smtpSecure: z.boolean().default(true),
   sendgridApiKey: z.string().optional(),
 });
 
-// Schema per le integrazioni di social login
-const socialLoginSchema = z.object({
+// Schema per template email
+const emailTemplateSchema = z.object({
+  name: z.string().min(1, "Il nome del template è obbligatorio"),
+  subject: z.string().min(1, "L'oggetto è obbligatorio"),
+  body: z.string().min(1, "Il corpo del messaggio è obbligatorio"),
+});
+
+// Schema per Twilio
+const twilioConfigSchema = z.object({
+  enabled: z.boolean().default(false),
+  accountSid: z.string().optional(),
+  authToken: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  verifyServiceSid: z.string().optional(),
+});
+
+// Schema per Social Login
+const socialLoginConfigSchema = z.object({
   googleEnabled: z.boolean().default(false),
   googleClientId: z.string().optional(),
   googleClientSecret: z.string().optional(),
-  
   facebookEnabled: z.boolean().default(false),
   facebookAppId: z.string().optional(),
   facebookAppSecret: z.string().optional(),
-  
   githubEnabled: z.boolean().default(false),
   githubClientId: z.string().optional(),
   githubClientSecret: z.string().optional(),
 });
 
-// Schema per Twilio
-const twilioSchema = z.object({
-  enabled: z.boolean().default(false),
-  accountSid: z.string().optional(),
-  authToken: z.string().optional(),
-  verifyServiceSid: z.string().optional(),
-  fromNumber: z.string().optional(),
-});
-
-// Schema per i pagamenti
-const paymentSchema = z.object({
+// Schema per i sistemi di pagamento
+const paymentConfigSchema = z.object({
   stripeEnabled: z.boolean().default(false),
   stripePublicKey: z.string().optional(),
   stripeSecretKey: z.string().optional(),
-  
   paypalEnabled: z.boolean().default(false),
   paypalClientId: z.string().optional(),
   paypalClientSecret: z.string().optional(),
 });
 
-// Schema per i template email
-const emailTemplateSchema = z.object({
-  name: z.string(),
-  subject: z.string(),
-  body: z.string(),
+// Schema per test email
+const testEmailSchema = z.object({
+  to: z.string().email("Inserisci un indirizzo email valido"),
+  templateName: z.string().min(1, "Seleziona un template"),
 });
 
-// Tipo per l'oggetto di configurazione complessivo
-type IntegrationsConfig = {
-  email: z.infer<typeof emailConfigSchema>;
-  socialLogin: z.infer<typeof socialLoginSchema>;
-  twilio: z.infer<typeof twilioSchema>;
-  payment: z.infer<typeof paymentSchema>;
-  emailTemplates: {
-    [key: string]: {
-      subject: string;
-      body: string;
-    }
-  };
-};
+// Schema per test SMS
+const testSmsSchema = z.object({
+  to: z.string().min(1, "Inserisci un numero di telefono"),
+});
 
 export default function IntegrationsPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("email");
-  const [testEmailAddress, setTestEmailAddress] = useState("");
-  const [testPhoneNumber, setTestPhoneNumber] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState("welcome");
+  const { toast } = useToast();
+  const [emailTemplate, setEmailTemplate] = useState<string>("");
+  const [testEmailModalOpen, setTestEmailModalOpen] = useState(false);
+  const [testSmsModalOpen, setTestSmsModalOpen] = useState(false);
 
-  // Recupero delle configurazioni esistenti
-  const { data: config, isLoading } = useQuery<IntegrationsConfig>({
-    queryKey: ["/api/admin/integrations"],
-    enabled: !!user,
+  // Fetch delle configurazioni delle integrazioni
+  const { data: integrations, isLoading } = useQuery({
+    queryKey: ['/api/admin/integrations'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/integrations');
+      if (!response.ok) throw new Error('Errore nel recupero delle integrazioni');
+      return response.json();
+    },
   });
 
-  // Form per l'email
-  const emailForm = useForm<z.infer<typeof emailConfigSchema>>({
+  // Form per la configurazione email
+  const emailForm = useForm({
     resolver: zodResolver(emailConfigSchema),
     defaultValues: {
-      enabled: config?.email?.enabled || false,
-      provider: config?.email?.provider || "smtp",
-      host: config?.email?.host || "",
-      port: config?.email?.port || 587,
-      secure: config?.email?.secure || false,
-      username: config?.email?.username || "",
-      password: config?.email?.password || "",
-      from: config?.email?.from || "",
-      sendgridApiKey: config?.email?.sendgridApiKey || "",
+      enabled: false,
+      provider: "smtp",
+      host: "",
+      port: "",
+      username: "",
+      password: "",
+      from: "",
+      smtpSecure: true,
+      sendgridApiKey: "",
     },
   });
 
-  // Form per i social login
-  const socialLoginForm = useForm<z.infer<typeof socialLoginSchema>>({
-    resolver: zodResolver(socialLoginSchema),
-    defaultValues: {
-      googleEnabled: config?.socialLogin?.googleEnabled || false,
-      googleClientId: config?.socialLogin?.googleClientId || "",
-      googleClientSecret: config?.socialLogin?.googleClientSecret || "",
-      facebookEnabled: config?.socialLogin?.facebookEnabled || false,
-      facebookAppId: config?.socialLogin?.facebookAppId || "",
-      facebookAppSecret: config?.socialLogin?.facebookAppSecret || "",
-      githubEnabled: config?.socialLogin?.githubEnabled || false,
-      githubClientId: config?.socialLogin?.githubClientId || "",
-      githubClientSecret: config?.socialLogin?.githubClientSecret || "",
-    },
-  });
-
-  // Form per Twilio
-  const twilioForm = useForm<z.infer<typeof twilioSchema>>({
-    resolver: zodResolver(twilioSchema),
-    defaultValues: {
-      enabled: config?.twilio?.enabled || false,
-      accountSid: config?.twilio?.accountSid || "",
-      authToken: config?.twilio?.authToken || "",
-      verifyServiceSid: config?.twilio?.verifyServiceSid || "",
-      fromNumber: config?.twilio?.fromNumber || "",
-    },
-  });
-
-  // Form per i pagamenti
-  const paymentForm = useForm<z.infer<typeof paymentSchema>>({
-    resolver: zodResolver(paymentSchema),
-    defaultValues: {
-      stripeEnabled: config?.payment?.stripeEnabled || false,
-      stripePublicKey: config?.payment?.stripePublicKey || "",
-      stripeSecretKey: config?.payment?.stripeSecretKey || "",
-      paypalEnabled: config?.payment?.paypalEnabled || false,
-      paypalClientId: config?.payment?.paypalClientId || "",
-      paypalClientSecret: config?.payment?.paypalClientSecret || "",
-    },
-  });
-
-  // Form per template email
-  const [templateForm, setTemplateForm] = useState({
-    subject: config?.emailTemplates?.[selectedTemplate]?.subject || "",
-    body: config?.emailTemplates?.[selectedTemplate]?.body || "",
-  });
-
-  // Aggiornamento form quando cambiano i dati
+  // Aggiorniamo i valori predefiniti quando arrivano i dati
   useEffect(() => {
-    if (config) {
-      // Email form
-      if (config.email) {
-        emailForm.reset({
-          enabled: config.email.enabled,
-          provider: config.email.provider,
-          host: config.email.host || "",
-          port: config.email.port || 587,
-          secure: config.email.secure,
-          username: config.email.username || "",
-          password: config.email.password || "",
-          from: config.email.from || "",
-          sendgridApiKey: config.email.sendgridApiKey || "",
-        });
-      }
-
-      // Social login form
-      if (config.socialLogin) {
-        socialLoginForm.reset({
-          googleEnabled: config.socialLogin.googleEnabled,
-          googleClientId: config.socialLogin.googleClientId || "",
-          googleClientSecret: config.socialLogin.googleClientSecret || "",
-          facebookEnabled: config.socialLogin.facebookEnabled,
-          facebookAppId: config.socialLogin.facebookAppId || "",
-          facebookAppSecret: config.socialLogin.facebookAppSecret || "",
-          githubEnabled: config.socialLogin.githubEnabled,
-          githubClientId: config.socialLogin.githubClientId || "",
-          githubClientSecret: config.socialLogin.githubClientSecret || "",
-        });
-      }
-
-      // Twilio form
-      if (config.twilio) {
-        twilioForm.reset({
-          enabled: config.twilio.enabled,
-          accountSid: config.twilio.accountSid || "",
-          authToken: config.twilio.authToken || "",
-          verifyServiceSid: config.twilio.verifyServiceSid || "",
-          fromNumber: config.twilio.fromNumber || "",
-        });
-      }
-
-      // Payment form
-      if (config.payment) {
-        paymentForm.reset({
-          stripeEnabled: config.payment.stripeEnabled,
-          stripePublicKey: config.payment.stripePublicKey || "",
-          stripeSecretKey: config.payment.stripeSecretKey || "",
-          paypalEnabled: config.payment.paypalEnabled,
-          paypalClientId: config.payment.paypalClientId || "",
-          paypalClientSecret: config.payment.paypalClientSecret || "",
-        });
-      }
-
-      // Template email
-      if (config.emailTemplates && config.emailTemplates[selectedTemplate]) {
-        setTemplateForm({
-          subject: config.emailTemplates[selectedTemplate].subject,
-          body: config.emailTemplates[selectedTemplate].body,
-        });
-      }
+    if (integrations?.email) {
+      emailForm.reset({
+        enabled: integrations.email.enabled,
+        provider: integrations.email.provider || "smtp",
+        host: integrations.email.host || "",
+        port: integrations.email.port || "",
+        username: integrations.email.username || "",
+        password: integrations.email.password || "",
+        from: integrations.email.from || "",
+        smtpSecure: integrations.email.smtpSecure !== false,
+        sendgridApiKey: integrations.email.sendgridApiKey || "",
+      });
     }
-  }, [config, selectedTemplate]);
+  }, [integrations?.email]);
 
-  // Mutazione per salvare le configurazioni
-  const saveEmailConfigMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof emailConfigSchema>) => {
-      const res = await apiRequest("PUT", "/api/admin/integrations/email", data);
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/integrations"] });
-      toast({
-        title: "Configurazione email salvata",
-        description: "Le impostazioni sono state aggiornate con successo.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Errore",
-        description: "Impossibile salvare le impostazioni: " + error.message,
-        variant: "destructive",
-      });
+  // Form per il template email
+  const emailTemplateForm = useForm({
+    resolver: zodResolver(emailTemplateSchema),
+    defaultValues: {
+      name: "",
+      subject: "",
+      body: "",
     },
   });
 
-  const saveSocialLoginConfigMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof socialLoginSchema>) => {
-      const res = await apiRequest("PUT", "/api/admin/integrations/social-login", data);
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/integrations"] });
-      toast({
-        title: "Configurazione social login salvata",
-        description: "Le impostazioni sono state aggiornate con successo.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Errore",
-        description: "Impossibile salvare le impostazioni: " + error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const saveTwilioConfigMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof twilioSchema>) => {
-      const res = await apiRequest("PUT", "/api/admin/integrations/twilio", data);
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/integrations"] });
-      toast({
-        title: "Configurazione Twilio salvata",
-        description: "Le impostazioni sono state aggiornate con successo.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Errore",
-        description: "Impossibile salvare le impostazioni: " + error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const savePaymentConfigMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof paymentSchema>) => {
-      const res = await apiRequest("PUT", "/api/admin/integrations/payment", data);
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/integrations"] });
-      toast({
-        title: "Configurazione pagamenti salvata",
-        description: "Le impostazioni sono state aggiornate con successo.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Errore",
-        description: "Impossibile salvare le impostazioni: " + error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const saveEmailTemplateMutation = useMutation({
-    mutationFn: async (data: { name: string, subject: string, body: string }) => {
-      const res = await apiRequest("PUT", "/api/admin/integrations/email-template", data);
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/integrations"] });
-      toast({
-        title: "Template email salvato",
-        description: "Il template è stato aggiornato con successo.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Errore",
-        description: "Impossibile salvare il template: " + error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Invio email di test
-  const sendTestEmailMutation = useMutation({
-    mutationFn: async (data: { email: string, templateName: string }) => {
-      const res = await apiRequest("POST", "/api/admin/integrations/test-email", data);
-      return res;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Email di test inviata",
-        description: "L'email è stata inviata con successo. Controlla la tua casella di posta.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Errore",
-        description: "Impossibile inviare l'email di test: " + error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Invio SMS di test
-  const sendTestSMSMutation = useMutation({
-    mutationFn: async (data: { phoneNumber: string }) => {
-      const res = await apiRequest("POST", "/api/admin/integrations/test-sms", data);
-      return res;
-    },
-    onSuccess: () => {
-      toast({
-        title: "SMS di test inviato",
-        description: "L'SMS è stato inviato con successo. Controlla il tuo telefono.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Errore",
-        description: "Impossibile inviare l'SMS di test: " + error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Gestione submit dei form
-  const onSubmitEmailConfig = (data: z.infer<typeof emailConfigSchema>) => {
-    saveEmailConfigMutation.mutate(data);
-  };
-
-  const onSubmitSocialLoginConfig = (data: z.infer<typeof socialLoginSchema>) => {
-    saveSocialLoginConfigMutation.mutate(data);
-  };
-
-  const onSubmitTwilioConfig = (data: z.infer<typeof twilioSchema>) => {
-    saveTwilioConfigMutation.mutate(data);
-  };
-
-  const onSubmitPaymentConfig = (data: z.infer<typeof paymentSchema>) => {
-    savePaymentConfigMutation.mutate(data);
-  };
-
-  const handleTemplateChange = (templateName: string) => {
-    setSelectedTemplate(templateName);
-    if (config?.emailTemplates && config.emailTemplates[templateName]) {
-      setTemplateForm({
-        subject: config.emailTemplates[templateName].subject,
-        body: config.emailTemplates[templateName].body,
+  // Aggiorniamo i valori del template quando viene selezionato
+  useEffect(() => {
+    if (emailTemplate && integrations?.emailTemplates && integrations.emailTemplates[emailTemplate]) {
+      const template = integrations.emailTemplates[emailTemplate];
+      emailTemplateForm.reset({
+        name: emailTemplate,
+        subject: template.subject,
+        body: template.body,
       });
     } else {
-      // Default empty template
-      setTemplateForm({
+      emailTemplateForm.reset({
+        name: emailTemplate || "",
         subject: "",
         body: "",
       });
     }
-  };
+  }, [emailTemplate, integrations?.emailTemplates]);
 
-  const handleTemplateSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    saveEmailTemplateMutation.mutate({
-      name: selectedTemplate,
-      subject: templateForm.subject,
-      body: templateForm.body,
-    });
-  };
+  // Form per la configurazione Twilio
+  const twilioForm = useForm({
+    resolver: zodResolver(twilioConfigSchema),
+    defaultValues: {
+      enabled: false,
+      accountSid: "",
+      authToken: "",
+      phoneNumber: "",
+      verifyServiceSid: "",
+    },
+  });
 
-  const handleTestEmail = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!testEmailAddress) {
+  // Aggiorniamo i valori predefiniti di Twilio
+  useEffect(() => {
+    if (integrations?.twilio) {
+      twilioForm.reset({
+        enabled: integrations.twilio.enabled,
+        accountSid: integrations.twilio.accountSid || "",
+        authToken: integrations.twilio.authToken || "",
+        phoneNumber: integrations.twilio.phoneNumber || "",
+        verifyServiceSid: integrations.twilio.verifyServiceSid || "",
+      });
+    }
+  }, [integrations?.twilio]);
+
+  // Form per i Social Login
+  const socialLoginForm = useForm({
+    resolver: zodResolver(socialLoginConfigSchema),
+    defaultValues: {
+      googleEnabled: false,
+      googleClientId: "",
+      googleClientSecret: "",
+      facebookEnabled: false,
+      facebookAppId: "",
+      facebookAppSecret: "",
+      githubEnabled: false,
+      githubClientId: "",
+      githubClientSecret: "",
+    },
+  });
+
+  // Aggiorniamo i valori predefiniti dei Social Login
+  useEffect(() => {
+    if (integrations?.socialLogin) {
+      socialLoginForm.reset({
+        googleEnabled: integrations.socialLogin.googleEnabled,
+        googleClientId: integrations.socialLogin.googleClientId || "",
+        googleClientSecret: integrations.socialLogin.googleClientSecret || "",
+        facebookEnabled: integrations.socialLogin.facebookEnabled,
+        facebookAppId: integrations.socialLogin.facebookAppId || "",
+        facebookAppSecret: integrations.socialLogin.facebookAppSecret || "",
+        githubEnabled: integrations.socialLogin.githubEnabled,
+        githubClientId: integrations.socialLogin.githubClientId || "",
+        githubClientSecret: integrations.socialLogin.githubClientSecret || "",
+      });
+    }
+  }, [integrations?.socialLogin]);
+
+  // Form per la configurazione dei pagamenti
+  const paymentForm = useForm({
+    resolver: zodResolver(paymentConfigSchema),
+    defaultValues: {
+      stripeEnabled: false,
+      stripePublicKey: "",
+      stripeSecretKey: "",
+      paypalEnabled: false,
+      paypalClientId: "",
+      paypalClientSecret: "",
+    },
+  });
+
+  // Aggiorniamo i valori predefiniti dei Pagamenti
+  useEffect(() => {
+    if (integrations?.payment) {
+      paymentForm.reset({
+        stripeEnabled: integrations.payment.stripeEnabled,
+        stripePublicKey: integrations.payment.stripePublicKey || "",
+        stripeSecretKey: integrations.payment.stripeSecretKey || "",
+        paypalEnabled: integrations.payment.paypalEnabled,
+        paypalClientId: integrations.payment.paypalClientId || "",
+        paypalClientSecret: integrations.payment.paypalClientSecret || "",
+      });
+    }
+  }, [integrations?.payment]);
+
+  // Form per il test email
+  const testEmailForm = useForm({
+    resolver: zodResolver(testEmailSchema),
+    defaultValues: {
+      to: user?.email || "",
+      templateName: "",
+    },
+  });
+
+  // Form per il test SMS
+  const testSmsForm = useForm({
+    resolver: zodResolver(testSmsSchema),
+    defaultValues: {
+      to: "",
+    },
+  });
+
+  // Mutation per salvare la configurazione email
+  const saveEmailConfigMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof emailConfigSchema>) => {
+      return apiRequest("PUT", "/api/admin/integrations/email", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Configurazione email salvata",
+        description: "La configurazione email è stata salvata con successo.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/integrations'] });
+    },
+    onError: (error) => {
       toast({
         title: "Errore",
-        description: "Inserisci un indirizzo email valido",
+        description: "Si è verificato un errore durante il salvataggio della configurazione email.",
         variant: "destructive",
       });
-      return;
-    }
-    sendTestEmailMutation.mutate({
-      email: testEmailAddress,
-      templateName: selectedTemplate,
-    });
-  };
+    },
+  });
 
-  const handleTestSMS = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!testPhoneNumber) {
+  // Mutation per salvare il template email
+  const saveEmailTemplateMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof emailTemplateSchema>) => {
+      return apiRequest("PUT", "/api/admin/integrations/email-template", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Template email salvato",
+        description: "Il template email è stato salvato con successo.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/integrations'] });
+    },
+    onError: (error) => {
       toast({
         title: "Errore",
-        description: "Inserisci un numero di telefono valido",
+        description: "Si è verificato un errore durante il salvataggio del template email.",
         variant: "destructive",
       });
-      return;
-    }
-    sendTestSMSMutation.mutate({
-      phoneNumber: testPhoneNumber,
-    });
+    },
+  });
+
+  // Mutation per salvare la configurazione Twilio
+  const saveTwilioConfigMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof twilioConfigSchema>) => {
+      return apiRequest("PUT", "/api/admin/integrations/twilio", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Configurazione Twilio salvata",
+        description: "La configurazione Twilio è stata salvata con successo.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/integrations'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore durante il salvataggio della configurazione Twilio.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation per salvare la configurazione Social Login
+  const saveSocialLoginConfigMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof socialLoginConfigSchema>) => {
+      return apiRequest("PUT", "/api/admin/integrations/social-login", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Configurazione Social Login salvata",
+        description: "La configurazione Social Login è stata salvata con successo.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/integrations'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore durante il salvataggio della configurazione Social Login.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation per salvare la configurazione Pagamenti
+  const savePaymentConfigMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof paymentConfigSchema>) => {
+      return apiRequest("PUT", "/api/admin/integrations/payment", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Configurazione Pagamenti salvata",
+        description: "La configurazione dei Pagamenti è stata salvata con successo.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/integrations'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore durante il salvataggio della configurazione Pagamenti.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation per inviare l'email di test
+  const sendTestEmailMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof testEmailSchema>) => {
+      return apiRequest("POST", "/api/admin/integrations/test-email", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Email di test inviata",
+        description: "L'email di test è stata inviata con successo.",
+      });
+      setTestEmailModalOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore durante l'invio dell'email di test.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation per inviare l'SMS di test
+  const sendTestSmsMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof testSmsSchema>) => {
+      return apiRequest("POST", "/api/admin/integrations/test-sms", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "SMS di test inviato",
+        description: "L'SMS di test è stato inviato con successo.",
+      });
+      setTestSmsModalOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore durante l'invio dell'SMS di test.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handler per il form email
+  const onEmailSubmit = (data: z.infer<typeof emailConfigSchema>) => {
+    saveEmailConfigMutation.mutate(data);
   };
 
-  // Template email disponibili
-  const emailTemplates = [
-    { id: "welcome", name: "Benvenuto" },
-    { id: "passwordReset", name: "Reset Password" },
-    { id: "verifyEmail", name: "Verifica Email" },
-    { id: "accountLocked", name: "Account Bloccato" },
-    { id: "passwordExpiring", name: "Password in Scadenza" },
-    { id: "contactRequest", name: "Richiesta Informazioni" },
-  ];
+  // Handler per il form template email
+  const onEmailTemplateSubmit = (data: z.infer<typeof emailTemplateSchema>) => {
+    saveEmailTemplateMutation.mutate(data);
+  };
+
+  // Handler per il form Twilio
+  const onTwilioSubmit = (data: z.infer<typeof twilioConfigSchema>) => {
+    saveTwilioConfigMutation.mutate(data);
+  };
+
+  // Handler per il form Social Login
+  const onSocialLoginSubmit = (data: z.infer<typeof socialLoginConfigSchema>) => {
+    saveSocialLoginConfigMutation.mutate(data);
+  };
+
+  // Handler per il form Pagamenti
+  const onPaymentSubmit = (data: z.infer<typeof paymentConfigSchema>) => {
+    savePaymentConfigMutation.mutate(data);
+  };
+
+  // Handler per il form test email
+  const onTestEmailSubmit = (data: z.infer<typeof testEmailSchema>) => {
+    sendTestEmailMutation.mutate(data);
+  };
+
+  // Handler per il form test SMS
+  const onTestSmsSubmit = (data: z.infer<typeof testSmsSchema>) => {
+    sendTestSmsMutation.mutate(data);
+  };
 
   return (
-    <div className="flex h-full min-h-screen bg-neutral-100">
+    <div className="min-h-screen bg-background">
       <AdminSidebar />
-      <div className="flex-1 flex flex-col pl-64 pb-16">
-        <AdminHeader user={user} />
-        <div className="flex-1 p-4">
-          <h1 className="text-3xl font-bold mb-6">Integrazioni</h1>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6 grid grid-cols-4 w-full">
-              <TabsTrigger value="email" className="flex items-center">
-                <Mail className="mr-2 h-4 w-4" />
-                Email
-              </TabsTrigger>
-              <TabsTrigger value="twilio" className="flex items-center">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                SMS/Twilio
-              </TabsTrigger>
-              <TabsTrigger value="social" className="flex items-center">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Social Login
-              </TabsTrigger>
-              <TabsTrigger value="payment" className="flex items-center">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Pagamenti
-              </TabsTrigger>
-            </TabsList>
+      <div className="pl-64 pb-16">
+        <AdminHeader title="Integrazioni" description="Configura le integrazioni con servizi esterni" icon={<Cog className="w-8 h-8" />} />
 
-            {/* Tab Email */}
-            <TabsContent value="email">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Configurazione Email */}
+        <main className="p-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Caricamento integrazioni...</span>
+            </div>
+          ) : (
+            <Tabs defaultValue="email">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="email">Email</TabsTrigger>
+                <TabsTrigger value="twilio">SMS/Telefono</TabsTrigger>
+                <TabsTrigger value="social">Social Login</TabsTrigger>
+                <TabsTrigger value="payment">Pagamenti</TabsTrigger>
+                <TabsTrigger value="templates">Template Email</TabsTrigger>
+              </TabsList>
+
+              {/* Tab Email */}
+              <TabsContent value="email">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Configurazione Email</CardTitle>
+                    <div className="flex items-center">
+                      <Mail className="w-5 h-5 mr-2" />
+                      <CardTitle>Configurazione Email</CardTitle>
+                    </div>
                     <CardDescription>
-                      Configura il servizio di invio email per le notifiche di sistema.
+                      Configura il sistema di invio email. Le email verranno utilizzate per notifiche e comunicazioni con gli utenti.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Form {...emailForm}>
-                      <form onSubmit={emailForm.handleSubmit(onSubmitEmailConfig)} className="space-y-4">
+                      <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-6">
                         <FormField
                           control={emailForm.control}
                           name="enabled"
                           render={({ field }) => (
                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                               <div className="space-y-0.5">
-                                <FormLabel className="text-base">Abilita servizio email</FormLabel>
+                                <FormLabel className="text-base">Abilita invio email</FormLabel>
                                 <FormDescription>
-                                  Attiva il servizio per l'invio di email dal sistema.
+                                  Quando abilitato, il sistema potrà inviare email automatiche.
                                 </FormDescription>
                               </div>
                               <FormControl>
@@ -529,22 +563,24 @@ export default function IntegrationsPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Provider</FormLabel>
-                              <div className="flex items-center space-x-2">
-                                <Button
-                                  type="button"
-                                  variant={field.value === "smtp" ? "default" : "outline"}
-                                  onClick={() => emailForm.setValue("provider", "smtp")}
-                                >
-                                  SMTP
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant={field.value === "sendgrid" ? "default" : "outline"}
-                                  onClick={() => emailForm.setValue("provider", "sendgrid")}
-                                >
-                                  SendGrid
-                                </Button>
+                              <div className="flex space-x-4">
+                                <div className={`cursor-pointer p-4 border rounded-md ${field.value === "smtp" ? "bg-primary/10 border-primary" : ""}`} onClick={() => field.onChange("smtp")}>
+                                  <div className="flex items-center">
+                                    <Mail className="h-5 w-5 mr-2" />
+                                    <span>SMTP</span>
+                                  </div>
+                                </div>
+                                <div className={`cursor-pointer p-4 border rounded-md ${field.value === "sendgrid" ? "bg-primary/10 border-primary" : ""}`} onClick={() => field.onChange("sendgrid")}>
+                                  <div className="flex items-center">
+                                    <Mail className="h-5 w-5 mr-2" />
+                                    <span>SendGrid</span>
+                                  </div>
+                                </div>
                               </div>
+                              <FormDescription>
+                                Seleziona il provider di servizi email da utilizzare.
+                              </FormDescription>
+                              <FormMessage />
                             </FormItem>
                           )}
                         />
@@ -571,9 +607,39 @@ export default function IntegrationsPage() {
                                 name="port"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Porta</FormLabel>
+                                    <FormLabel>Porta SMTP</FormLabel>
                                     <FormControl>
-                                      <Input type="number" placeholder="587" {...field} />
+                                      <Input placeholder="587" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <FormField
+                                control={emailForm.control}
+                                name="username"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Username</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="user@example.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={emailForm.control}
+                                name="password"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Password</FormLabel>
+                                    <FormControl>
+                                      <Input type="password" placeholder="••••••••" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -583,49 +649,22 @@ export default function IntegrationsPage() {
 
                             <FormField
                               control={emailForm.control}
-                              name="secure"
+                              name="smtpSecure"
                               render={({ field }) => (
-                                <FormItem className="flex flex-row items-center space-x-3 rounded-md border p-3">
+                                <FormItem className="flex flex-row items-center rounded-lg border p-4">
+                                  <div className="space-y-0.5">
+                                    <FormLabel className="text-base">Usa SSL/TLS</FormLabel>
+                                    <FormDescription>
+                                      Abilita la crittografia SSL/TLS per la connessione SMTP.
+                                    </FormDescription>
+                                  </div>
                                   <FormControl>
                                     <Switch
+                                      className="ml-auto"
                                       checked={field.value}
                                       onCheckedChange={field.onChange}
                                     />
                                   </FormControl>
-                                  <div className="space-y-1 leading-none">
-                                    <FormLabel>Usa SSL/TLS</FormLabel>
-                                    <FormDescription>
-                                      Usa una connessione sicura per l'invio delle email.
-                                    </FormDescription>
-                                  </div>
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={emailForm.control}
-                              name="username"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Username</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="email@example.com" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={emailForm.control}
-                              name="password"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Password</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" placeholder="******" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
                                 </FormItem>
                               )}
                             />
@@ -638,8 +677,11 @@ export default function IntegrationsPage() {
                               <FormItem>
                                 <FormLabel>API Key SendGrid</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="SG.xxxxxxxx" {...field} />
+                                  <Input type="password" placeholder="SG.xxxxxxxx" {...field} />
                                 </FormControl>
+                                <FormDescription>
+                                  Ottieni la tua API key dal pannello SendGrid.
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -651,588 +693,781 @@ export default function IntegrationsPage() {
                           name="from"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Indirizzo mittente</FormLabel>
+                              <FormLabel>Indirizzo mittente (From)</FormLabel>
                               <FormControl>
                                 <Input placeholder="noreply@tuodominio.com" {...field} />
                               </FormControl>
                               <FormDescription>
-                                Questo indirizzo sarà usato come mittente per tutte le email inviate.
+                                L'indirizzo email che verrà mostrato come mittente delle email.
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
 
-                        <Button 
-                          type="submit" 
-                          className="w-full mt-6"
-                          disabled={saveEmailConfigMutation.isPending}
-                        >
-                          Salva configurazione
+                        <div className="flex justify-between">
+                          <Button 
+                            type="button" 
+                            variant="outline"
+                            onClick={() => setTestEmailModalOpen(true)}
+                            disabled={!emailForm.watch("enabled")}
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            Invia email di test
+                          </Button>
+                          <Button type="submit" disabled={saveEmailConfigMutation.isPending}>
+                            {saveEmailConfigMutation.isPending ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Salvataggio...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="h-4 w-4 mr-2" />
+                                Salva configurazione
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Tab Twilio */}
+              <TabsContent value="twilio">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center">
+                      <Phone className="w-5 h-5 mr-2" />
+                      <CardTitle>Configurazione SMS e Telefono</CardTitle>
+                    </div>
+                    <CardDescription>
+                      Configura Twilio per inviare SMS e verificare numeri di telefono. Utile per autenticazione a due fattori e notifiche via SMS.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...twilioForm}>
+                      <form onSubmit={twilioForm.handleSubmit(onTwilioSubmit)} className="space-y-6">
+                        <FormField
+                          control={twilioForm.control}
+                          name="enabled"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                              <div className="space-y-0.5">
+                                <FormLabel className="text-base">Abilita Twilio</FormLabel>
+                                <FormDescription>
+                                  Quando abilitato, il sistema potrà inviare SMS e verificare numeri di telefono.
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={twilioForm.control}
+                            name="accountSid"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Account SID</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="ACxxxxxxxxxxxx" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  Il tuo SID account dalla dashboard Twilio.
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={twilioForm.control}
+                            name="authToken"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Auth Token</FormLabel>
+                                <FormControl>
+                                  <Input type="password" placeholder="xxxxxxxxxxxxxxxx" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  Il tuo token di autenticazione dalla dashboard Twilio.
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={twilioForm.control}
+                            name="phoneNumber"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Numero di telefono</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="+1234567890" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  Il numero di telefono Twilio da utilizzare per inviare SMS.
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={twilioForm.control}
+                            name="verifyServiceSid"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Verify Service SID</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="VAxxxxxxxxxxxxxxx" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  L'ID del servizio Verify se utilizzi Twilio Verify.
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="flex justify-between">
+                          <Button 
+                            type="button" 
+                            variant="outline"
+                            onClick={() => setTestSmsModalOpen(true)}
+                            disabled={!twilioForm.watch("enabled")}
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            Invia SMS di test
+                          </Button>
+                          <Button type="submit" disabled={saveTwilioConfigMutation.isPending}>
+                            {saveTwilioConfigMutation.isPending ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Salvataggio...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="h-4 w-4 mr-2" />
+                                Salva configurazione
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Tab Social Login */}
+              <TabsContent value="social">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center">
+                      <Users className="w-5 h-5 mr-2" />
+                      <CardTitle>Social Login</CardTitle>
+                    </div>
+                    <CardDescription>
+                      Configura l'accesso tramite account social media. Gli utenti potranno accedere utilizzando i loro account esistenti sui social network.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...socialLoginForm}>
+                      <form onSubmit={socialLoginForm.handleSubmit(onSocialLoginSubmit)} className="space-y-6">
+                        {/* Google */}
+                        <div className="border rounded-lg p-4 mb-6">
+                          <div className="flex items-center mb-4">
+                            <FaGoogle className="text-red-500 w-5 h-5 mr-2" />
+                            <h3 className="text-lg font-semibold">Google</h3>
+                            <FormField
+                              control={socialLoginForm.control}
+                              name="googleEnabled"
+                              render={({ field }) => (
+                                <FormItem className="ml-auto">
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={socialLoginForm.control}
+                              name="googleClientId"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Client ID</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="xxxxxxxx.apps.googleusercontent.com" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={socialLoginForm.control}
+                              name="googleClientSecret"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Client Secret</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" placeholder="GOCSPX-xxxxxxx" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <p className="text-sm mt-2 text-muted-foreground">
+                            Ottieni le tue credenziali dalla <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary">Google Cloud Console</a>.
+                          </p>
+                        </div>
+
+                        {/* Facebook */}
+                        <div className="border rounded-lg p-4 mb-6">
+                          <div className="flex items-center mb-4">
+                            <Facebook className="text-blue-600 w-5 h-5 mr-2" />
+                            <h3 className="text-lg font-semibold">Facebook</h3>
+                            <FormField
+                              control={socialLoginForm.control}
+                              name="facebookEnabled"
+                              render={({ field }) => (
+                                <FormItem className="ml-auto">
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={socialLoginForm.control}
+                              name="facebookAppId"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>App ID</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="123456789012345" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={socialLoginForm.control}
+                              name="facebookAppSecret"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>App Secret</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" placeholder="abcdef1234567890" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <p className="text-sm mt-2 text-muted-foreground">
+                            Ottieni le tue credenziali dal <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer" className="text-primary">Facebook Developer Portal</a>.
+                          </p>
+                        </div>
+
+                        {/* GitHub */}
+                        <div className="border rounded-lg p-4 mb-6">
+                          <div className="flex items-center mb-4">
+                            <Github className="w-5 h-5 mr-2" />
+                            <h3 className="text-lg font-semibold">GitHub</h3>
+                            <FormField
+                              control={socialLoginForm.control}
+                              name="githubEnabled"
+                              render={({ field }) => (
+                                <FormItem className="ml-auto">
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={socialLoginForm.control}
+                              name="githubClientId"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Client ID</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Iv1.xxxxxxxxxxxxxxxx" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={socialLoginForm.control}
+                              name="githubClientSecret"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Client Secret</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <p className="text-sm mt-2 text-muted-foreground">
+                            Ottieni le tue credenziali da <a href="https://github.com/settings/developers" target="_blank" rel="noopener noreferrer" className="text-primary">GitHub Developer Settings</a>.
+                          </p>
+                        </div>
+
+                        <Button type="submit" disabled={saveSocialLoginConfigMutation.isPending}>
+                          {saveSocialLoginConfigMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Salvataggio...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              Salva configurazione
+                            </>
+                          )}
                         </Button>
                       </form>
                     </Form>
                   </CardContent>
                 </Card>
+              </TabsContent>
 
-                {/* Template Email */}
+              {/* Tab Pagamenti */}
+              <TabsContent value="payment">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Template Email</CardTitle>
+                    <div className="flex items-center">
+                      <CreditCard className="w-5 h-5 mr-2" />
+                      <CardTitle>Sistemi di Pagamento</CardTitle>
+                    </div>
                     <CardDescription>
-                      Gestisci i template delle email inviate dal sistema.
+                      Configura i gateway di pagamento per accettare pagamenti online sul tuo sito.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {emailTemplates.map((template) => (
-                          <Button
-                            key={template.id}
-                            variant={selectedTemplate === template.id ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handleTemplateChange(template.id)}
-                          >
-                            {template.name}
-                          </Button>
-                        ))}
-                      </div>
+                    <Form {...paymentForm}>
+                      <form onSubmit={paymentForm.handleSubmit(onPaymentSubmit)} className="space-y-6">
+                        {/* Stripe */}
+                        <div className="border rounded-lg p-4 mb-6">
+                          <div className="flex items-center mb-4">
+                            <div className="flex-1 flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" className="w-5 h-5 text-indigo-600 mr-2" fill="currentColor">
+                                <path d="M165 144.7l-43.3 9.2-.2 142.4c0 26.3 19.8 43.3 46.1 43.3 14.6 0 25.3-2.7 31.2-5.9v-33.8c-5.7 2.3-33.7 10.5-33.7-15.7V221h33.7v-37.8h-33.7zm89.1 51.6l-2.7-13.1H213v153.2h44.3V233.3c10.5-13.8 28.2-11.1 33.9-9.3v-40.8c-6-2.1-26.7-6-37.1 13.1zm92.3-72.3l-44.6 9.5v36.2l44.6-9.5zM44.9 228.3c0-6.9 5.8-9.6 15.1-9.7 13.5 0 30.7 4.1 44.2 11.4v-41.8c-14.7-5.8-29.4-8.1-44.1-8.1-36 0-60 18.8-60 50.2 0 49.2 67.5 41.2 67.5 62.4 0 8.2-7.1 10.9-17 10.9-14.7 0-33.7-6.1-48.6-14.2v40c16.5 7.1 33.2 10.1 48.5 10.1 36.9 0 62.3-15.8 62.3-47.8 0-52.9-67.9-43.4-67.9-63.4zM640 261.6c0-45.5-22-81.4-64.2-81.4s-67.9 35.9-67.9 81.1c0 53.5 30.3 78.2 73.5 78.2 21.2 0 37.1-4.8 49.2-11.5v-33.4c-12.1 6.1-26 9.8-43.6 9.8-17.3 0-32.5-6.1-34.5-26.9h86.9c.2-2.3.6-11.6.6-15.9zm-87.9-16.8c0-20 12.3-28.4 23.4-28.4 10.9 0 22.5 8.4 22.5 28.4zm-112.9-64.6c-17.4 0-28.6 8.2-34.8 13.9l-2.3-11H363v204.8l44.4-9.4.1-50.2c6.4 4.7 15.9 11.2 31.4 11.2 31.8 0 60.8-23.2 60.8-79.6.1-51.6-29.3-79.7-60.5-79.7zm-10.6 122.5c-10.4 0-16.6-3.8-20.9-8.4l-.3-66c4.6-5.1 11-8.8 21.2-8.8 16.2 0 27.4 18.2 27.4 41.4.1 23.9-10.9 41.8-27.4 41.8zm-126.7 33.7h44.6V183.2h-44.6z"/>
+                              </svg>
+                              <h3 className="text-lg font-semibold">Stripe</h3>
+                            </div>
+                            <FormField
+                              control={paymentForm.control}
+                              name="stripeEnabled"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
 
-                      <form onSubmit={handleTemplateSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="subject">Oggetto</Label>
-                          <Input
-                            id="subject"
-                            value={templateForm.subject}
-                            onChange={(e) => setTemplateForm({...templateForm, subject: e.target.value})}
-                            placeholder="Oggetto dell'email"
-                          />
-                        </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={paymentForm.control}
+                              name="stripePublicKey"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Chiave pubblica</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="pk_test_..." {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
 
-                        <div className="space-y-2">
-                          <Label htmlFor="body">Contenuto</Label>
-                          <Textarea
-                            id="body"
-                            value={templateForm.body}
-                            onChange={(e) => setTemplateForm({...templateForm, body: e.target.value})}
-                            placeholder="Contenuto dell'email in formato HTML"
-                            className="min-h-[200px] font-mono text-sm"
-                          />
-                          <p className="text-sm text-gray-500">
-                            Variabili disponibili: {"{nome}"}, {"{email}"}, {"{link}"}
+                            <FormField
+                              control={paymentForm.control}
+                              name="stripeSecretKey"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Chiave segreta</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" placeholder="sk_test_..." {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <p className="text-sm mt-2 text-muted-foreground">
+                            Ottieni le tue chiavi API dalla <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" className="text-primary">Dashboard Stripe</a>.
                           </p>
                         </div>
 
-                        <div className="flex justify-between mt-6">
-                          <Button 
-                            type="submit" 
-                            disabled={saveEmailTemplateMutation.isPending}
-                          >
-                            Salva template
-                          </Button>
-
-                          <div className="flex items-center space-x-2">
-                            <Input
-                              placeholder="test@example.com"
-                              value={testEmailAddress}
-                              onChange={(e) => setTestEmailAddress(e.target.value)}
-                              className="w-48"
+                        {/* PayPal */}
+                        <div className="border rounded-lg p-4 mb-6">
+                          <div className="flex items-center mb-4">
+                            <div className="flex-1 flex items-center">
+                              <DollarSign className="w-5 h-5 text-blue-500 mr-2" />
+                              <h3 className="text-lg font-semibold">PayPal</h3>
+                            </div>
+                            <FormField
+                              control={paymentForm.control}
+                              name="paypalEnabled"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
                             />
-                            <Button 
-                              type="button"
-                              variant="outline"
-                              onClick={handleTestEmail}
-                              disabled={sendTestEmailMutation.isPending || !emailForm.watch("enabled")}
-                            >
-                              <Send className="mr-2 h-4 w-4" />
-                              Test
-                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={paymentForm.control}
+                              name="paypalClientId"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Client ID</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="AXxxxxxxxxxxxxxxxx" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={paymentForm.control}
+                              name="paypalClientSecret"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Client Secret</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" placeholder="EGxxxxxxxxxxxxxxxx" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <p className="text-sm mt-2 text-muted-foreground">
+                            Ottieni le tue credenziali dal <a href="https://developer.paypal.com/developer/applications" target="_blank" rel="noopener noreferrer" className="text-primary">PayPal Developer Dashboard</a>.
+                          </p>
+                        </div>
+
+                        <Button type="submit" disabled={savePaymentConfigMutation.isPending}>
+                          {savePaymentConfigMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Salvataggio...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              Salva configurazione
+                            </>
+                          )}
+                        </Button>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Tab Template Email */}
+              <TabsContent value="templates">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center">
+                      <Mail className="w-5 h-5 mr-2" />
+                      <CardTitle>Template Email</CardTitle>
+                    </div>
+                    <CardDescription>
+                      Gestisci i template per le email inviate dal sistema.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex space-x-4 mb-6">
+                      <div className="w-1/3 border rounded-md p-4">
+                        <h3 className="text-lg font-semibold mb-4">Template disponibili</h3>
+                        
+                        <div className="space-y-2">
+                          <div className={`p-2 border rounded cursor-pointer hover:bg-accent ${emailTemplate === "welcome" ? "bg-accent" : ""}`}
+                               onClick={() => setEmailTemplate("welcome")}>
+                            Email di benvenuto
+                          </div>
+                          <div className={`p-2 border rounded cursor-pointer hover:bg-accent ${emailTemplate === "password_reset" ? "bg-accent" : ""}`}
+                               onClick={() => setEmailTemplate("password_reset")}>
+                            Reset password
+                          </div>
+                          <div className={`p-2 border rounded cursor-pointer hover:bg-accent ${emailTemplate === "verification" ? "bg-accent" : ""}`}
+                               onClick={() => setEmailTemplate("verification")}>
+                            Verifica email
+                          </div>
+                          <div className={`p-2 border rounded cursor-pointer hover:bg-accent ${emailTemplate === "request_confirmation" ? "bg-accent" : ""}`}
+                               onClick={() => setEmailTemplate("request_confirmation")}>
+                            Conferma richiesta
+                          </div>
+                          <div className={`p-2 border rounded cursor-pointer hover:bg-accent ${emailTemplate === "password_changed" ? "bg-accent" : ""}`}
+                               onClick={() => setEmailTemplate("password_changed")}>
+                            Password cambiata
                           </div>
                         </div>
-                      </form>
+                      </div>
+                      
+                      <div className="w-2/3 border rounded-md p-4">
+                        <h3 className="text-lg font-semibold mb-4">Editor template</h3>
+                        
+                        {emailTemplate ? (
+                          <Form {...emailTemplateForm}>
+                            <form onSubmit={emailTemplateForm.handleSubmit(onEmailTemplateSubmit)} className="space-y-4">
+                              <FormField
+                                control={emailTemplateForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Nome template</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} disabled />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={emailTemplateForm.control}
+                                name="subject"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Oggetto email</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                      L'oggetto che verrà mostrato nell'email.
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={emailTemplateForm.control}
+                                name="body"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Corpo del messaggio</FormLabel>
+                                    <FormControl>
+                                      <Textarea rows={12} {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                      Puoi utilizzare variabili nel formato {{nomevariabile}}. Es: {{username}}, {{siteName}}, {{url}}.
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <Button type="submit" disabled={saveEmailTemplateMutation.isPending}>
+                                {saveEmailTemplateMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Salvataggio...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Save className="h-4 w-4 mr-2" />
+                                    Salva template
+                                  </>
+                                )}
+                              </Button>
+                            </form>
+                          </Form>
+                        ) : (
+                          <div className="flex items-center justify-center h-64">
+                            <p className="text-muted-foreground">Seleziona un template dalla lista per modificarlo</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            </TabsContent>
-
-            {/* Tab Twilio */}
-            <TabsContent value="twilio">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Configurazione SMS (Twilio)</CardTitle>
-                  <CardDescription>
-                    Configura Twilio per la verifica del numero di telefono e l'invio di SMS.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...twilioForm}>
-                    <form onSubmit={twilioForm.handleSubmit(onSubmitTwilioConfig)} className="space-y-4">
-                      <FormField
-                        control={twilioForm.control}
-                        name="enabled"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base">Abilita Twilio</FormLabel>
-                              <FormDescription>
-                                Attiva Twilio per la verifica dei numeri di telefono e l'invio di SMS.
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={twilioForm.control}
-                          name="accountSid"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Account SID</FormLabel>
-                              <FormControl>
-                                <Input placeholder="ACxxxxxxxx" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={twilioForm.control}
-                          name="authToken"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Auth Token</FormLabel>
-                              <FormControl>
-                                <Input type="password" placeholder="xxxxxxxx" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <FormField
-                        control={twilioForm.control}
-                        name="verifyServiceSid"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Verify Service SID</FormLabel>
-                            <FormControl>
-                              <Input placeholder="VAxxxxxxxx" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              Il SID del servizio Verify di Twilio per la verifica dei numeri di telefono.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={twilioForm.control}
-                        name="fromNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Numero mittente</FormLabel>
-                            <FormControl>
-                              <Input placeholder="+1234567890" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              Il numero di telefono da cui inviare gli SMS (deve essere registrato su Twilio).
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="flex justify-between mt-6">
-                        <Button 
-                          type="submit" 
-                          disabled={saveTwilioConfigMutation.isPending}
-                        >
-                          Salva configurazione
-                        </Button>
-
-                        <div className="flex items-center space-x-2">
-                          <Input
-                            placeholder="+39123456789"
-                            value={testPhoneNumber}
-                            onChange={(e) => setTestPhoneNumber(e.target.value)}
-                            className="w-48"
-                          />
-                          <Button 
-                            type="button"
-                            variant="outline"
-                            onClick={handleTestSMS}
-                            disabled={sendTestSMSMutation.isPending || !twilioForm.watch("enabled")}
-                          >
-                            <Send className="mr-2 h-4 w-4" />
-                            Test SMS
-                          </Button>
-                        </div>
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Tab Social Login */}
-            <TabsContent value="social">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Configurazione Social Login</CardTitle>
-                  <CardDescription>
-                    Configura le integrazioni con i social network per permettere agli utenti di accedere con i loro account social.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...socialLoginForm}>
-                    <form onSubmit={socialLoginForm.handleSubmit(onSubmitSocialLoginConfig)} className="space-y-6">
-                      {/* Google */}
-                      <div className="rounded-lg border p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Google className="h-5 w-5 text-red-500" />
-                            <h3 className="text-lg font-medium">Google</h3>
-                          </div>
-                          <FormField
-                            control={socialLoginForm.control}
-                            name="googleEnabled"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={socialLoginForm.control}
-                            name="googleClientId"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Client ID</FormLabel>
-                                <FormControl>
-                                  <Input {...field} disabled={!socialLoginForm.watch("googleEnabled")} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={socialLoginForm.control}
-                            name="googleClientSecret"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Client Secret</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="password" 
-                                    {...field} 
-                                    disabled={!socialLoginForm.watch("googleEnabled")} 
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Facebook */}
-                      <div className="rounded-lg border p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Facebook className="h-5 w-5 text-blue-600" />
-                            <h3 className="text-lg font-medium">Facebook</h3>
-                          </div>
-                          <FormField
-                            control={socialLoginForm.control}
-                            name="facebookEnabled"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={socialLoginForm.control}
-                            name="facebookAppId"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>App ID</FormLabel>
-                                <FormControl>
-                                  <Input {...field} disabled={!socialLoginForm.watch("facebookEnabled")} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={socialLoginForm.control}
-                            name="facebookAppSecret"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>App Secret</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="password" 
-                                    {...field} 
-                                    disabled={!socialLoginForm.watch("facebookEnabled")} 
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-
-                      {/* GitHub */}
-                      <div className="rounded-lg border p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Github className="h-5 w-5" />
-                            <h3 className="text-lg font-medium">GitHub</h3>
-                          </div>
-                          <FormField
-                            control={socialLoginForm.control}
-                            name="githubEnabled"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={socialLoginForm.control}
-                            name="githubClientId"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Client ID</FormLabel>
-                                <FormControl>
-                                  <Input {...field} disabled={!socialLoginForm.watch("githubEnabled")} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={socialLoginForm.control}
-                            name="githubClientSecret"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Client Secret</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="password" 
-                                    {...field} 
-                                    disabled={!socialLoginForm.watch("githubEnabled")} 
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-
-                      <Button 
-                        type="submit" 
-                        className="w-full" 
-                        disabled={saveSocialLoginConfigMutation.isPending}
-                      >
-                        Salva configurazione
-                      </Button>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Tab Pagamenti */}
-            <TabsContent value="payment">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Configurazione Pagamenti</CardTitle>
-                  <CardDescription>
-                    Configura i gateway di pagamento per accettare pagamenti online.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...paymentForm}>
-                    <form onSubmit={paymentForm.handleSubmit(onSubmitPaymentConfig)} className="space-y-6">
-                      {/* Stripe */}
-                      <div className="rounded-lg border p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <svg viewBox="0 0 60 25" xmlns="http://www.w3.org/2000/svg" width="60" height="25" className="UserLogo variant-- ">
-                              <title>Stripe logo</title>
-                              <path fill="#635BFF" d="M59.64 14.28h-8.06c.19 1.93 1.6 2.55 3.2 2.55 1.64 0 2.96-.37 4.05-.95v3.32a8.33 8.33 0 0 1-4.56 1.1c-4.01 0-6.83-2.5-6.83-7.48 0-4.19 2.39-7.52 6.3-7.52 3.92 0 5.96 3.28 5.96 7.5 0 .4-.04 1.26-.06 1.48zm-5.92-5.62c-1.03 0-2.17.73-2.17 2.58h4.25c0-1.85-1.07-2.58-2.08-2.58zM40.95 20.3c-1.44 0-2.32-.6-2.9-1.04l-.02 4.63-4.12.87V5.57h3.76l.08 1.02a4.7 4.7 0 0 1 3.23-1.29c2.9 0 5.62 2.6 5.62 7.4 0 5.23-2.7 7.6-5.65 7.6zM40 8.95c-.95 0-1.54.34-1.97.81l.02 6.12c.4.44.98.78 1.95.78 1.52 0 2.54-1.65 2.54-3.87 0-2.15-1.04-3.84-2.54-3.84zM28.24 5.57h4.13v14.44h-4.13V5.57zm0-4.7L32.37 0v3.36l-4.13.88V.88zm-4.32 9.35v9.79H19.8V5.57h3.7l.12 1.22c1-1.77 3.07-1.41 3.62-1.22v3.79c-.52-.17-2.29-.43-3.32.86zm-8.55 4.72c0 2.43 2.6 1.68 3.12 1.46v3.36c-.55.3-1.54.54-2.89.54a4.15 4.15 0 0 1-4.27-4.24l.02-13.17 4.02-.86v3.54h3.14V9.1h-3.14v5.85zm-4.91.7c0 2.97-2.31 4.66-5.73 4.66a11.2 11.2 0 0 1-4.46-.93v-3.93c1.38.75 3.1 1.31 4.46 1.31.92 0 1.53-.24 1.53-1C1.26 16.33.13 16.16.13 12.82c0-2.95 2.4-4.67 5.57-4.67 1.37 0 2.75.32 3.81.8v3.8a9.23 9.23 0 0 0-3.81-1.02c-.89 0-1.44.25-1.44.9 0 1.85 5.2 2.07 5.2 5.95z" fillRule="evenodd"></path>
-                            </svg>
-                          </div>
-                          <FormField
-                            control={paymentForm.control}
-                            name="stripeEnabled"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={paymentForm.control}
-                            name="stripePublicKey"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Chiave pubblica (Publishable Key)</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="pk_..." {...field} disabled={!paymentForm.watch("stripeEnabled")} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={paymentForm.control}
-                            name="stripeSecretKey"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Chiave segreta (Secret Key)</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="password" 
-                                    placeholder="sk_..." 
-                                    {...field} 
-                                    disabled={!paymentForm.watch("stripeEnabled")} 
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-
-                      {/* PayPal */}
-                      <div className="rounded-lg border p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="25" viewBox="0 0 124.7 33.1">
-                              <path d="M48 6.9H39c-.6 0-1.1.5-1.2 1.1l-3.5 22.1c-.1.4.2.8.6.8h4.2c.6 0 1.1-.5 1.2-1.1l.9-5.9c.1-.6.6-1.1 1.2-1.1h2.9c5.8 0 9.2-2.8 10-8.3.4-2.4 0-4.4-1.1-5.7-1.3-1.4-3.5-1.9-6.2-1.9zm1 8.2c-.5 3-2.8 3-5.1 3h-1.3l.9-5.7c.1-.3.4-.5.6-.5h.6c1.6 0 3 0 3.8.9.4.5.6 1.3.5 2.3zm24.1-.1h-4.2c-.3 0-.5.2-.6.5l-.2 1-.2-.4c-.8-1.2-2.4-1.5-4.1-1.5-3.8 0-7.1 2.9-7.7 7-.3 2 .1 4 1.3 5.4 1.1 1.2 2.6 1.8 4.5 1.8 3.2 0 4.9-2 4.9-2l-.2 1c-.1.4.2.8.6.8h3.8c.6 0 1.1-.5 1.2-1.1l2.3-14.4c0-.3-.2-.6-.4-.7.1.1 0 .1-.8.1zm-5.8 8.2c-.3 2-2 3.3-4 3.3-1 0-1.9-.3-2.4-1-.5-.6-.7-1.5-.6-2.5.3-1.9 2-3.3 3.9-3.3 1 0 1.8.3 2.4.9.6.7.8 1.6.7 2.6zm27-8.3h-4.2c-.4 0-.8.2-1 .5l-5.8 8.6-2.5-8.3c-.2-.5-.6-.8-1.1-.8h-4.1c-.5 0-.8.5-.7 1l4.6 13.5-4.3 6.1c-.3.5 0 1.1.5 1.1h4.2c.4 0 .8-.2 1-.5l13.9-20c.4-.5 0-1.2-.5-1.2z" fill="#253B80"/>
-                              <path d="M94.6 6.9h-9c-.6 0-1.1.5-1.2 1.1l-3.5 22.1c-.1.4.2.8.6.8h4.6c.4 0 .7-.3.8-.7l1-6.3c.1-.6.6-1.1 1.2-1.1h2.9c5.8 0 9.2-2.8 10-8.3.4-2.4 0-4.4-1.1-5.7-1.3-1.4-3.6-1.9-6.3-1.9zm1 8.2c-.5 3-2.8 3-5.1 3h-1.3l.9-5.7c.1-.3.4-.5.6-.5h.6c1.6 0 3 0 3.8.9.5.5.6 1.3.5 2.3zm24.1-.1h-4.2c-.3 0-.5.2-.6.5l-.2 1-.2-.4c-.8-1.2-2.4-1.5-4.1-1.5-3.8 0-7.1 2.9-7.7 7-.3 2 .1 4 1.3 5.4 1.1 1.2 2.6 1.8 4.5 1.8 3.2 0 4.9-2 4.9-2l-.2 1c-.1.4.2.8.6.8h3.8c.6 0 1.1-.5 1.2-1.1l2.3-14.4c.1-.4-.2-.7-.4-.8-.1-.3-.2-.3-1-.3zm-5.9 8.2c-.3 2-2 3.3-4 3.3-1 0-1.9-.3-2.4-1-.5-.6-.7-1.5-.6-2.5.3-1.9 2-3.3 3.9-3.3 1 0 1.8.3 2.4.9.6.7.9 1.6.7 2.6zm11.9-15.4l-3.6 22.6c-.1.4.2.8.6.8h3.6c.6 0 1.1-.5 1.2-1.1l3.5-22.1c.1-.4-.2-.8-.6-.8h-4c-.3 0-.6.2-.7.6z" fill="#179BD7"/>
-                              <path d="M8.5 6.9H-.5c-.6 0-1.1.5-1.2 1.1l-3.5 22.1c-.1.4.2.8.6.8h4.1c.6 0 1.1-.5 1.2-1.1l1-6c.1-.6.6-1.1 1.2-1.1h2.9c5.8 0 9.2-2.8 10-8.3.4-2.4 0-4.4-1.1-5.7-1.3-1.4-3.5-1.8-6.2-1.8zm1 8.2c-.5 3-2.8 3-5.1 3H3.1l.9-5.7c.1-.3.4-.5.6-.5h.6c1.6 0 3 0 3.8.9.5.5.6 1.3.5 2.3zm24.1-.1h-4.2c-.3 0-.5.2-.6.5l-.2 1-.2-.4c-.8-1.1-2.4-1.5-4.1-1.5-3.8 0-7.1 2.9-7.7 7-.3 2 .1 4 1.3 5.4 1.1 1.2 2.6 1.8 4.5 1.8 3.2 0 4.9-2 4.9-2l-.2 1c-.1.4.2.8.6.8h3.8c.6 0 1.1-.5 1.2-1.1L33 15c.1-.3-.1-.7-.4-.7.1.1-.1.1-1 .1zm-5.9 8.2c-.3 2-2 3.3-4 3.3-1 0-1.9-.3-2.4-1-.5-.6-.7-1.5-.6-2.5.3-1.9 2-3.3 3.9-3.3 1 0 1.8.3 2.4.9.6.7.8 1.6.7 2.6zm27.1-8.3h-4.2c-.4 0-.8.2-1 .5l-5.8 8.6-2.5-8.3c-.2-.5-.6-.8-1.1-.8h-4.1c-.5 0-.8.5-.7 1l4.6 13.5-4.3 6.1c-.3.5 0 1.1.5 1.1h4.2c.4 0 .8-.2 1-.5l13.9-20c.3-.5 0-1.2-.5-1.2z" fill="#253B80"/>
-                            </svg>
-                          </div>
-                          <FormField
-                            control={paymentForm.control}
-                            name="paypalEnabled"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={paymentForm.control}
-                            name="paypalClientId"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Client ID</FormLabel>
-                                <FormControl>
-                                  <Input {...field} disabled={!paymentForm.watch("paypalEnabled")} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={paymentForm.control}
-                            name="paypalClientSecret"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Client Secret</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="password" 
-                                    {...field} 
-                                    disabled={!paymentForm.watch("paypalEnabled")} 
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-
-                      <Button 
-                        type="submit" 
-                        className="w-full" 
-                        disabled={savePaymentConfigMutation.isPending}
-                      >
-                        Salva configurazione
-                      </Button>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+              </TabsContent>
+            </Tabs>
+          )}
+        </main>
       </div>
+
+      {/* Dialog per test email */}
+      <Dialog open={testEmailModalOpen} onOpenChange={setTestEmailModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invia email di test</DialogTitle>
+            <DialogDescription>
+              Compila i campi per inviare un'email di test e verificare la configurazione.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...testEmailForm}>
+            <form onSubmit={testEmailForm.handleSubmit(onTestEmailSubmit)} className="space-y-4">
+              <FormField
+                control={testEmailForm.control}
+                name="to"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Destinatario</FormLabel>
+                    <FormControl>
+                      <Input placeholder="email@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={testEmailForm.control}
+                name="templateName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Template</FormLabel>
+                    <select
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={field.value}
+                      onChange={field.onChange}
+                    >
+                      <option value="">Seleziona un template</option>
+                      {integrations?.emailTemplates && Object.keys(integrations.emailTemplates).map((key) => (
+                        <option key={key} value={key}>{key}</option>
+                      ))}
+                    </select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setTestEmailModalOpen(false)}>
+                  Annulla
+                </Button>
+                <Button type="submit" disabled={sendTestEmailMutation.isPending}>
+                  {sendTestEmailMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Invio in corso...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Invia email di test
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog per test SMS */}
+      <Dialog open={testSmsModalOpen} onOpenChange={setTestSmsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invia SMS di test</DialogTitle>
+            <DialogDescription>
+              Inserisci un numero di telefono per inviare un SMS di test e verificare la configurazione Twilio.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...testSmsForm}>
+            <form onSubmit={testSmsForm.handleSubmit(onTestSmsSubmit)} className="space-y-4">
+              <FormField
+                control={testSmsForm.control}
+                name="to"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Numero di telefono</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+1234567890" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Inserisci il numero in formato internazionale (es. +39xxxxxxxxxx).
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setTestSmsModalOpen(false)}>
+                  Annulla
+                </Button>
+                <Button type="submit" disabled={sendTestSmsMutation.isPending}>
+                  {sendTestSmsMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Invio in corso...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Invia SMS di test
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
