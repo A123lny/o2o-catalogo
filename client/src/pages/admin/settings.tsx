@@ -763,7 +763,7 @@ export default function SettingsPage() {
                               e.preventDefault(); // Previene la propagazione dell'evento click
                               e.stopPropagation(); // Ferma la propagazione dell'evento
                               // Utilizziamo setLocation per la navigazione SPA
-                              setLocation('/admin/two-factor-setup');
+                              setLocation('/admin/two-factor-setup-new');
                             }}
                             type="button" // Specificare che è un pulsante e non un submit
                             variant="outline"

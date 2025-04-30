@@ -20,6 +20,7 @@ import UsersPage from "@/pages/admin/users";
 import SettingsPage from "@/pages/admin/settings";
 import PromoManagementPage from "@/pages/admin/promo-management";
 import TwoFactorSetupPage from "@/pages/admin/two-factor-setup-page";
+import TwoFactorSetupNewPage from "@/pages/admin/two-factor-setup-new-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import PageTitle from "@/components/page-title";
@@ -47,6 +48,7 @@ function Router() {
       <ProtectedRoute path="/admin/settings" component={SettingsPage} />
       <ProtectedRoute path="/admin/promos" component={PromoManagementPage} />
       <ProtectedRoute path="/admin/two-factor-setup" component={TwoFactorSetupPage} />
+      <ProtectedRoute path="/admin/two-factor-setup-new" component={TwoFactorSetupNewPage} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
