@@ -21,6 +21,7 @@ export const userTwoFactorSecrets = pgTable("user_two_factor_secrets", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().unique(),
   secret: text("secret").notNull(),
+  uri: text("uri").notNull(), // Aggiunto campo URI per il QR code
   verified: boolean("verified").default(false).notNull(),
   backupCodes: jsonb("backup_codes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -21,6 +21,15 @@ declare global {
       role: string;
       createdAt: Date;
       passwordExpired?: boolean; // Flag per indicare se la password è scaduta
+      twoFactorEnabled?: boolean; // Flag per indicare se l'utente ha abilitato il 2FA
+      twoFactorVerified?: boolean; // Flag per indicare se l'utente ha completato la configurazione 2FA
+    }
+  }
+  
+  // Estende l'interfaccia di session per twoFactorUserId
+  namespace Express.Session {
+    interface SessionData {
+      twoFactorUserId?: number;
     }
   }
 }
@@ -128,7 +137,7 @@ export function setupAuth(app: Express) {
       }
       
       if (!user) {
-        return res.status(401).send("Authentication failed");
+        return res.status(401).json({ success: false, message: "Credenziali non valide" });
       }
       
       try {
@@ -167,21 +176,69 @@ export function setupAuth(app: Express) {
           }
         }
         
+        // Verifica se l'autenticazione a due fattori è richiesta
+        if (user.twoFactorEnabled && user.twoFactorVerified) {
+          console.log(`2FA richiesto per l'utente ${user.username}`);
+          
+          // Salviamo l'ID utente nella sessione per il processo 2FA
+          req.session.twoFactorUserId = user.id;
+          
+          // Non effettuiamo il login completo, ma indichiamo che è necessario il 2FA
+          return res.json({
+            success: true,
+            requireTwoFactor: true,
+            message: "Inserisci il codice di autenticazione a due fattori"
+          });
+        }
+        
+        // Verifica se il 2FA è obbligatorio in base alle impostazioni di sicurezza
+        // ma l'utente non lo ha ancora configurato
+        if (securitySettings?.require2FA && !user.twoFactorEnabled) {
+          // Effettuiamo il login ma indichiamo che è necessario configurare il 2FA
+          req.login(user, (loginErr) => {
+            if (loginErr) {
+              return next(loginErr);
+            }
+            
+            return res.status(200).json({
+              success: true,
+              user,
+              setupTwoFactor: true,
+              message: "È necessario configurare l'autenticazione a due fattori"
+            });
+          });
+          return;
+        }
+        
+        // Login normale se non è richiesto il 2FA
         req.login(user, (loginErr) => {
           if (loginErr) {
             return next(loginErr);
           }
           
-          return res.status(200).send(user);
+          // Registra il login nel log delle attività
+          storage.createActivityLog({
+            userId: user.id,
+            action: "USER_LOGIN",
+            entityType: "user",
+            entityId: user.id,
+            details: JSON.stringify({
+              message: "Login effettuato con successo"
+            }),
+            ipAddress: req.ip || "",
+            userAgent: req.headers["user-agent"] || ""
+          }).catch(e => console.error("Errore registrazione log:", e));
+          
+          return res.status(200).json({
+            success: true,
+            user
+          });
         });
       } catch (error) {
-        console.error("Error checking password expiration:", error);
-        req.login(user, (loginErr) => {
-          if (loginErr) {
-            return next(loginErr);
-          }
-          
-          return res.status(200).send(user);
+        console.error("Error during login:", error);
+        return res.status(500).json({ 
+          success: false, 
+          message: "Errore durante il login" 
         });
       }
     })(req, res, next);
