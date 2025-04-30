@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
+import SocialLoginConfig from "@/components/admin/social-login-config";
 import { Cog, Mail, Phone, CreditCard, Users as UsersIcon } from "lucide-react";
 import {
   Card,

@@ -913,6 +913,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // --- INTEGRATIONS API ENDPOINTS --- //
   
+  // Social Login Configuration
+  app.get("/api/integrations/social/:provider", isAdmin, async (req, res) => {
+    try {
+      const { provider } = req.params;
+      const config = await storage.getSocialLoginConfig(provider);
+      
+      if (!config) {
+        return res.status(404).json({ message: "Configurazione non trovata" });
+      }
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Errore nel caricamento della configurazione social:", error);
+      res.status(500).json({ message: "Errore nel caricamento della configurazione" });
+    }
+  });
+  
+  app.post("/api/integrations/social/:provider", isAdmin, async (req, res) => {
+    try {
+      const { provider } = req.params;
+      const data = req.body;
+      
+      // Assicurati che provider sia nel corpo della richiesta
+      data.provider = provider;
+      
+      const config = await storage.saveSocialLoginConfig(data);
+      res.json(config);
+    } catch (error) {
+      console.error("Errore nel salvataggio della configurazione social:", error);
+      res.status(500).json({ message: "Errore nel salvataggio della configurazione" });
+    }
+  });
+  
   // Get all integrations configuration
   app.get("/api/admin/integrations", async (req, res) => {
     if (!req.isAuthenticated() || req.user.role !== "admin") {
