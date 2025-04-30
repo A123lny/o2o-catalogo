@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import { useAuth } from "@/hooks/use-auth";
@@ -760,6 +761,7 @@ export default function SettingsPage() {
                             onClick={(e) => {
                               e.preventDefault(); // Previene la propagazione dell'evento click
                               e.stopPropagation(); // Ferma la propagazione dell'evento
+                              // Utilizziamo setLocation invece di window.location per evitare ricarica pagina
                               window.location.href = '/admin/two-factor-setup';
                             }}
                             type="button" // Specificare che è un pulsante e non un submit
