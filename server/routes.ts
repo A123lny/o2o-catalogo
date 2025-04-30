@@ -184,7 +184,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/vehicles", isAdmin, upload.single("mainImage"), async (req, res) => {
     try {
-      const vehicleData = JSON.parse(req.body.data);
+      let vehicleData;
+      try {
+        vehicleData = JSON.parse(req.body.data);
+      } catch (parseError) {
+        console.error("Error parsing vehicle data:", parseError);
+        return res.status(400).json({ message: "Invalid JSON format in vehicle data" });
+      }
+      
+      // Trasforma eventuali campi JSON
+      if (vehicleData.features && typeof vehicleData.features === "string") {
+        try {
+          vehicleData.features = JSON.parse(vehicleData.features);
+        } catch (e) {
+          vehicleData.features = []; // In caso di errore, usa un array vuoto
+        }
+      }
+      
+      if (vehicleData.badges && typeof vehicleData.badges === "string") {
+        try {
+          vehicleData.badges = JSON.parse(vehicleData.badges);
+        } catch (e) {
+          vehicleData.badges = []; // In caso di errore, usa un array vuoto
+        }
+      }
+      
       const validatedData = insertVehicleSchema.parse(vehicleData);
       
       // Handle image upload here
@@ -195,14 +219,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const vehicle = await storage.createVehicle(validatedData);
       res.status(201).json(vehicle);
     } catch (error) {
-      res.status(400).json({ message: "Invalid vehicle data" });
+      console.error("Error creating vehicle:", error);
+      res.status(400).json({ message: "Invalid vehicle data", error: error.message });
     }
   });
 
   app.put("/api/admin/vehicles/:id", isAdmin, upload.single("mainImage"), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const vehicleData = JSON.parse(req.body.data);
+      
+      let vehicleData;
+      try {
+        vehicleData = JSON.parse(req.body.data);
+      } catch (parseError) {
+        console.error("Error parsing vehicle data:", parseError);
+        return res.status(400).json({ message: "Invalid JSON format in vehicle data" });
+      }
+      
+      // Trasforma eventuali campi JSON
+      if (vehicleData.features && typeof vehicleData.features === "string") {
+        try {
+          vehicleData.features = JSON.parse(vehicleData.features);
+        } catch (e) {
+          vehicleData.features = []; // In caso di errore, usa un array vuoto
+        }
+      }
+      
+      if (vehicleData.badges && typeof vehicleData.badges === "string") {
+        try {
+          vehicleData.badges = JSON.parse(vehicleData.badges);
+        } catch (e) {
+          vehicleData.badges = []; // In caso di errore, usa un array vuoto
+        }
+      }
+      
       const validatedData = insertVehicleSchema.parse(vehicleData);
       
       // Handle image upload here
@@ -213,7 +263,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const vehicle = await storage.updateVehicle(id, validatedData);
       res.json(vehicle);
     } catch (error) {
-      res.status(400).json({ message: "Invalid vehicle data" });
+      console.error("Error updating vehicle:", error);
+      res.status(400).json({ message: "Invalid vehicle data", error: error.message });
     }
   });
 
@@ -249,8 +300,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         badges = badges.filter(badge => badge !== "Assegnato");
       }
       
+      // Prepara i dati da aggiornare - estrai solo i campi necessari
+      const { badges: _, ...vehicleData } = vehicle;
+      
       // Aggiorna il veicolo
-      const updatedVehicle = await storage.updateVehicle(id, { ...vehicle, badges });
+      const updatedVehicle = await storage.updateVehicle(id, { 
+        ...vehicleData, 
+        badges: badges 
+      });
+      
       res.json(updatedVehicle);
     } catch (error) {
       res.status(500).json({ message: "Error updating vehicle status" });
@@ -288,7 +346,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/brands", isAdmin, upload.single("logo"), async (req, res) => {
     try {
-      const brandData = JSON.parse(req.body.data);
+      let brandData;
+      try {
+        brandData = JSON.parse(req.body.data);
+      } catch (parseError) {
+        console.error("Error parsing brand data:", parseError);
+        return res.status(400).json({ message: "Invalid JSON format in brand data" });
+      }
+      
       const validatedData = insertBrandSchema.parse(brandData);
       
       if (req.file) {
@@ -298,14 +363,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const brand = await storage.createBrand(validatedData);
       res.status(201).json(brand);
     } catch (error) {
-      res.status(400).json({ message: "Invalid brand data" });
+      console.error("Error creating brand:", error);
+      res.status(400).json({ message: "Invalid brand data", error: error.message });
     }
   });
 
   app.put("/api/admin/brands/:id", isAdmin, upload.single("logo"), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const brandData = JSON.parse(req.body.data);
+      
+      let brandData;
+      try {
+        brandData = JSON.parse(req.body.data);
+      } catch (parseError) {
+        console.error("Error parsing brand data:", parseError);
+        return res.status(400).json({ message: "Invalid JSON format in brand data" });
+      }
+      
       const validatedData = insertBrandSchema.parse(brandData);
       
       if (req.file) {
@@ -315,7 +389,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const brand = await storage.updateBrand(id, validatedData);
       res.json(brand);
     } catch (error) {
-      res.status(400).json({ message: "Invalid brand data" });
+      console.error("Error updating brand:", error);
+      res.status(400).json({ message: "Invalid brand data", error: error.message });
     }
   });
 
@@ -341,7 +416,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/categories", isAdmin, upload.single("image"), async (req, res) => {
     try {
-      const categoryData = JSON.parse(req.body.data);
+      let categoryData;
+      try {
+        categoryData = JSON.parse(req.body.data);
+      } catch (parseError) {
+        console.error("Error parsing category data:", parseError);
+        return res.status(400).json({ message: "Invalid JSON format in category data" });
+      }
+      
       const validatedData = insertCategorySchema.parse(categoryData);
       
       if (req.file) {
@@ -351,14 +433,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const category = await storage.createCategory(validatedData);
       res.status(201).json(category);
     } catch (error) {
-      res.status(400).json({ message: "Invalid category data" });
+      console.error("Error creating category:", error);
+      res.status(400).json({ message: "Invalid category data", error: error.message });
     }
   });
 
   app.put("/api/admin/categories/:id", isAdmin, upload.single("image"), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const categoryData = JSON.parse(req.body.data);
+      
+      let categoryData;
+      try {
+        categoryData = JSON.parse(req.body.data);
+      } catch (parseError) {
+        console.error("Error parsing category data:", parseError);
+        return res.status(400).json({ message: "Invalid JSON format in category data" });
+      }
+      
       const validatedData = insertCategorySchema.parse(categoryData);
       
       if (req.file) {
@@ -368,7 +459,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const category = await storage.updateCategory(id, validatedData);
       res.json(category);
     } catch (error) {
-      res.status(400).json({ message: "Invalid category data" });
+      console.error("Error updating category:", error);
+      res.status(400).json({ message: "Invalid category data", error: error.message });
     }
   });
 
