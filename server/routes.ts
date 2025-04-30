@@ -731,6 +731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: { 
           passwordExpiryDays: settings.passwordExpiryDays,
           enable2FA: settings.enable2FA,
+          require2FA: settings.require2FA,
           failedLoginAttempts: settings.failedLoginAttempts 
         }
       });
