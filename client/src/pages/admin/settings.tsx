@@ -799,52 +799,48 @@ export default function SettingsPage() {
                       </div>
                       
                       {/* Stato 2FA personale e pulsanti di gestione */}
-                      <Card className="mt-4 mb-4">
-                        <CardHeader>
-                          <CardTitle>Autenticazione a due fattori (2FA)</CardTitle>
-                          <CardDescription>
-                            Gestisci l'autenticazione a due fattori per il tuo account
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex flex-col space-y-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="text-sm font-medium">Stato 2FA</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  {has2FAEnabled ? 
-                                    "L'autenticazione a due fattori è attiva per il tuo account" : 
-                                    "L'autenticazione a due fattori non è configurata"
-                                  }
-                                </p>
-                              </div>
-                              {has2FAEnabled ? (
-                                <Button 
-                                  variant="destructive" 
-                                  onClick={disable2FA}
-                                  disabled={isDisabling2FA}
-                                >
-                                  {isDisabling2FA ? (
-                                    <>
-                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                      Disattivazione...
-                                    </>
-                                  ) : (
-                                    "Disattiva 2FA"
-                                  )}
-                                </Button>
-                              ) : (
-                                <Button 
-                                  variant="default" 
-                                  onClick={() => setLocation('/admin/two-factor-setup-new')}
-                                >
-                                  Configura 2FA
-                                </Button>
-                              )}
+                      <div className="mt-4 mb-4 border p-4 rounded-lg">
+                        <h3 className="text-lg font-medium">Autenticazione a due fattori (2FA)</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Gestisci l'autenticazione a due fattori per il tuo account
+                        </p>
+                        <div className="flex flex-col space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="text-sm font-medium">Stato 2FA</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {has2FAEnabled ? 
+                                  "L'autenticazione a due fattori è attiva per il tuo account" : 
+                                  "L'autenticazione a due fattori non è configurata"
+                                }
+                              </p>
                             </div>
+                            {has2FAEnabled ? (
+                              <Button 
+                                variant="destructive" 
+                                onClick={disable2FA}
+                                disabled={isDisabling2FA}
+                              >
+                                {isDisabling2FA ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Disattivazione...
+                                  </>
+                                ) : (
+                                  "Disattiva 2FA"
+                                )}
+                              </Button>
+                            ) : (
+                              <Button 
+                                variant="default" 
+                                onClick={() => setLocation('/admin/two-factor-setup-new')}
+                              >
+                                Configura 2FA
+                              </Button>
+                            )}
                           </div>
-                        </CardContent>
-                      </Card>
+                        </div>
+                      </div>
                       
                       {/* Impostazioni globali 2FA */}
                       <div className="space-y-4 border rounded-lg p-4 mb-4">
