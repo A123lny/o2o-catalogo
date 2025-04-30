@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
-import AuthPage from "@/pages/auth-page";
+import LoginPage from "@/pages/login-page";
 import VehicleDetailPage from "@/pages/vehicle-detail-page";
 import RequestInfoPage from "@/pages/request-info-page";
 import CatalogPage from "@/pages/catalog-page";
@@ -27,7 +27,7 @@ function Router() {
     <Switch>
       {/* Public Routes */}
       <Route path="/" component={HomePage} />
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/auth" component={LoginPage} />
       <Route path="/catalog" component={CatalogPage} />
       <Route path="/vehicle/:id" component={VehicleDetailPage} />
       <Route path="/request-info/:vehicleId/:rentalOptionId?" component={RequestInfoPage} />
