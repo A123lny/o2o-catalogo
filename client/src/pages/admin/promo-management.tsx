@@ -326,10 +326,11 @@ export default function PromoManagement() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-full min-h-screen bg-neutral-100">
       <AdminSidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="p-8">
+      <div className="flex-1 flex flex-col pl-64 pb-16">
+        <AdminHeader user={user} />
+        <div className="flex-1 p-4">
           <h1 className="text-3xl font-bold mb-6">Gestione Promozioni</h1>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
