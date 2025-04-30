@@ -72,6 +72,7 @@ const securitySettingsSchema = z.object({
   enable2FA: z.boolean(),
   failedLoginAttempts: z.number().min(1).max(10),
   lockoutDurationMinutes: z.number().min(1).max(1440),
+  autoLogoutMinutes: z.number().min(0).max(1440),
 });
 
 type GeneralSettingsValues = z.infer<typeof generalSettingsSchema>;
@@ -193,6 +194,7 @@ export default function SettingsPage() {
       enable2FA: false,
       failedLoginAttempts: 5,
       lockoutDurationMinutes: 30,
+      autoLogoutMinutes: 30,
     },
   });
   
@@ -210,6 +212,7 @@ export default function SettingsPage() {
         enable2FA: securitySettings.enable2FA || false,
         failedLoginAttempts: securitySettings.failedLoginAttempts || 5,
         lockoutDurationMinutes: securitySettings.lockoutDurationMinutes || 30,
+        autoLogoutMinutes: securitySettings.autoLogoutMinutes || 30,
       });
     }
   }, [securitySettings, securityForm]);
