@@ -45,9 +45,10 @@ export async function generateTOTP(username: string): Promise<{ secret: string; 
       console.log("QR code generato con successo, lunghezza URL dati:", qrCodeUrl.length);
 
       return { secret, qrCodeUrl };
-    } catch (qrError) {
-      console.error("Errore specifico nella generazione QR:", qrError);
-      throw new Error("Errore nella generazione del QR code: " + (qrError.message || "errore sconosciuto"));
+    } catch (error) {
+      console.error("Errore specifico nella generazione QR:", error);
+      const errorMessage = error instanceof Error ? error.message : "errore sconosciuto";
+      throw new Error("Errore nella generazione del QR code: " + errorMessage);
     }
   } catch (error) {
     console.error("Errore nella generazione TOTP:", error);

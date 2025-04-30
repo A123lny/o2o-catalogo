@@ -62,9 +62,10 @@ export function setupTwoFactorRoutes(router: Router) {
         
         console.log("Invio QR code, lunghezza URL:", qrCodeUrl?.length || 0);
         res.json({ qrCodeUrl });
-      } catch (totpError) {
-        console.error("Errore specifico nella generazione TOTP:", totpError);
-        return res.status(500).json({ error: "Errore nella generazione del codice QR: " + (totpError.message || 'Errore sconosciuto') });
+      } catch (error) {
+        console.error("Errore specifico nella generazione TOTP:", error);
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        return res.status(500).json({ error: "Errore nella generazione del codice QR: " + errorMessage });
       }
     } catch (error) {
       console.error("Errore durante il setup 2FA:", error);
@@ -148,7 +149,9 @@ export function setupTwoFactorRoutes(router: Router) {
       let remainingBackupCodes: string[] = [];
       
       if (!isValidToken && secret.backupCodes) {
-        const backupCodes = JSON.parse(secret.backupCodes);
+        const backupCodes = typeof secret.backupCodes === 'string' ? 
+          JSON.parse(secret.backupCodes) : 
+          (Array.isArray(secret.backupCodes) ? secret.backupCodes : []);
         isBackupCode = backupCodes.includes(token);
         
         if (isBackupCode) {
