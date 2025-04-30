@@ -115,8 +115,8 @@ export default function LoginPage() {
   // Funzione per gestire il login social
   const handleSocialLogin = (provider: string) => {
     console.log(`Login con ${provider}`);
-    alert(`La funzionalità di login con ${provider} sarà implementata presto!`);
-    // In un'implementazione reale, qui redirigeremo l'utente all'endpoint di autenticazione OAuth
+    // Redirect all'endpoint di autenticazione OAuth
+    window.location.href = `/auth/${provider}`;
   }
   
   // Funzione per ottenere l'icona del provider
