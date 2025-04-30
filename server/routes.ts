@@ -771,6 +771,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Registra le rotte per l'autenticazione a due fattori
+  registerTwoFactorRoutes(app);
+
   const httpServer = createServer(app);
   return httpServer;
 }

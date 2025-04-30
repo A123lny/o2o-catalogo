@@ -32,6 +32,12 @@ export interface IStorage {
   getUsers(): Promise<User[]>;
   updateUser(id: number, data: Partial<User>): Promise<User>;
   
+  // Two-Factor Authentication
+  getUserTwoFactorSecret(userId: number): Promise<UserTwoFactorSecret | undefined>;
+  createUserTwoFactorSecret(data: InsertUserTwoFactorSecret): Promise<UserTwoFactorSecret>;
+  updateUserTwoFactorSecret(userId: number, data: Partial<UserTwoFactorSecret>): Promise<UserTwoFactorSecret>;
+  deleteUserTwoFactorSecret(userId: number): Promise<void>;
+  
   // Brands
   getBrands(): Promise<Brand[]>;
   getActiveBrands(): Promise<Brand[]>; // Marche con veicoli disponibili
