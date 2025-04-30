@@ -621,22 +621,41 @@ export default function SettingsPage() {
                         />
                       </div>
                       
-                      <FormField
-                        control={securityForm.control}
-                        name="lockoutDurationMinutes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Durata blocco (minuti)</FormLabel>
-                            <FormControl>
-                              <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
-                            </FormControl>
-                            <FormDescription>
-                              Durata del blocco dell'account dopo i tentativi falliti
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={securityForm.control}
+                          name="lockoutDurationMinutes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Durata blocco (minuti)</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                              </FormControl>
+                              <FormDescription>
+                                Durata del blocco dell'account dopo i tentativi falliti
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={securityForm.control}
+                          name="autoLogoutMinutes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Logout automatico (minuti)</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                              </FormControl>
+                              <FormDescription>
+                                Tempo di inattività prima del logout automatico (0 = disabilitato)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
