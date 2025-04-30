@@ -1,4 +1,4 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
@@ -15,7 +15,7 @@ import {
   insertProvinceSchema,
   insertActivityLogSchema
 } from "@shared/schema";
-import { registerTwoFactorRoutes } from "./routes/two-factor-routes";
+import { setupTwoFactorRoutes } from "./routes/two-factor-routes";
 
 // Configure multer for in-memory storage
 const upload = multer({ 
@@ -36,6 +36,11 @@ const isAdmin = (req: Request, res: Response, next: NextFunction) => {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
+  
+  // Set up two-factor authentication routes
+  const router = express.Router();
+  setupTwoFactorRoutes(router);
+  app.use(router);
 
   // Public API routes
   
@@ -772,7 +777,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Registra le rotte per l'autenticazione a due fattori
-  registerTwoFactorRoutes(app);
+  const router2FA = express.Router();
+  setupTwoFactorRoutes(router2FA);
+  app.use(router2FA);
 
   const httpServer = createServer(app);
   return httpServer;

@@ -1,102 +1,69 @@
 import * as speakeasy from 'speakeasy';
-import * as QRCode from 'qrcode';
-import { storage } from './storage';
-import { InsertUserTwoFactorSecret, User } from '@shared/schema';
+import * as qrcode from 'qrcode';
 
-export interface TwoFactorSetupData {
-  otpAuthUrl: string;
-  qrCodeDataUrl: string;
-  secret: string;
+// Nome dell'applicazione
+const APP_NAME = 'o2o Mobility';
+
+/**
+ * Genera un nuovo segreto TOTP e il relativo QR code.
+ * @param username Nome utente per cui generare il segreto
+ * @returns Il segreto generato e l'URL del QR code
+ */
+export async function generateTOTP(username: string): Promise<{ secret: string; qrCodeUrl: string }> {
+  // Genera un nuovo segreto
+  const secretObj = speakeasy.generateSecret({
+    name: `${APP_NAME}:${username}`,
+    issuer: APP_NAME,
+    length: 20 // Lunghezza del segreto (20 byte è considerato sicuro)
+  });
+
+  // Ottieni il segreto in formato base32
+  const secret = secretObj.base32;
+
+  // Crea un URL otpauth per l'app autenticatore
+  const otpauthUrl = speakeasy.otpauthURL({
+    secret,
+    label: `${APP_NAME}:${username}`,
+    issuer: APP_NAME,
+    encoding: 'base32'
+  });
+
+  // Genera il QR code come stringa di dati
+  const qrCodeUrl = await qrcode.toDataURL(otpauthUrl);
+
+  return { secret, qrCodeUrl };
 }
 
-export class TwoFactorService {
-  // Genera un nuovo segreto TOTP per un utente
-  static async generateSecret(user: User): Promise<TwoFactorSetupData> {
-    const secretResult = speakeasy.generateSecret({
-      name: `O2O Mobility (${user.username})`,
-      length: 20
-    });
-
-    const secret = secretResult.base32;
-    const otpAuthUrl = secretResult.otauth_url || '';
-
-    // Genera il QR code come data URL
-    const qrCodeDataUrl = await QRCode.toDataURL(otpAuthUrl);
-
-    // Salva il segreto nel database (non ancora verificato)
-    const data: InsertUserTwoFactorSecret = {
-      userId: user.id,
-      secret: secret
-    };
-
-    // Verifica se l'utente ha già un segreto
-    const existingSecret = await storage.getUserTwoFactorSecret(user.id);
-    
-    // Se esiste, aggiorna; altrimenti, crea
-    if (existingSecret) {
-      await storage.updateUserTwoFactorSecret(user.id, { secret });
-    } else {
-      await storage.createUserTwoFactorSecret(data);
-    }
-
-    // Aggiorna lo stato 2FA dell'utente (non ancora verificato)
-    await storage.updateUser(user.id, { 
-      twoFactorEnabled: true,
-      twoFactorVerified: false
-    });
-
-    return {
-      otpAuthUrl,
-      qrCodeDataUrl,
-      secret
-    };
-  }
-
-  // Verifica un codice TOTP fornito dall'utente durante la configurazione
-  static async verifyTotpSetup(userId: number, token: string): Promise<boolean> {
-    const twoFactorSecret = await storage.getUserTwoFactorSecret(userId);
-    
-    if (!twoFactorSecret || !twoFactorSecret.secret) {
-      return false;
-    }
-
-    const verified = speakeasy.totp.verify({
-      secret: twoFactorSecret.secret,
-      encoding: 'base32',
-      token,
-      window: 1 // Consente una leggera tolleranza temporale (30 secondi prima/dopo)
-    });
-
-    if (verified) {
-      // Marca l'utente come verificato per 2FA
-      await storage.updateUser(userId, { twoFactorVerified: true });
-    }
-
-    return verified;
-  }
-
-  // Verifica un codice TOTP durante il login
-  static async verifyTotp(userId: number, token: string): Promise<boolean> {
-    const twoFactorSecret = await storage.getUserTwoFactorSecret(userId);
-    
-    if (!twoFactorSecret || !twoFactorSecret.secret) {
-      return false;
-    }
-
+/**
+ * Verifica un token TOTP.
+ * @param secret Il segreto TOTP dell'utente
+ * @param token Il token fornito dall'utente
+ * @returns true se il token è valido, false altrimenti
+ */
+export function verifyTOTP(secret: string, token: string): boolean {
+  try {
+    // Verifica il token con una finestra temporale di ±1 unità (30 secondi per unità)
+    // Questo permette di gestire piccole discrepanze nell'orologio del client
     return speakeasy.totp.verify({
-      secret: twoFactorSecret.secret,
+      secret,
       encoding: 'base32',
-      token,
+      token: token.replace(/\s+/g, ''), // Rimuove tutti gli spazi
       window: 1
     });
+  } catch (error) {
+    console.error('Errore nella verifica del token TOTP:', error);
+    return false;
   }
+}
 
-  // Disabilita 2FA per un utente
-  static async disable2FA(userId: number): Promise<void> {
-    await storage.updateUser(userId, { 
-      twoFactorEnabled: false,
-      twoFactorVerified: false
-    });
-    await storage.deleteUserTwoFactorSecret(userId);
-  }
+/**
+ * Genera un token TOTP per test o debugging.
+ * @param secret Il segreto TOTP dell'utente
+ * @returns Il token TOTP generato
+ */
+export function generateTOTPToken(secret: string): string {
+  return speakeasy.totp({
+    secret,
+    encoding: 'base32'
+  });
 }
