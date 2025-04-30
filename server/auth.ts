@@ -134,7 +134,11 @@ export function setupAuth(app: Express) {
       try {
         // Controlla se 2FA è attivo globalmente dalle impostazioni di sicurezza
         const securitySettings = await storage.getSecuritySettings();
-        const is2FARequired = securitySettings?.enable2FA || false;
+        const is2FAEnabled = securitySettings?.enable2FA || false;
+        const is2FAActive = securitySettings?.twoFaActive || false;
+        
+        // Il 2FA è richiesto solo se è sia abilitato che attivo a livello globale
+        const is2FARequired = is2FAEnabled && is2FAActive;
         
         if (is2FARequired) {
           // Controlla se l'utente ha già configurato il 2FA
@@ -220,6 +224,7 @@ export function setupAuth(app: Express) {
         storage.createActivityLog({
           userId: user.id,
           action: "login",
+          entityType: "auth",
           details: "Login con autenticazione a due fattori",
           ipAddress: req.ip
         }).catch(console.error);
