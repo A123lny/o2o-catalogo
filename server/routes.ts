@@ -890,6 +890,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Endpoint per verificare lo stato 2FA dell'utente corrente
+  app.get("/api/auth/2fa/status", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Non autenticato" });
+    }
+    
+    try {
+      const userId = req.user.id;
+      const twoFactorAuth = await storage.getUserTwoFactorAuth(userId);
+      
+      return res.json({
+        isEnabled: !!(twoFactorAuth && twoFactorAuth.isVerified)
+      });
+    } catch (error) {
+      console.error("Error checking 2FA status:", error);
+      res.status(500).json({ message: "Errore durante il controllo dello stato 2FA" });
+    }
+  });
+  
   // Disabilita 2FA
   app.post("/api/auth/2fa/disable", async (req, res) => {
     if (!req.isAuthenticated()) {
