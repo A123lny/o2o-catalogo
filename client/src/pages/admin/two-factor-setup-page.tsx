@@ -40,17 +40,41 @@ export default function TwoFactorSetupPage() {
     setIsLoading(true);
     try {
       const response = await apiRequest('POST', '/api/auth/2fa/setup');
+      console.log('2FA setup response:', response);
+      
       if (response.ok) {
         const data = await response.json();
-        setQrCode(data.qrCode);
-        setSecret(data.secret);
-        setStep(2);
+        console.log('2FA setup data:', data);
+        
+        if (data && data.qrCode && data.secret) {
+          setQrCode(data.qrCode);
+          setSecret(data.secret);
+          setStep(2);
+        } else {
+          console.error('Invalid 2FA response data:', data);
+          toast({
+            title: "Errore nei dati",
+            description: "Dati incompleti dalla generazione 2FA. Contattare l'amministratore.",
+            variant: "destructive",
+          });
+        }
       } else {
-        toast({
-          title: "Errore",
-          description: "Impossibile generare la configurazione 2FA. Riprova più tardi.",
-          variant: "destructive",
-        });
+        // Tenta di leggere l'errore dal server
+        try {
+          const errorData = await response.json();
+          console.error('Server error:', errorData);
+          toast({
+            title: "Errore dal server",
+            description: errorData.message || "Impossibile generare la configurazione 2FA. Riprova più tardi.",
+            variant: "destructive",
+          });
+        } catch (e) {
+          toast({
+            title: "Errore",
+            description: "Impossibile generare la configurazione 2FA. Riprova più tardi.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Error setting up 2FA:', error);
@@ -70,20 +94,45 @@ export default function TwoFactorSetupPage() {
     
     setIsVerifying(true);
     try {
+      console.log('Verifying code:', verificationCode);
       const response = await apiRequest('POST', '/api/auth/2fa/verify', {
         token: verificationCode,
       });
       
+      console.log('Verification response:', response);
+      
       if (response.ok) {
         const data = await response.json();
-        setBackupCodes(data.backupCodes || []);
-        setStep(3);
+        console.log('Verification data:', data);
+        
+        if (data && data.backupCodes && Array.isArray(data.backupCodes)) {
+          setBackupCodes(data.backupCodes);
+          setStep(3);
+        } else {
+          console.error('Invalid backup codes data:', data);
+          toast({
+            title: "Dati incompleti",
+            description: "Dati di backup incompleti. Contatta l'amministratore.",
+            variant: "destructive",
+          });
+        }
       } else {
-        toast({
-          title: "Codice non valido",
-          description: "Il codice inserito non è valido. Assicurati di inserire il codice mostrato nell'app di autenticazione.",
-          variant: "destructive",
-        });
+        // Tenta di leggere l'errore dal server
+        try {
+          const errorData = await response.json();
+          console.error('Verification error data:', errorData);
+          toast({
+            title: "Codice non valido",
+            description: errorData.message || "Il codice inserito non è valido. Assicurati di inserire il codice mostrato nell'app di autenticazione.",
+            variant: "destructive",
+          });
+        } catch (e) {
+          toast({
+            title: "Codice non valido",
+            description: "Il codice inserito non è valido. Assicurati di inserire il codice mostrato nell'app di autenticazione.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Error verifying 2FA code:', error);

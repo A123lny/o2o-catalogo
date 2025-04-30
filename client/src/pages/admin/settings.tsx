@@ -81,6 +81,7 @@ type SecuritySettingsValues = z.infer<typeof securitySettingsSchema>;
 export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("general");
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -761,8 +762,8 @@ export default function SettingsPage() {
                             onClick={(e) => {
                               e.preventDefault(); // Previene la propagazione dell'evento click
                               e.stopPropagation(); // Ferma la propagazione dell'evento
-                              // Utilizziamo setLocation invece di window.location per evitare ricarica pagina
-                              window.location.href = '/admin/two-factor-setup';
+                              // Utilizziamo setLocation per la navigazione SPA
+                              setLocation('/admin/two-factor-setup');
                             }}
                             type="button" // Specificare che è un pulsante e non un submit
                             variant="outline"
