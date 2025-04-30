@@ -11,7 +11,8 @@ import {
   handleFailedLoginAttempt,
   resetFailedLoginAttempts,
   isPasswordExpired,
-  validatePasswordComplexity
+  validatePasswordComplexity,
+  isPasswordPreviouslyUsed
 } from "./security-utils";
 
 import type * as SchemaTypes from '@shared/schema';
@@ -254,9 +255,9 @@ export function setupAuth(app: Express) {
       }
       
       // Verifica nuovamente la scadenza della password nel caso in cui il frontend non abbia passato l'informazione
-      let isPasswordExpired = passwordExpired === true;
-      if (!isPasswordExpired) {
-        isPasswordExpired = await isPasswordExpired(user.id);
+      let passwordIsExpired = passwordExpired === true;
+      if (!passwordIsExpired) {
+        passwordIsExpired = await isPasswordExpired(user.id);
       }
       
       // Effettua il login
@@ -276,7 +277,7 @@ export function setupAuth(app: Express) {
         }).catch(console.error);
         
         // Se la password è scaduta, informiamo il client
-        if (isPasswordExpired) {
+        if (passwordIsExpired) {
           return res.status(200).json({
             ...user,
             passwordExpired: true
