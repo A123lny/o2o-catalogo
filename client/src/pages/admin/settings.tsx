@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import { useAuth } from "@/hooks/use-auth";
@@ -759,7 +759,12 @@ export default function SettingsPage() {
                             Configura l'autenticazione a due fattori per il tuo account amministratore
                           </p>
                           <Button 
-                            onClick={() => setTwoFactorDialogOpen(true)}
+                            onClick={(e) => {
+                              e.preventDefault(); // Previene la propagazione dell'evento click
+                              e.stopPropagation(); // Ferma la propagazione dell'evento
+                              setTwoFactorDialogOpen(true);
+                            }}
+                            type="button" // Specificare che è un pulsante e non un submit
                             variant="outline"
                           >
                             Configura 2FA
