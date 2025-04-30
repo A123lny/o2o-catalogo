@@ -5,7 +5,7 @@ import {
   InsertFeaturedPromo, FeaturedPromo, Province, InsertProvince,
   GeneralSettings, InsertGeneralSettings, SecuritySettings, InsertSecuritySettings,
   ActivityLog, InsertActivityLog, PasswordHistory, AccountLockout, InsertAccountLockout,
-  PasswordReset, InsertPasswordReset, InsertPasswordHistory
+  PasswordReset, InsertPasswordReset, InsertPasswordHistory, TwoFactorAuth, InsertTwoFactorAuth
 } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -16,7 +16,7 @@ import {
   users, brands, categories, vehicles, 
   rentalOptions, requests, promoSettings, featuredPromos,
   provinces, generalSettings, securitySettings, activityLogs,
-  passwordHistory, accountLockouts, passwordResets
+  passwordHistory, accountLockouts, passwordResets, twoFactorAuth
 } from "@shared/schema";
 
 // PostgreSQL session store
@@ -123,6 +123,14 @@ export interface IStorage {
   getPasswordResetByToken(token: string): Promise<PasswordReset | undefined>;
   markPasswordResetUsed(id: number): Promise<void>;
   cleanupExpiredPasswordResets(): Promise<void>;
+  
+  // 2FA (Autenticazione a due fattori)
+  getUserTwoFactorAuth(userId: number): Promise<TwoFactorAuth | undefined>;
+  createTwoFactorAuth(data: InsertTwoFactorAuth): Promise<TwoFactorAuth>;
+  updateTwoFactorAuth(userId: number, data: Partial<InsertTwoFactorAuth>): Promise<TwoFactorAuth>;
+  deleteTwoFactorAuth(userId: number): Promise<void>;
+  verify2FAToken(userId: number, token: string): Promise<boolean>;
+  useBackupCode(userId: number, code: string): Promise<boolean>;
   
   // Session
   sessionStore: any;
@@ -1352,5 +1360,76 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(accountLockouts)
       .where(eq(accountLockouts.userId, userId));
+  }
+
+  // 2FA Implementation
+  async getUserTwoFactorAuth(userId: number): Promise<TwoFactorAuth | undefined> {
+    const [twoFactor] = await db.select().from(twoFactorAuth).where(eq(twoFactorAuth.userId, userId));
+    return twoFactor;
+  }
+
+  async createTwoFactorAuth(data: InsertTwoFactorAuth): Promise<TwoFactorAuth> {
+    const [twoFactor] = await db
+      .insert(twoFactorAuth)
+      .values(data)
+      .returning();
+    return twoFactor;
+  }
+
+  async updateTwoFactorAuth(userId: number, data: Partial<InsertTwoFactorAuth>): Promise<TwoFactorAuth> {
+    const [updatedTwoFactor] = await db
+      .update(twoFactorAuth)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(twoFactorAuth.userId, userId))
+      .returning();
+
+    if (!updatedTwoFactor) {
+      throw new Error(`Two-factor authentication for user ${userId} not found`);
+    }
+
+    return updatedTwoFactor;
+  }
+
+  async deleteTwoFactorAuth(userId: number): Promise<void> {
+    await db.delete(twoFactorAuth).where(eq(twoFactorAuth.userId, userId));
+  }
+
+  async verify2FAToken(userId: number, token: string): Promise<boolean> {
+    // Il controllo effettivo del token verrà gestito nel controller usando speakeasy
+    // Qui restituiamo solo i dati 2FA dell'utente
+    const twoFactorData = await this.getUserTwoFactorAuth(userId);
+    return !!twoFactorData; // Questo verrà modificato nella logica di autenticazione
+  }
+
+  async useBackupCode(userId: number, code: string): Promise<boolean> {
+    const twoFactorData = await this.getUserTwoFactorAuth(userId);
+    
+    if (!twoFactorData || !twoFactorData.backupCodes) {
+      return false;
+    }
+    
+    // Ottieni i codici di backup (potrebbero essere memorizzati come JSON)
+    let backupCodes: string[] = Array.isArray(twoFactorData.backupCodes) 
+      ? twoFactorData.backupCodes 
+      : JSON.parse(twoFactorData.backupCodes as string);
+    
+    // Verifica se il codice è presente
+    const codeIndex = backupCodes.indexOf(code);
+    if (codeIndex === -1) {
+      return false;
+    }
+    
+    // Rimuovi il codice utilizzato dall'array
+    backupCodes.splice(codeIndex, 1);
+    
+    // Aggiorna i codici di backup
+    await this.updateTwoFactorAuth(userId, {
+      backupCodes: backupCodes as any
+    });
+    
+    return true;
   }
 }
