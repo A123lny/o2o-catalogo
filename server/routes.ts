@@ -771,6 +771,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API per le province
+  app.get("/api/provinces", async (req, res) => {
+    try {
+      const provinces = await storage.getProvinces();
+      res.json(provinces);
+    } catch (error) {
+      res.status(500).json({ message: "Errore nel recupero delle province" });
+    }
+  });
+
+  // 2FA API routes
+  
+  // Ottieni lo stato 2FA dell'utente
+  app.get("/api/auth/2fa/status", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Non autenticato" });
+    }
+    
+    try {
+      const twoFactorAuth = await storage.getUserTwoFactorAuth(req.user.id);
+      res.json({
+        isEnabled: !!twoFactorAuth,
+        isVerified: twoFactorAuth?.isVerified || false
+      });
+    } catch (error) {
+      console.error("Error getting 2FA status:", error);
+      res.status(500).json({ message: "Errore nel recupero dello stato 2FA" });
+    }
+  });
+  
+  // Inizia la configurazione 2FA
+  app.post("/api/auth/2fa/setup", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Non autenticato" });
+    }
+    
+    try {
+      // Verifica se l'utente ha già configurato il 2FA
+      const existingSetup = await storage.getUserTwoFactorAuth(req.user.id);
+      if (existingSetup) {
+        await storage.deleteTwoFactorAuth(req.user.id);
+      }
+      
+      // Genera un nuovo secret
+      const setup = await generateSecret(req.user.id, req.user.username);
+      res.json(setup);
+    } catch (error) {
+      console.error("Error setting up 2FA:", error);
+      res.status(500).json({ message: "Errore nella configurazione 2FA" });
+    }
+  });
+  
+  // Verifica il token 2FA
+  app.post("/api/auth/2fa/verify", async (req, res) => {
+    if (!req.isAuthenticated() && !req.body.userId) {
+      return res.status(401).json({ message: "Non autenticato" });
+    }
+    
+    try {
+      const userId = req.body.userId || req.user.id;
+      const token = req.body.token;
+      
+      if (!token) {
+        return res.status(400).json({ message: "Token mancante" });
+      }
+      
+      const verified = await verifyToken(userId, token);
+      
+      if (verified) {
+        // Se è una richiesta di verifica durante il login, non dovremmo fare nulla qui
+        // Perché l'utente deve ancora essere autenticato tramite il flusso di login
+        
+        res.json({ success: true });
+      } else {
+        res.status(400).json({ message: "Token non valido" });
+      }
+    } catch (error) {
+      console.error("Error verifying 2FA token:", error);
+      res.status(500).json({ message: "Errore nella verifica del token 2FA" });
+    }
+  });
+  
+  // Verifica un codice di backup
+  app.post("/api/auth/2fa/verify-backup", async (req, res) => {
+    if (!req.isAuthenticated() && !req.body.userId) {
+      return res.status(401).json({ message: "Non autenticato" });
+    }
+    
+    try {
+      const userId = req.body.userId || req.user.id;
+      const code = req.body.code;
+      
+      if (!code) {
+        return res.status(400).json({ message: "Codice mancante" });
+      }
+      
+      const verified = await verifyBackupCode(userId, code);
+      
+      if (verified) {
+        res.json({ success: true });
+      } else {
+        res.status(400).json({ message: "Codice di backup non valido" });
+      }
+    } catch (error) {
+      console.error("Error verifying backup code:", error);
+      res.status(500).json({ message: "Errore nella verifica del codice di backup" });
+    }
+  });
+  
+  // Disabilita 2FA
+  app.post("/api/auth/2fa/disable", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Non autenticato" });
+    }
+    
+    try {
+      await disable2FA(req.user.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error disabling 2FA:", error);
+      res.status(500).json({ message: "Errore nella disabilitazione del 2FA" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

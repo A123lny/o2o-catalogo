@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User } from "@shared/schema";
+import { verifyToken, verifyBackupCode } from "./2fa-utils";
 
 import type * as SchemaTypes from '@shared/schema';
 
@@ -121,7 +122,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", async (err, user, info) => {
       if (err) {
         return next(err);
       }
@@ -130,14 +131,84 @@ export function setupAuth(app: Express) {
         return res.status(401).send("Authentication failed");
       }
       
+      try {
+        // Controlla se l'utente ha 2FA abilitato
+        const twoFactorAuth = await storage.getUserTwoFactorAuth(user.id);
+        
+        if (twoFactorAuth && twoFactorAuth.isVerified) {
+          // Se 2FA è abilitato, rispondi con un flag che indica che è necessario 2FA
+          // e un ID utente temporaneo per la verifica
+          return res.status(200).json({ 
+            requiresTwoFactor: true,
+            userId: user.id,
+            username: user.username
+          });
+        }
+        
+        // Se non è richiesto 2FA, procedi con il login normalmente
+        req.login(user, (loginErr) => {
+          if (loginErr) {
+            return next(loginErr);
+          }
+          
+          return res.status(200).send(user);
+        });
+      } catch (error) {
+        console.error("Error checking 2FA status:", error);
+        return next(error);
+      }
+    })(req, res, next);
+  });
+  
+  // Autenticazione con 2FA
+  app.post("/api/login/2fa", async (req, res, next) => {
+    const { userId, token, isBackupCode } = req.body;
+    
+    if (!userId || (!token && !isBackupCode)) {
+      return res.status(400).json({ message: "Parametri mancanti" });
+    }
+    
+    try {
+      // Verifica il token 2FA o il codice di backup
+      let verified = false;
+      
+      if (isBackupCode) {
+        verified = await verifyBackupCode(userId, token);
+      } else {
+        verified = await verifyToken(userId, token);
+      }
+      
+      if (!verified) {
+        return res.status(401).json({ message: "Codice di verifica non valido" });
+      }
+      
+      // Trova l'utente nel database
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Utente non trovato" });
+      }
+      
+      // Effettua il login
       req.login(user, (loginErr) => {
         if (loginErr) {
           return next(loginErr);
         }
         
+        // Registra l'attività
+        storage.createActivityLog({
+          userId: user.id,
+          action: "login",
+          details: "Login con autenticazione a due fattori",
+          ipAddress: req.ip
+        }).catch(console.error);
+        
         return res.status(200).send(user);
       });
-    })(req, res, next);
+    } catch (error) {
+      console.error("Error during 2FA verification:", error);
+      return next(error);
+    }
   });
 
   app.post("/api/logout", (req, res, next) => {

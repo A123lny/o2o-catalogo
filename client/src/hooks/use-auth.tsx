@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 import {
   useQuery,
   useMutation,
@@ -8,19 +8,49 @@ import { InsertUser, User, LoginData } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Tipo per la risposta di login quando è richiesto 2FA
+type TwoFactorLoginResponse = {
+  requiresTwoFactor: true;
+  userId: number;
+  username: string;
+};
+
+// Tipo per la richiesta di verifica 2FA
+type TwoFactorVerifyRequest = {
+  userId: number;
+  token: string;
+  isBackupCode?: boolean;
+};
+
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<User, Error, LoginData>;
+  loginMutation: UseMutationResult<User | TwoFactorLoginResponse, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<User, Error, InsertUser>;
+  verifyTwoFactorMutation: UseMutationResult<User, Error, TwoFactorVerifyRequest>;
+  twoFactorState: {
+    pendingUserId: number | null;
+    pendingUsername: string | null;
+    requiresTwoFactor: boolean;
+  };
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [twoFactorState, setTwoFactorState] = useState<{
+    pendingUserId: number | null;
+    pendingUsername: string | null;
+    requiresTwoFactor: boolean;
+  }>({
+    pendingUserId: null,
+    pendingUsername: null,
+    requiresTwoFactor: false
+  });
+  
   const {
     data: user,
     error,
@@ -46,24 +76,101 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error(errorData?.message || "Autenticazione fallita");
         }
         
-        const userData = await response.text();
-        return JSON.parse(userData);
+        const userData = await response.json();
+        return userData;
       } catch (error) {
         console.error("Login error:", error);
         throw error;
       }
     },
-    onSuccess: (user: User) => {
-      queryClient.setQueryData(["/api/user"], user);
-      toast({
-        title: "Login effettuato",
-        description: `Benvenuto, ${user.fullName}!`,
-      });
+    onSuccess: (responseData: User | TwoFactorLoginResponse) => {
+      // Controlla se l'autenticazione richiede 2FA
+      if ('requiresTwoFactor' in responseData) {
+        // Se richiede 2FA, imposta lo stato per la verifica 2FA
+        setTwoFactorState({
+          pendingUserId: responseData.userId,
+          pendingUsername: responseData.username,
+          requiresTwoFactor: true
+        });
+        
+        toast({
+          title: "Verifica richiesta",
+          description: "È necessaria la verifica con autenticazione a due fattori",
+        });
+      } else {
+        // Se non richiede 2FA, procedi con il login normale
+        queryClient.setQueryData(["/api/user"], responseData);
+        
+        // Resetta lo stato 2FA (se per caso era impostato)
+        setTwoFactorState({
+          pendingUserId: null,
+          pendingUsername: null,
+          requiresTwoFactor: false
+        });
+        
+        toast({
+          title: "Login effettuato",
+          description: `Benvenuto, ${responseData.fullName}!`,
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
         title: "Login fallito",
         description: error.message || "Si è verificato un errore durante il login",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Mutation per verifica 2FA
+  const verifyTwoFactorMutation = useMutation({
+    mutationFn: async ({ userId, token, isBackupCode = false }: TwoFactorVerifyRequest) => {
+      try {
+        const response = await fetch("/api/login/2fa", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            userId, 
+            token, 
+            isBackupCode
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.message || "Verifica 2FA fallita");
+        }
+        
+        const userData = await response.json();
+        return userData;
+      } catch (error) {
+        console.error("2FA verification error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (userData: User) => {
+      // Aggiorna i dati utente
+      queryClient.setQueryData(["/api/user"], userData);
+      
+      // Resetta lo stato 2FA
+      setTwoFactorState({
+        pendingUserId: null,
+        pendingUsername: null,
+        requiresTwoFactor: false
+      });
+      
+      toast({
+        title: "Verifica completata",
+        description: `Benvenuto, ${userData.fullName}!`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Verifica fallita",
+        description: error.message || "Si è verificato un errore durante la verifica del codice",
         variant: "destructive",
       });
     },
@@ -151,6 +258,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        verifyTwoFactorMutation,
+        twoFactorState
       }}
     >
       {children}
