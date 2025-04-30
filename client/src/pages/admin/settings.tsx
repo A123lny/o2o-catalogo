@@ -3,6 +3,7 @@ import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import { useAuth } from "@/hooks/use-auth";
 import { ProvincesSolution } from "@/components/admin/provinces-solution";
+import { TwoFactorSetup } from "@/components/two-factor-setup";
 import {
   Card,
   CardContent,
@@ -748,6 +749,17 @@ export default function SettingsPage() {
                           </FormItem>
                         )}
                       />
+                      
+                      {/* Componente Configurazione 2FA personale */}
+                      {user && (
+                        <div className="border rounded-md p-4 mb-4">
+                          <h3 className="text-lg font-medium mb-2">Configurazione 2FA personale</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Configura l'autenticazione a due fattori per il tuo account amministratore
+                          </p>
+                          <TwoFactorSetup />
+                        </div>
+                      )}
                       
                       <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? (
