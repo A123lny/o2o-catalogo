@@ -24,6 +24,7 @@ export function setupTwoFactorRoutes(router: Router) {
   // Inizializza la configurazione 2FA per un utente
   router.post("/api/two-factor/setup", isAuthenticated, async (req, res) => {
     try {
+      console.log("2FA Setup iniziato per:", req.user?.username);
       const userId = req.user!.id;
       
       // Verifica se l'utente ha già il 2FA configurato
@@ -32,29 +33,39 @@ export function setupTwoFactorRoutes(router: Router) {
         return res.status(400).json({ error: "L'autenticazione a due fattori è già configurata." });
       }
       
-      // Genera un nuovo segreto TOTP
-      const { secret, qrCodeUrl } = await generateTOTP(req.user!.username);
-      
-      // Salva o aggiorna il segreto nel database (non ancora verificato)
-      if (existingSecret) {
-        await storage.updateUserTwoFactorSecret(userId, { 
-          secret, 
-          verified: false,
-          backupCodes: JSON.stringify([]) // Reset backup codes
-        });
-      } else {
-        await storage.createUserTwoFactorSecret({
-          userId,
-          secret,
-          verified: false,
-          backupCodes: JSON.stringify([])
-        });
+      try {
+        console.log("Generazione TOTP per username:", req.user!.username);
+        // Genera un nuovo segreto TOTP
+        const { secret, qrCodeUrl } = await generateTOTP(req.user!.username);
+        console.log("TOTP generato con successo, secret length:", secret?.length || 0);
+        
+        // Salva o aggiorna il segreto nel database (non ancora verificato)
+        if (existingSecret) {
+          console.log("Aggiornamento secret esistente per userId:", userId);
+          await storage.updateUserTwoFactorSecret(userId, { 
+            secret, 
+            verified: false,
+            backupCodes: JSON.stringify([]) // Reset backup codes
+          });
+        } else {
+          console.log("Creazione nuovo secret per userId:", userId);
+          await storage.createUserTwoFactorSecret({
+            userId,
+            secret,
+            verified: false,
+            backupCodes: JSON.stringify([])
+          });
+        }
+        
+        // Aggiorna lo stato dell'utente
+        await storage.updateUser(userId, { twoFactorEnabled: true, twoFactorVerified: false });
+        
+        console.log("Invio QR code, lunghezza URL:", qrCodeUrl?.length || 0);
+        res.json({ qrCodeUrl });
+      } catch (totpError) {
+        console.error("Errore specifico nella generazione TOTP:", totpError);
+        return res.status(500).json({ error: "Errore nella generazione del codice QR: " + (totpError.message || 'Errore sconosciuto') });
       }
-      
-      // Aggiorna lo stato dell'utente
-      await storage.updateUser(userId, { twoFactorEnabled: true, twoFactorVerified: false });
-      
-      res.json({ qrCodeUrl });
     } catch (error) {
       console.error("Errore durante il setup 2FA:", error);
       res.status(500).json({ error: "Errore durante la configurazione dell'autenticazione a due fattori." });

@@ -10,28 +10,49 @@ const APP_NAME = 'o2o Mobility';
  * @returns Il segreto generato e l'URL del QR code
  */
 export async function generateTOTP(username: string): Promise<{ secret: string; qrCodeUrl: string }> {
-  // Genera un nuovo segreto
-  const secretObj = speakeasy.generateSecret({
-    name: `${APP_NAME}:${username}`,
-    issuer: APP_NAME,
-    length: 20 // Lunghezza del segreto (20 byte è considerato sicuro)
-  });
+  try {
+    console.log("Inizio generazione segreto TOTP per:", username);
+    
+    // Genera un nuovo segreto
+    const secretObj = speakeasy.generateSecret({
+      name: `${APP_NAME}:${username}`,
+      issuer: APP_NAME,
+      length: 20 // Lunghezza del segreto (20 byte è considerato sicuro)
+    });
 
-  // Ottieni il segreto in formato base32
-  const secret = secretObj.base32;
+    if (!secretObj || !secretObj.base32) {
+      throw new Error("Errore nella generazione del segreto: secretObj non valido");
+    }
 
-  // Crea un URL otpauth per l'app autenticatore
-  const otpauthUrl = speakeasy.otpauthURL({
-    secret,
-    label: `${APP_NAME}:${username}`,
-    issuer: APP_NAME,
-    encoding: 'base32'
-  });
+    // Ottieni il segreto in formato base32
+    const secret = secretObj.base32;
+    console.log("Secret generato con successo, lunghezza:", secret.length);
 
-  // Genera il QR code come stringa di dati
-  const qrCodeUrl = await qrcode.toDataURL(otpauthUrl);
+    // Crea un URL otpauth per l'app autenticatore
+    const otpauthUrl = speakeasy.otpauthURL({
+      secret,
+      label: `${APP_NAME}:${username}`,
+      issuer: APP_NAME,
+      encoding: 'base32'
+    });
+    
+    console.log("TOTP URL generato con successo, lunghezza:", otpauthUrl.length);
 
-  return { secret, qrCodeUrl };
+    try {
+      // Genera il QR code come stringa di dati
+      console.log("Generazione QR code...");
+      const qrCodeUrl = await qrcode.toDataURL(otpauthUrl);
+      console.log("QR code generato con successo, lunghezza URL dati:", qrCodeUrl.length);
+
+      return { secret, qrCodeUrl };
+    } catch (qrError) {
+      console.error("Errore specifico nella generazione QR:", qrError);
+      throw new Error("Errore nella generazione del QR code: " + (qrError.message || "errore sconosciuto"));
+    }
+  } catch (error) {
+    console.error("Errore nella generazione TOTP:", error);
+    throw error;
+  }
 }
 
 /**
