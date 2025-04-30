@@ -20,6 +20,7 @@ declare global {
       fullName: string;
       role: string;
       createdAt: Date;
+      passwordExpired?: boolean; // Flag per indicare se la password è scaduta
     }
   }
 }
@@ -120,8 +121,8 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+  app.post("/api/login", async (req, res, next) => {
+    passport.authenticate("local", async (err, user, info) => {
       if (err) {
         return next(err);
       }
@@ -130,13 +131,59 @@ export function setupAuth(app: Express) {
         return res.status(401).send("Authentication failed");
       }
       
-      req.login(user, (loginErr) => {
-        if (loginErr) {
-          return next(loginErr);
+      try {
+        // Verifica se la password è scaduta in base alle impostazioni
+        const securitySettings = await storage.getSecuritySettings();
+        
+        if (securitySettings && securitySettings.passwordExpiryDays > 0) {
+          // Verifica se è disponibile l'ultima modifica della password
+          const latestPasswordHistory = await storage.getLatestPasswordHistory(user.id);
+          
+          if (latestPasswordHistory) {
+            const passwordChangedDate = new Date(latestPasswordHistory.createdAt);
+            const today = new Date();
+            
+            // Calcola i giorni trascorsi dall'ultimo cambio password
+            const daysSinceChange = Math.floor(
+              (today.getTime() - passwordChangedDate.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            
+            // Se sono passati più giorni del limite, imposta un flag di password scaduta
+            if (daysSinceChange >= securitySettings.passwordExpiryDays) {
+              user.passwordExpired = true;
+            }
+          } else {
+            // Se non c'è storico, considera la data di creazione dell'utente
+            const userCreatedDate = new Date(user.createdAt);
+            const today = new Date();
+            
+            const daysSinceCreation = Math.floor(
+              (today.getTime() - userCreatedDate.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            
+            if (daysSinceCreation >= securitySettings.passwordExpiryDays) {
+              user.passwordExpired = true;
+            }
+          }
         }
         
-        return res.status(200).send(user);
-      });
+        req.login(user, (loginErr) => {
+          if (loginErr) {
+            return next(loginErr);
+          }
+          
+          return res.status(200).send(user);
+        });
+      } catch (error) {
+        console.error("Error checking password expiration:", error);
+        req.login(user, (loginErr) => {
+          if (loginErr) {
+            return next(loginErr);
+          }
+          
+          return res.status(200).send(user);
+        });
+      }
     })(req, res, next);
   });
 
