@@ -69,17 +69,17 @@ export default function Header() {
           <Link href="#contact" className="text-neutral-600 hover:text-primary font-medium py-1 hover:border-b-2 hover:border-primary">
             Contatti
           </Link>
+          {/* Aggiungiamo il link Admin sempre visibile per facilitare l'accesso */}
+          <Link href="/admin" className="text-neutral-600 hover:text-primary font-medium py-1 hover:border-b-2 hover:border-primary flex items-center">
+            <Settings className="h-4 w-4 mr-1" />
+            Admin
+          </Link>
         </nav>
 
         {/* Auth buttons */}
         <div className="hidden md:flex items-center space-x-4">
           {user ? (
             <>
-              {user.role === 'admin' && (
-                <Link href="/admin">
-                  <Settings className="h-5 w-5 text-neutral-600 hover:text-primary" />
-                </Link>
-              )}
               <Link href="/logout">
                 <Button variant="outline" size="sm">Logout</Button>
               </Link>
@@ -103,6 +103,12 @@ export default function Header() {
           </Link>
           <Link href="#contact" className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100">
             Contatti
+          </Link>
+          
+          {/* Aggiungiamo Admin anche al menu mobile */}
+          <Link href="/admin" className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100 flex items-center">
+            <Settings className="h-4 w-4 mr-2" />
+            Admin
           </Link>
           
           {/* Auth mobile menu items */}
