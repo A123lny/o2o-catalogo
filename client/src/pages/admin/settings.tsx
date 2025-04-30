@@ -3,7 +3,7 @@ import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import { useAuth } from "@/hooks/use-auth";
 import { ProvincesSolution } from "@/components/admin/provinces-solution";
-import { TwoFactorSetup } from "@/components/two-factor-setup";
+import { TwoFactorSetupDialog } from "@/components/two-factor-setup-dialog";
 import {
   Card,
   CardContent,
@@ -85,6 +85,7 @@ export default function SettingsPage() {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [provinces, setProvinces] = useState<{[id: number]: string}>({});
+  const [twoFactorDialogOpen, setTwoFactorDialogOpen] = useState(false);
 
   // Fetch general settings
   const { data: generalSettings, isLoading: isLoadingGeneral } = useQuery({
@@ -757,7 +758,17 @@ export default function SettingsPage() {
                           <p className="text-sm text-muted-foreground mb-4">
                             Configura l'autenticazione a due fattori per il tuo account amministratore
                           </p>
-                          <TwoFactorSetup 
+                          <Button 
+                            onClick={() => setTwoFactorDialogOpen(true)}
+                            variant="outline"
+                          >
+                            Configura 2FA
+                          </Button>
+                          
+                          {/* Dialog modale per configurazione 2FA */}
+                          <TwoFactorSetupDialog
+                            open={twoFactorDialogOpen}
+                            onOpenChange={setTwoFactorDialogOpen}
                             onComplete={() => {
                               toast({
                                 title: "2FA configurato con successo",
@@ -774,19 +785,6 @@ export default function SettingsPage() {
                       <Button 
                         type="submit" 
                         disabled={isSubmitting}
-                        onClick={(e) => {
-                          // Se il componente 2FA è aperto e in fase di configurazione,
-                          // mostra un avviso all'utente e impedisci il salvataggio
-                          const twoFactorOpen = document.querySelector('[data-two-factor-setup="active"]');
-                          if (twoFactorOpen) {
-                            e.preventDefault();
-                            toast({
-                              title: "Completare la configurazione 2FA",
-                              description: "Completa o annulla la configurazione dell'autenticazione a due fattori prima di salvare le impostazioni",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
                       >
                         {isSubmitting ? (
                           <>
