@@ -110,6 +110,7 @@ export interface IStorage {
   
   // Password History (Storico Password)
   getPasswordHistory(userId: number): Promise<PasswordHistory[]>;
+  getLatestPasswordHistory(userId: number): Promise<PasswordHistory | undefined>;
   addPasswordToHistory(userId: number, passwordHash: string): Promise<PasswordHistory>;
   cleanupPasswordHistory(userId: number, keep: number): Promise<void>;
   
@@ -1006,6 +1007,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(passwordHistory.userId, userId))
       .orderBy(desc(passwordHistory.createdAt));
   }
+  
+  async getLatestPasswordHistory(userId: number): Promise<PasswordHistory | undefined> {
+    const [latestEntry] = await db.select().from(passwordHistory)
+      .where(eq(passwordHistory.userId, userId))
+      .orderBy(desc(passwordHistory.createdAt))
+      .limit(1);
+    return latestEntry;
+  }
 
   async addPasswordToHistory(userId: number, passwordHash: string): Promise<PasswordHistory> {
     const [entry] = await db.insert(passwordHistory)
@@ -1273,6 +1282,14 @@ export class DatabaseStorage implements IStorage {
       .from(passwordHistory)
       .where(eq(passwordHistory.userId, userId))
       .orderBy(desc(passwordHistory.createdAt));
+  }
+  
+  async getLatestPasswordHistory(userId: number): Promise<PasswordHistory | undefined> {
+    const [latestEntry] = await db.select().from(passwordHistory)
+      .where(eq(passwordHistory.userId, userId))
+      .orderBy(desc(passwordHistory.createdAt))
+      .limit(1);
+    return latestEntry;
   }
 
   async addPasswordToHistory(userId: number, passwordHash: string): Promise<PasswordHistory> {

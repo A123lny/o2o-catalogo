@@ -122,7 +122,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", async (req, res, next) => {
-    passport.authenticate("local", async (err, user, info) => {
+    passport.authenticate("local", async (err: Error, user: User, info: any) => {
       if (err) {
         return next(err);
       }
@@ -135,7 +135,7 @@ export function setupAuth(app: Express) {
         // Verifica se la password è scaduta in base alle impostazioni
         const securitySettings = await storage.getSecuritySettings();
         
-        if (securitySettings && securitySettings.passwordExpiryDays > 0) {
+        if (securitySettings && securitySettings.passwordExpiryDays && securitySettings.passwordExpiryDays > 0) {
           // Verifica se è disponibile l'ultima modifica della password
           const latestPasswordHistory = await storage.getLatestPasswordHistory(user.id);
           
