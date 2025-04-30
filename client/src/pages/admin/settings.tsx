@@ -347,11 +347,8 @@ export default function SettingsPage() {
 
   return (
     <div className="flex h-screen bg-neutral-100 overflow-hidden">
-      <div className="w-64 shrink-0">
-        <AdminSidebar />
-      </div>
-      
-      <div className="flex-1 flex flex-col overflow-auto">
+      <AdminSidebar />
+      <div className="flex-1 flex flex-col overflow-auto pl-64">
         <AdminHeader user={user} />
         
         <main className="flex-1 p-4">
