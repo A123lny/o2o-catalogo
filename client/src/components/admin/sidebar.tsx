@@ -117,10 +117,12 @@ export default function AdminSidebar() {
           </div>
         </Link>
         
-        <div className={`flex items-center px-4 py-3 hover:bg-sidebar-accent text-sidebar-foreground/80 cursor-pointer`}>
-          <Plug className="w-5 h-5 mr-3" />
-          <span>Integrazioni</span>
-        </div>
+        <Link href="/admin/integrations">
+          <div className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/integrations') ? 'bg-sidebar-accent' : ''}`}>
+            <Plug className="w-5 h-5 mr-3" />
+            <span>Integrazioni</span>
+          </div>
+        </Link>
       </nav>
       
       <div className="p-4 border-t border-sidebar-border">

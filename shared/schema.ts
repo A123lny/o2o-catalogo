@@ -366,3 +366,106 @@ export type LoginData = Pick<InsertUser, 'username' | 'password'>;
 export type Verify2FAData = {
   token: string;
 };
+
+// Integrations tables
+export const emailConfig = pgTable("email_config", {
+  id: serial("id").primaryKey(),
+  enabled: boolean("enabled").notNull().default(false),
+  provider: text("provider").notNull().default("smtp"),
+  host: text("host"),
+  port: integer("port").default(587),
+  secure: boolean("secure").default(false),
+  username: text("username"),
+  password: text("password"),
+  from: text("from"),
+  sendgridApiKey: text("sendgrid_api_key"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const emailTemplates = pgTable("email_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const twilioConfig = pgTable("twilio_config", {
+  id: serial("id").primaryKey(),
+  enabled: boolean("enabled").notNull().default(false),
+  accountSid: text("account_sid"),
+  authToken: text("auth_token"),
+  verifyServiceSid: text("verify_service_sid"),
+  fromNumber: text("from_number"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const socialLoginConfig = pgTable("social_login_config", {
+  id: serial("id").primaryKey(),
+  provider: text("provider").notNull().unique(), // google, facebook, github
+  enabled: boolean("enabled").notNull().default(false),
+  clientId: text("client_id"),
+  clientSecret: text("client_secret"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const paymentConfig = pgTable("payment_config", {
+  id: serial("id").primaryKey(),
+  provider: text("provider").notNull().unique(), // stripe, paypal
+  enabled: boolean("enabled").notNull().default(false),
+  publicKey: text("public_key"),
+  secretKey: text("secret_key"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Insert schemas for integrations
+export const insertEmailConfigSchema = createInsertSchema(emailConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTwilioConfigSchema = createInsertSchema(twilioConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSocialLoginConfigSchema = createInsertSchema(socialLoginConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPaymentConfigSchema = createInsertSchema(paymentConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Export types for integrations
+export type InsertEmailConfig = z.infer<typeof insertEmailConfigSchema>;
+export type EmailConfig = typeof emailConfig.$inferSelect;
+
+export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+
+export type InsertTwilioConfig = z.infer<typeof insertTwilioConfigSchema>;
+export type TwilioConfig = typeof twilioConfig.$inferSelect;
+
+export type InsertSocialLoginConfig = z.infer<typeof insertSocialLoginConfigSchema>;
+export type SocialLoginConfig = typeof socialLoginConfig.$inferSelect;
+
+export type InsertPaymentConfig = z.infer<typeof insertPaymentConfigSchema>;
+export type PaymentConfig = typeof paymentConfig.$inferSelect;

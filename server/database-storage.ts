@@ -5,7 +5,10 @@ import {
   InsertFeaturedPromo, FeaturedPromo, Province, InsertProvince,
   GeneralSettings, InsertGeneralSettings, SecuritySettings, InsertSecuritySettings,
   ActivityLog, InsertActivityLog, PasswordHistory, AccountLockout, InsertAccountLockout,
-  PasswordReset, InsertPasswordReset, InsertPasswordHistory, TwoFactorAuth, InsertTwoFactorAuth
+  PasswordReset, InsertPasswordReset, InsertPasswordHistory, TwoFactorAuth, InsertTwoFactorAuth,
+  EmailConfig, InsertEmailConfig, EmailTemplate, InsertEmailTemplate,
+  TwilioConfig, InsertTwilioConfig, SocialLoginConfig, InsertSocialLoginConfig,
+  PaymentConfig, InsertPaymentConfig
 } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -16,7 +19,8 @@ import {
   users, brands, categories, vehicles, 
   rentalOptions, requests, promoSettings, featuredPromos,
   provinces, generalSettings, securitySettings, activityLogs,
-  passwordHistory, accountLockouts, passwordResets, twoFactorAuth
+  passwordHistory, accountLockouts, passwordResets, twoFactorAuth,
+  emailConfig, emailTemplates, twilioConfig, socialLoginConfig, paymentConfig
 } from "@shared/schema";
 
 // PostgreSQL session store
@@ -132,6 +136,31 @@ export interface IStorage {
   deleteTwoFactorAuth(userId: number): Promise<void>;
   verify2FAToken(userId: number, token: string): Promise<boolean>;
   useBackupCode(userId: number, code: string): Promise<boolean>;
+  
+  // Integrations - Email
+  getEmailConfig(): Promise<EmailConfig | undefined>;
+  saveEmailConfig(config: InsertEmailConfig): Promise<EmailConfig>;
+  getEmailTemplates(): Promise<EmailTemplate[]>;
+  getEmailTemplate(name: string): Promise<EmailTemplate | undefined>;
+  saveEmailTemplate(template: InsertEmailTemplate): Promise<EmailTemplate>;
+  sendEmail(to: string, templateName: string, data?: Record<string, any>): Promise<boolean>;
+  
+  // Integrations - Twilio
+  getTwilioConfig(): Promise<TwilioConfig | undefined>;
+  saveTwilioConfig(config: InsertTwilioConfig): Promise<TwilioConfig>;
+  sendSMS(to: string, message: string): Promise<boolean>;
+  startPhoneVerification(phoneNumber: string): Promise<boolean>;
+  checkPhoneVerification(phoneNumber: string, code: string): Promise<boolean>;
+  
+  // Integrations - Social Login
+  getSocialLoginConfigs(): Promise<SocialLoginConfig[]>;
+  getSocialLoginConfig(provider: string): Promise<SocialLoginConfig | undefined>;
+  saveSocialLoginConfig(config: InsertSocialLoginConfig): Promise<SocialLoginConfig>;
+  
+  // Integrations - Payment
+  getPaymentConfigs(): Promise<PaymentConfig[]>;
+  getPaymentConfig(provider: string): Promise<PaymentConfig | undefined>;
+  savePaymentConfig(config: InsertPaymentConfig): Promise<PaymentConfig>;
   
   // Session
   sessionStore: any;
