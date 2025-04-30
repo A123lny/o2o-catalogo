@@ -117,6 +117,17 @@ export const featuredPromosRelations = relations(featuredPromos, ({ one }) => ({
 
 // NUOVE TABELLE PER LE IMPOSTAZIONI
 
+// Tabella per la 2FA
+export const twoFactorAuth = pgTable("two_factor_auth", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  secret: text("secret").notNull(),
+  isVerified: boolean("is_verified").default(false).notNull(),
+  backupCodes: jsonb("backup_codes").notNull(), // Array di codici di backup
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Gestione delle province
 export const provinces = pgTable("provinces", {
   id: serial("id").primaryKey(),
@@ -316,6 +327,13 @@ export const insertPasswordResetSchema = createInsertSchema(passwordResets).omit
   createdAt: true,
 });
 
+// Schema per la 2FA
+export const insertTwoFactorAuthSchema = createInsertSchema(twoFactorAuth).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Tipi per le nuove tabelle
 export type InsertProvince = z.infer<typeof insertProvinceSchema>;
 export type Province = typeof provinces.$inferSelect;
@@ -338,4 +356,12 @@ export type AccountLockout = typeof accountLockouts.$inferSelect;
 export type InsertPasswordReset = z.infer<typeof insertPasswordResetSchema>;
 export type PasswordReset = typeof passwordResets.$inferSelect;
 
+export type InsertTwoFactorAuth = z.infer<typeof insertTwoFactorAuthSchema>;
+export type TwoFactorAuth = typeof twoFactorAuth.$inferSelect;
+
 export type LoginData = Pick<InsertUser, 'username' | 'password'>;
+
+// Dati per la verifica 2FA
+export type Verify2FAData = {
+  token: string;
+};
