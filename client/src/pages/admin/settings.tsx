@@ -86,6 +86,9 @@ export default function SettingsPage() {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [provinces, setProvinces] = useState<{[id: number]: string}>({});
+  const [has2FAEnabled, setHas2FAEnabled] = useState(false);
+  const [isDisabling2FA, setIsDisabling2FA] = useState(false);
+  const [isLoading2FAStatus, setIsLoading2FAStatus] = useState(false);
 
   // Fetch general settings
   const { data: generalSettings, isLoading: isLoadingGeneral } = useQuery({
@@ -143,6 +146,70 @@ export default function SettingsPage() {
       setActivityLogs(logs);
     }
   }, [logs]);
+
+  // Verifica lo stato del 2FA per l'utente corrente
+  useEffect(() => {
+    const check2FAStatus = async () => {
+      if (user) {
+        setIsLoading2FAStatus(true);
+        try {
+          const response = await fetch('/api/auth/2fa/status');
+          if (response.ok) {
+            const data = await response.json();
+            setHas2FAEnabled(data.isEnabled);
+          }
+        } catch (error) {
+          console.error('Errore nel recupero dello stato 2FA:', error);
+          toast({
+            title: "Errore",
+            description: "Impossibile verificare lo stato del 2FA",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoading2FAStatus(false);
+        }
+      }
+    };
+    
+    check2FAStatus();
+  }, [user, toast]);
+  
+  // Funzione per disabilitare il 2FA
+  const disable2FA = async () => {
+    if (!confirm("Sei sicuro di voler disabilitare l'autenticazione a due fattori? Questa azione ridurrà la sicurezza del tuo account.")) {
+      return;
+    }
+    
+    setIsDisabling2FA(true);
+    try {
+      const response = await fetch('/api/auth/2fa/disable', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        setHas2FAEnabled(false);
+        toast({
+          title: "2FA disabilitato",
+          description: "L'autenticazione a due fattori è stata disabilitata con successo.",
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Errore durante la disabilitazione del 2FA");
+      }
+    } catch (error) {
+      console.error("Errore nella disabilitazione del 2FA:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile disabilitare l'autenticazione a due fattori. Riprova più tardi.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDisabling2FA(false);
+    }
+  };
 
   const generalForm = useForm<GeneralSettingsValues>({
     resolver: zodResolver(generalSettingsSchema),
@@ -729,15 +796,64 @@ export default function SettingsPage() {
                         />
                       </div>
                       
+                      {/* Stato 2FA personale e pulsanti di gestione */}
+                      <Card className="mt-4 mb-4">
+                        <CardHeader>
+                          <CardTitle>Autenticazione a due fattori (2FA)</CardTitle>
+                          <CardDescription>
+                            Gestisci l'autenticazione a due fattori per il tuo account
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex flex-col space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="text-sm font-medium">Stato 2FA</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {has2FAEnabled ? 
+                                    "L'autenticazione a due fattori è attiva per il tuo account" : 
+                                    "L'autenticazione a due fattori non è configurata"
+                                  }
+                                </p>
+                              </div>
+                              {has2FAEnabled ? (
+                                <Button 
+                                  variant="destructive" 
+                                  onClick={disable2FA}
+                                  disabled={isDisabling2FA}
+                                >
+                                  {isDisabling2FA ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Disattivazione...
+                                    </>
+                                  ) : (
+                                    "Disattiva 2FA"
+                                  )}
+                                </Button>
+                              ) : (
+                                <Button 
+                                  variant="default" 
+                                  onClick={() => setLocation('/admin/two-factor-setup-new')}
+                                >
+                                  Configura 2FA
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      {/* Impostazione globale 2FA per tutti gli utenti */}
                       <FormField
                         control={securityForm.control}
                         name="enable2FA"
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between p-3 rounded-md border">
                             <div>
-                              <FormLabel>Abilita 2FA</FormLabel>
+                              <FormLabel>Richiedi 2FA per tutti gli utenti</FormLabel>
                               <FormDescription>
-                                Richiedi autenticazione a due fattori per gli accessi
+                                Se abilitato, tutti gli utenti dovranno configurare l'autenticazione a due fattori
                               </FormDescription>
                             </div>
                             <FormControl>
