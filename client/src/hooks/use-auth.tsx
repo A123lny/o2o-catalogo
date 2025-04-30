@@ -178,7 +178,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setTwoFactorState({
         pendingUserId: null,
         pendingUsername: null,
-        requiresTwoFactor: false
+        requiresTwoFactor: false,
+        requiresTwoFactorSetup: false
       });
       
       toast({
