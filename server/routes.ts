@@ -1164,7 +1164,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      res.json(config);
+      // Converti esplicitamente tutti i campi booleani in formato corretto
+      const transformedConfig = {
+        ...config,
+        enabled: config.enabled === true,
+        secure: config.secure === true
+      };
+      
+      console.log("Email config dal database:", config);
+      console.log("Email config trasformata:", transformedConfig);
+      
+      res.json(transformedConfig);
     } catch (error) {
       console.error("Errore nel caricamento della configurazione email:", error);
       res.status(500).json({ message: "Errore nel caricamento della configurazione" });
