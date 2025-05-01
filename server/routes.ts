@@ -1181,6 +1181,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Email templates
+  app.get("/api/integrations/email-templates", isAdmin, async (req, res) => {
+    try {
+      const templates = await storage.getEmailTemplates();
+      
+      // Converte l'array di templates in un oggetto con nome del template come chiave
+      const templatesMap = templates.reduce((acc, template) => {
+        acc[template.name] = {
+          subject: template.subject,
+          body: template.body,
+        };
+        return acc;
+      }, {});
+      
+      res.json(templatesMap);
+    } catch (error) {
+      console.error("Errore nel caricamento dei template email:", error);
+      res.status(500).json({ message: "Errore nel caricamento dei template" });
+    }
+  });
+  
+  app.post("/api/integrations/email-template", isAdmin, async (req, res) => {
+    try {
+      const { name, subject, body } = req.body;
+      
+      if (!name || !subject || !body) {
+        return res.status(400).json({ message: "Campi obbligatori mancanti" });
+      }
+      
+      const template = await storage.saveEmailTemplate({
+        name,
+        subject,
+        body,
+      });
+      
+      res.json(template);
+    } catch (error) {
+      console.error("Errore nel salvataggio del template email:", error);
+      res.status(500).json({ message: "Errore nel salvataggio del template" });
+    }
+  });
+  
   // Twilio (SMS) Configuration
   app.get("/api/integrations/twilio", isAdmin, async (req, res) => {
     try {
