@@ -143,12 +143,14 @@ export async function setupAuth(app: Express) {
           
           // Controlla se la password è scaduta
           const isExpired = await isPasswordExpired(user.id);
-          if (isExpired) {
-            // In caso di password scaduta, permetti comunque l'accesso ma imposta un flag
-            user.passwordExpired = true;
-          }
           
-          return done(null, user);
+          // Crea un oggetto AuthenticatedUser con il flag passwordExpired se necessario
+          const authenticatedUser: AuthenticatedUser = {
+            ...user,
+            passwordExpired: isExpired
+          };
+          
+          return done(null, authenticatedUser);
         }
       } catch (error) {
         console.error('Authentication error:', error);
@@ -161,17 +163,20 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
+      if (!user) {
+        return done(null, false);
+      }
       
       // Verifica se la password è scaduta
       const isExpired = await isPasswordExpired(id);
       
-      // Se la password è scaduta, aggiunge il flag all'oggetto utente
-      if (isExpired) {
-        // @ts-ignore - Aggiungiamo una proprietà che non è nel tipo originale
-        user.passwordExpired = true;
-      }
+      // Crea un oggetto AuthenticatedUser aggiungendo il flag se necessario
+      const authenticatedUser: AuthenticatedUser = {
+        ...user,
+        passwordExpired: isExpired
+      };
       
-      done(null, user);
+      done(null, authenticatedUser);
     } catch (error) {
       done(error);
     }
@@ -345,7 +350,17 @@ export async function setupAuth(app: Express) {
             provider
           });
         }
-        return done(null, user);
+        
+        // Controlla se la password è scaduta
+        const isExpired = await isPasswordExpired(user.id);
+        
+        // Crea un oggetto AuthenticatedUser con il flag passwordExpired
+        const authenticatedUser: AuthenticatedUser = {
+          ...user,
+          passwordExpired: isExpired
+        };
+        
+        return done(null, authenticatedUser);
       }
       
       // Se l'utente non esiste, lo creiamo
@@ -384,7 +399,13 @@ export async function setupAuth(app: Express) {
         userAgent: ''
       });
       
-      return done(null, newUser);
+      // Per i nuovi utenti, la password non è scaduta
+      const authenticatedUser: AuthenticatedUser = {
+        ...newUser,
+        passwordExpired: false
+      };
+      
+      return done(null, authenticatedUser);
     } catch (error) {
       console.error(`Error in ${provider} authentication:`, error);
       return done(error);
@@ -407,10 +428,16 @@ export async function setupAuth(app: Express) {
         ...req.body,
         password: await hashPassword(req.body.password),
       });
+      
+      // Per i nuovi utenti, la password non è scaduta
+      const authenticatedUser: AuthenticatedUser = {
+        ...user,
+        passwordExpired: false
+      };
 
-      req.login(user, (err) => {
+      req.login(authenticatedUser, (err) => {
         if (err) return next(err);
-        res.status(201).json(user);
+        res.status(201).json(authenticatedUser);
       });
     } catch (error) {
       next(error);
@@ -477,6 +504,7 @@ export async function setupAuth(app: Express) {
         }
         
         // Se 2FA non è richiesto o disattivato globalmente, procedi con il login normalmente
+        // Nota: user è già un AuthenticatedUser perché viene dalla LocalStrategy
         req.login(user, (loginErr) => {
           if (loginErr) {
             return next(loginErr);
@@ -492,14 +520,7 @@ export async function setupAuth(app: Express) {
             userAgent: req.headers['user-agent']
           }).catch(console.error);
           
-          // Se la password è scaduta, informiamo il client
-          if (passwordExpired) {
-            return res.status(200).json({
-              ...user,
-              passwordExpired: true
-            });
-          }
-          
+          // L'oggetto user include già il flag passwordExpired impostato dalla LocalStrategy
           return res.status(200).json(user);
         });
       } catch (error) {
@@ -544,8 +565,14 @@ export async function setupAuth(app: Express) {
         passwordIsExpired = await isPasswordExpired(user.id);
       }
       
+      // Crea l'utente autenticato con flag di password scaduta
+      const authenticatedUser: AuthenticatedUser = {
+        ...user,
+        passwordExpired: passwordIsExpired
+      };
+      
       // Effettua il login
-      req.login(user, (loginErr) => {
+      req.login(authenticatedUser, (loginErr) => {
         if (loginErr) {
           return next(loginErr);
         }
@@ -560,15 +587,7 @@ export async function setupAuth(app: Express) {
           userAgent: req.headers['user-agent']
         }).catch(console.error);
         
-        // Se la password è scaduta, informiamo il client
-        if (passwordIsExpired) {
-          return res.status(200).json({
-            ...user,
-            passwordExpired: true
-          });
-        }
-        
-        return res.status(200).json(user);
+        return res.status(200).json(authenticatedUser);
       });
     } catch (error) {
       console.error("Error during 2FA verification:", error);
