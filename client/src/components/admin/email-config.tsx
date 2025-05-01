@@ -107,32 +107,17 @@ export default function EmailConfig() {
       
       console.log("Saving email config:", dataToSend);
       
-      const response = await apiRequest("POST", "/api/integrations/email", dataToSend);
-      
-      if (!response.ok) {
-        let errorMessage = "Errore durante il salvataggio";
-        try {
-          // Verifichiamo se il corpo della risposta contiene testo
-          const text = await response.text();
-          if (text) {
-            try {
-              // Proviamo a convertire il testo in JSON
-              const jsonData = JSON.parse(text);
-              errorMessage = jsonData?.message || errorMessage;
-            } catch (e) {
-              // Se non è JSON, usiamo il testo come messaggio di errore
-              errorMessage = text || errorMessage;
-            }
-          }
-        } catch (e) {
-          console.error("Errore durante la lettura della risposta", e);
-        }
-        throw new Error(errorMessage);
+      try {
+        // Semplicemente proviamo a inviare i dati, ignoriamo completamente la risposta
+        await apiRequest("POST", "/api/integrations/email", dataToSend);
+        
+        // Se non ci sono errori, restituiamo direttamente i dati inviati
+        return dataToSend;
+      } catch (error) {
+        // Se c'è un errore durante la richiesta, lo rilanciamo
+        console.error("Errore durante il salvataggio", error);
+        throw new Error("Errore durante il salvataggio");
       }
-      
-      // Se la risposta è ok, non proviamo a fare il parsing JSON
-      // ma restituiamo direttamente i dati inviati
-      return dataToSend;
     },
     onSuccess: () => {
       toast({

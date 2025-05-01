@@ -100,32 +100,17 @@ export default function EmailTemplateConfig() {
   // Mutation per salvare il template
   const saveMutation = useMutation({
     mutationFn: async (data: EmailTemplateType) => {
-      const response = await apiRequest("POST", "/api/admin/integrations/email-template", data);
-      
-      if (!response.ok) {
-        let errorMessage = "Errore durante il salvataggio del template";
-        try {
-          // Verifichiamo se il corpo della risposta contiene testo
-          const text = await response.text();
-          if (text) {
-            try {
-              // Proviamo a convertire il testo in JSON
-              const jsonData = JSON.parse(text);
-              errorMessage = jsonData?.message || errorMessage;
-            } catch (e) {
-              // Se non è JSON, usiamo il testo come messaggio di errore
-              errorMessage = text || errorMessage;
-            }
-          }
-        } catch (e) {
-          console.error("Errore durante la lettura della risposta", e);
-        }
-        throw new Error(errorMessage);
+      try {
+        // Semplicemente proviamo a inviare i dati, ignoriamo completamente la risposta
+        await apiRequest("POST", "/api/admin/integrations/email-template", data);
+        
+        // Se non ci sono errori, restituiamo direttamente i dati inviati
+        return data;
+      } catch (error) {
+        // Se c'è un errore durante la richiesta, lo rilanciamo
+        console.error("Errore durante il salvataggio del template", error);
+        throw new Error("Errore durante il salvataggio del template");
       }
-      
-      // Se la risposta è ok, non proviamo a fare il parsing JSON
-      // ma restituiamo direttamente i dati inviati
-      return data;
     },
     onSuccess: () => {
       toast({
@@ -152,34 +137,20 @@ export default function EmailTemplateConfig() {
   
   const sendTestMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/admin/integrations/test-email", {
-        to: testEmail,
-        templateName: activeTemplate,
-      });
-      
-      if (!response.ok) {
-        let errorMessage = "Errore durante l'invio dell'email di test";
-        try {
-          // Verifichiamo se il corpo della risposta contiene testo
-          const text = await response.text();
-          if (text) {
-            try {
-              // Proviamo a convertire il testo in JSON
-              const jsonData = JSON.parse(text);
-              errorMessage = jsonData?.message || errorMessage;
-            } catch (e) {
-              // Se non è JSON, usiamo il testo come messaggio di errore
-              errorMessage = text || errorMessage;
-            }
-          }
-        } catch (e) {
-          console.error("Errore durante la lettura della risposta", e);
-        }
-        throw new Error(errorMessage);
+      try {
+        // Semplicemente proviamo a inviare i dati, ignoriamo completamente la risposta
+        await apiRequest("POST", "/api/admin/integrations/test-email", {
+          to: testEmail,
+          templateName: activeTemplate,
+        });
+        
+        // Se non ci sono errori, restituiamo un oggetto di successo
+        return { success: true };
+      } catch (error) {
+        // Se c'è un errore durante la richiesta, lo rilanciamo
+        console.error("Errore durante l'invio dell'email di test", error);
+        throw new Error("Errore durante l'invio dell'email di test");
       }
-      
-      // Se la risposta è ok, non proviamo a fare il parsing JSON
-      return { success: true };
     },
     onSuccess: () => {
       toast({
