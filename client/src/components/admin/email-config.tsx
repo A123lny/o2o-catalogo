@@ -80,8 +80,15 @@ export default function EmailConfig() {
       console.log("CONFIG LOADED:", config);
       console.log("ENABLED VALUE:", config.enabled, "TYPE:", typeof config.enabled);
       
-      // Set the enabled toggle state
-      setIsServiceEnabled(Boolean(config.enabled));
+      // IMPORTANTE: Forza il valore a true se config.enabled è true nel database
+      // Questo è l'unico punto dove impostiamo il valore dello stato
+      if (config.enabled === true) {
+        setIsServiceEnabled(true);
+        console.log("IMPOSTO STATO TOGGLE A TRUE");
+      } else {
+        setIsServiceEnabled(false);
+        console.log("IMPOSTO STATO TOGGLE A FALSE");
+      }
       
       form.reset({
         provider: config.provider || "smtp",
