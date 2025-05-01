@@ -25,7 +25,6 @@ import { Label } from "@/components/ui/label";
 
 // Schema per la validazione del form
 const emailConfigSchema = z.object({
-  enabled: z.boolean().default(false),
   provider: z.enum(["smtp", "sendgrid"]).default("smtp"),
   host: z.string().optional().nullable(),
   port: z.coerce.number().optional().nullable(),
@@ -43,7 +42,7 @@ export default function EmailConfigNew() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Definiamo uno stato locale per il valore "enabled"
+  // Usiamo uno stato separato per il toggle di abilitazione
   const [isServiceEnabled, setIsServiceEnabled] = useState<boolean>(false);
   
   // Carica la configurazione esistente
@@ -62,7 +61,6 @@ export default function EmailConfigNew() {
   const form = useForm<EmailConfigType>({
     resolver: zodResolver(emailConfigSchema),
     defaultValues: {
-      enabled: false,
       provider: "smtp",
       host: "",
       port: 587,
@@ -70,36 +68,32 @@ export default function EmailConfigNew() {
       username: "",
       password: "",
       from: "",
+      fromEmail: "",
       sendgridApiKey: "",
     },
   });
   
-  // Aggiornaamo il form quando i dati vengono caricati
+  // Aggiorniamo il form quando i dati vengono caricati
   useEffect(() => {
     if (config) {
-      // Verifichiamo e impostiamo lo stato locale
-      const dbEnabled = config.enabled === true || config.enabled === "true";
-      setIsServiceEnabled(dbEnabled);
-      console.log("Config dal server:", config);
-      console.log("enabled dal server:", config.enabled, "tipo:", typeof config.enabled);
-      console.log("enabled interpretato:", dbEnabled);
+      console.log("CONFIGURAZIONE RICEVUTA:", config);
+      console.log("VALORE ENABLED:", config.enabled, "TIPO:", typeof config.enabled);
+      
+      // Impostiamo lo stato separato per l'interruttore
+      setIsServiceEnabled(!!config.enabled);
       
       // Imposta i valori del form
-      const formValues = {
-        enabled: dbEnabled,
+      form.reset({
         provider: config.provider || "smtp",
         host: config.host || "",
         port: config.port || 587,
-        secure: config.secure === true || config.secure === "true",
+        secure: !!config.secure,
         username: config.username || "",
         password: config.password || "",
         from: config.fromEmail || "",
         fromEmail: config.fromEmail || "",
         sendgridApiKey: config.sendgridApiKey || "",
-      };
-      
-      // Reset completo del form 
-      form.reset(formValues);
+      });
     }
   }, [config, form]);
   
@@ -118,15 +112,13 @@ export default function EmailConfigNew() {
         sendgridApiKey: data.sendgridApiKey || null
       };
       
-      console.log("Saving email config:", dataToSend);
+      console.log("Invio configurazione:", dataToSend);
       
-      try {
-        await apiRequest("POST", "/api/integrations/email", dataToSend);
-        return dataToSend;
-      } catch (error) {
-        console.error("Errore durante il salvataggio", error);
+      const response = await apiRequest("POST", "/api/integrations/email", dataToSend);
+      if (!response.ok) {
         throw new Error("Errore durante il salvataggio");
       }
+      return dataToSend;
     },
     onSuccess: () => {
       toast({
@@ -227,7 +219,7 @@ export default function EmailConfigNew() {
                 <Switch
                   checked={isServiceEnabled}
                   onCheckedChange={(checked) => {
-                    console.log("Switch cambiato a:", checked);
+                    console.log("Valore switch cambiato a:", checked);
                     setIsServiceEnabled(checked);
                   }}
                 />
@@ -243,7 +235,7 @@ export default function EmailConfigNew() {
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                           className="flex flex-col space-y-1"
                         >
                           <div className="flex items-center space-x-2">
@@ -270,7 +262,11 @@ export default function EmailConfigNew() {
                         <FormItem>
                           <FormLabel>Server SMTP</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="smtp.example.com" />
+                            <Input 
+                              placeholder="smtp.example.com" 
+                              {...field} 
+                              value={field.value || ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -284,7 +280,12 @@ export default function EmailConfigNew() {
                         <FormItem>
                           <FormLabel>Porta</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" placeholder="587" />
+                            <Input 
+                              type="number" 
+                              placeholder="587" 
+                              {...field} 
+                              value={field.value || ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -319,7 +320,11 @@ export default function EmailConfigNew() {
                         <FormItem>
                           <FormLabel>Username</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="user@example.com" />
+                            <Input 
+                              placeholder="user@example.com" 
+                              {...field} 
+                              value={field.value || ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -333,7 +338,12 @@ export default function EmailConfigNew() {
                         <FormItem>
                           <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input {...field} type="password" placeholder="Password" />
+                            <Input 
+                              type="password" 
+                              placeholder="Password" 
+                              {...field} 
+                              value={field.value || ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -347,7 +357,11 @@ export default function EmailConfigNew() {
                         <FormItem>
                           <FormLabel>Indirizzo Mittente</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="noreply@example.com" />
+                            <Input 
+                              placeholder="noreply@example.com" 
+                              {...field} 
+                              value={field.value || ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -363,7 +377,12 @@ export default function EmailConfigNew() {
                         <FormItem>
                           <FormLabel>SendGrid API Key</FormLabel>
                           <FormControl>
-                            <Input {...field} type="password" placeholder="API Key" />
+                            <Input 
+                              type="password" 
+                              placeholder="API Key" 
+                              {...field} 
+                              value={field.value || ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -377,7 +396,11 @@ export default function EmailConfigNew() {
                         <FormItem>
                           <FormLabel>Indirizzo Mittente</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="noreply@example.com" />
+                            <Input 
+                              placeholder="noreply@example.com" 
+                              {...field} 
+                              value={field.value || ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
