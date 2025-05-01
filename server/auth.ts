@@ -61,13 +61,6 @@ export async function setupAuth(app: Express) {
       try {
         console.log(`Authentication attempt for username: ${username}`);
         
-        // Verifica se l'account è bloccato per tentativi falliti
-        const lockoutResult = await handleFailedLoginAttempt(username);
-        if (lockoutResult.lockedOut) {
-          console.log(`Account locked for ${username}: ${lockoutResult.message}`);
-          return done(null, false, { message: lockoutResult.message || `Account bloccato. Riprova tra ${lockoutResult.lockoutDuration} minuti.` });
-        }
-        
         const user = await storage.getUserByUsername(username);
         console.log(`User found: ${!!user}`);
         
@@ -77,20 +70,68 @@ export async function setupAuth(app: Express) {
           return done(null, false, { message: "Username o password non validi" });
         }
         
+        // Verifica se l'account è bloccato per tentativi falliti
+        const securitySettings = await storage.getSecuritySettings();
+        const lockoutRecord = await storage.getAccountLockout(user.id);
+        
+        if (lockoutRecord && lockoutRecord.lockedUntil) {
+          const now = new Date();
+          const lockoutUntil = new Date(lockoutRecord.lockedUntil);
+          
+          if (now < lockoutUntil) {
+            // Se l'account è ancora bloccato
+            const remainingMinutes = Math.ceil((lockoutUntil.getTime() - now.getTime()) / (60 * 1000));
+            console.log(`Account locked for ${username} for ${remainingMinutes} more minutes`);
+            return done(null, false, { 
+              message: `Account bloccato per troppi tentativi di accesso falliti. Riprova tra ${remainingMinutes} minuti.` 
+            });
+          }
+        }
+        
         const passwordMatches = await comparePasswords(password, user.password);
         console.log(`Password match: ${passwordMatches}`);
         
         if (!passwordMatches) {
           // Aggiorna i tentativi falliti
-          const updatedLockoutStatus = await handleFailedLoginAttempt(username);
-          console.log(`Failed login attempt recorded. Remaining attempts: ${updatedLockoutStatus.remainingAttempts}`);
+          const newFailedAttempts = (lockoutRecord?.failedAttempts || 0) + 1;
+          console.log(`Failed login attempt recorded. Attempts: ${newFailedAttempts}`);
           
-          let errorMessage = "Username o password non validi";
-          if (updatedLockoutStatus.remainingAttempts !== undefined) {
-            errorMessage += `. Tentativi rimanenti: ${updatedLockoutStatus.remainingAttempts}`;
+          // Se il numero di tentativi falliti raggiunge il limite, blocca l'account
+          if (securitySettings && securitySettings.failedLoginAttempts && 
+              newFailedAttempts >= securitySettings.failedLoginAttempts) {
+            // Blocca l'account
+            const now = new Date();
+            const lockedUntil = new Date(now);
+            lockedUntil.setMinutes(now.getMinutes() + (securitySettings.lockoutDurationMinutes || 30));
+            
+            await storage.createOrUpdateAccountLockout(user.id, {
+              failedAttempts: newFailedAttempts,
+              lastFailedAttempt: now,
+              lockedUntil: lockedUntil
+            });
+            
+            return done(null, false, { 
+              message: `Account bloccato per troppi tentativi di accesso falliti. Riprova tra ${securitySettings.lockoutDurationMinutes || 30} minuti.` 
+            });
+          } else {
+            // Incrementa solo il contatore di tentativi falliti
+            await storage.createOrUpdateAccountLockout(user.id, {
+              failedAttempts: newFailedAttempts,
+              lastFailedAttempt: new Date(),
+              lockedUntil: null
+            });
+            
+            const remainingAttempts = securitySettings && securitySettings.failedLoginAttempts 
+              ? securitySettings.failedLoginAttempts - newFailedAttempts 
+              : undefined;
+            
+            let errorMessage = "Username o password non validi";
+            if (remainingAttempts !== undefined) {
+              errorMessage += `. Tentativi rimanenti: ${remainingAttempts}`;
+            }
+            
+            return done(null, false, { message: errorMessage });
           }
-          
-          return done(null, false, { message: errorMessage });
         } else {
           // Reset dei tentativi falliti dopo login con successo
           await resetFailedLoginAttempts(user.id);
@@ -120,6 +161,44 @@ export async function setupAuth(app: Express) {
       done(error);
     }
   });
+  
+  // Funzione per resettare i tentativi falliti di login
+  async function resetFailedLoginAttempts(userId: number) {
+    try {
+      await storage.createOrUpdateAccountLockout(userId, {
+        failedAttempts: 0,
+        lastFailedAttempt: new Date(),
+        lockedUntil: null
+      });
+    } catch (error) {
+      console.error('Errore nel reset dei tentativi falliti:', error);
+    }
+  }
+  
+  // Funzione per verificare se la password è scaduta
+  async function isPasswordExpired(userId: number): Promise<boolean> {
+    try {
+      // Ottieni l'ultimo cambio password
+      const lastPasswordChange = await storage.getLastPasswordChange(userId);
+      if (!lastPasswordChange) return false;
+      
+      // Ottieni le impostazioni di sicurezza
+      const securitySettings = await storage.getSecuritySettings();
+      if (!securitySettings || !securitySettings.passwordExpiryDays) return false;
+      
+      const now = new Date();
+      const lastChange = new Date(lastPasswordChange.changedAt);
+      
+      // Calcola la differenza in giorni
+      const diffTime = Math.abs(now.getTime() - lastChange.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      return diffDays >= securitySettings.passwordExpiryDays;
+    } catch (error) {
+      console.error('Errore nel controllo della scadenza password:', error);
+      return false;
+    }
+  }
   
   // Configurazione delle strategie OAuth per i social login
   
