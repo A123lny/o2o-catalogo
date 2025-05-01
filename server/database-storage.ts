@@ -117,6 +117,8 @@ export interface IStorage {
   
   // Password History (Storico Password)
   getPasswordHistory(userId: number): Promise<PasswordHistory[]>;
+  getPasswordHistory(userId: number, limit: number): Promise<PasswordHistory[]>;
+  getLastPasswordChange(userId: number): Promise<PasswordHistory | undefined>;
   addPasswordToHistory(userId: number, passwordHash: string): Promise<PasswordHistory>;
   cleanupPasswordHistory(userId: number, keep: number): Promise<void>;
   
@@ -1096,10 +1098,25 @@ export class DatabaseStorage implements IStorage {
 
   // METODI PER PASSWORD HISTORY
 
-  async getPasswordHistory(userId: number): Promise<PasswordHistory[]> {
-    return db.select().from(passwordHistory)
+  async getPasswordHistory(userId: number, limit?: number): Promise<PasswordHistory[]> {
+    let query = db.select().from(passwordHistory)
       .where(eq(passwordHistory.userId, userId))
       .orderBy(desc(passwordHistory.createdAt));
+      
+    if (limit) {
+      query = query.limit(limit);
+    }
+    
+    return query;
+  }
+  
+  async getLastPasswordChange(userId: number): Promise<PasswordHistory | undefined> {
+    const [lastChange] = await db.select().from(passwordHistory)
+      .where(eq(passwordHistory.userId, userId))
+      .orderBy(desc(passwordHistory.createdAt))
+      .limit(1);
+      
+    return lastChange;
   }
 
   async addPasswordToHistory(userId: number, passwordHash: string): Promise<PasswordHistory> {
