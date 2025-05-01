@@ -1016,7 +1016,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const config = await storage.getSocialLoginConfig(provider);
       
       if (!config) {
-        return res.status(404).json({ message: "Configurazione non trovata" });
+        // Se non esiste configurazione, ritorniamo un oggetto vuoto 
+        return res.json({
+          provider: provider,
+          enabled: false,
+          clientId: "",
+          clientSecret: "",
+          callbackUrl: ""
+        });
       }
       
       res.json(config);
@@ -1183,7 +1190,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get social login configurations
       const socialLoginConfigs = await storage.getSocialLoginConfigs();
-      let socialLogin = {
+      let socialLogin: {
+        googleEnabled: boolean;
+        facebookEnabled: boolean;
+        githubEnabled: boolean;
+        googleClientId?: string;
+        googleClientSecret?: string;
+        facebookAppId?: string;
+        facebookAppSecret?: string;
+        githubClientId?: string;
+        githubClientSecret?: string;
+      } = {
         googleEnabled: false,
         facebookEnabled: false,
         githubEnabled: false,
@@ -1207,7 +1224,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get payment configurations
       const paymentConfigs = await storage.getPaymentConfigs();
-      let payment = {
+      let payment: {
+        stripeEnabled: boolean;
+        paypalEnabled: boolean;
+        stripePublicKey?: string;
+        stripeSecretKey?: string;
+        paypalClientId?: string;
+        paypalClientSecret?: string;
+      } = {
         stripeEnabled: false,
         paypalEnabled: false,
       };
