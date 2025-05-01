@@ -92,13 +92,25 @@ export default function EmailConfig() {
   // Mutation per salvare la configurazione
   const saveMutation = useMutation({
     mutationFn: async (data: EmailConfigType) => {
+      // Correggiamo i dati per assicurarci che siano nel formato corretto
       const dataToSend = {
-        ...data,
-        fromEmail: data.from // Assicuriamoci che 'from' venga inviato come 'fromEmail'
+        enabled: data.enabled,
+        provider: data.provider,
+        host: data.host || null,
+        port: data.port || 587,
+        secure: data.secure || false,
+        username: data.username || null,
+        password: data.password || null,
+        fromEmail: data.from || data.fromEmail || null, // Assicuriamoci che 'from' venga inviato come 'fromEmail'
+        sendgridApiKey: data.sendgridApiKey || null
       };
+      
+      console.log("Saving email config:", dataToSend);
+      
       const response = await apiRequest("POST", "/api/integrations/email", dataToSend);
       if (!response.ok) {
-        throw new Error("Errore durante il salvataggio");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Errore durante il salvataggio");
       }
       return response.json();
     },
