@@ -156,6 +156,16 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
+      
+      // Verifica se la password è scaduta
+      const isExpired = await isPasswordExpired(id);
+      
+      // Se la password è scaduta, aggiunge il flag all'oggetto utente
+      if (isExpired) {
+        // @ts-ignore - Aggiungiamo una proprietà che non è nel tipo originale
+        user.passwordExpired = true;
+      }
+      
       done(null, user);
     } catch (error) {
       done(error);
