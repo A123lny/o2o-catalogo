@@ -108,11 +108,25 @@ export default function EmailConfig() {
       console.log("Saving email config:", dataToSend);
       
       const response = await apiRequest("POST", "/api/integrations/email", dataToSend);
+      
+      // Verifichiamo se response.json è una funzione prima di chiamarla
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || "Errore durante il salvataggio");
+        let errorMessage = "Errore durante il salvataggio";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData?.message || errorMessage;
+        } catch (e) {
+          console.error("Errore durante il parsing della risposta", e);
+        }
+        throw new Error(errorMessage);
       }
-      return response.json();
+      
+      try {
+        return await response.json();
+      } catch (e) {
+        console.log("La risposta non contiene JSON, restituiamo la risposta stessa");
+        return dataToSend; // Restituiamo i dati inviati in caso di errore nel parsing
+      }
     },
     onSuccess: () => {
       toast({
@@ -144,10 +158,24 @@ export default function EmailConfig() {
         to: testEmail,
         templateName: selectedTemplate,
       });
+      
       if (!response.ok) {
-        throw new Error("Errore durante l'invio dell'email di test");
+        let errorMessage = "Errore durante l'invio dell'email di test";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData?.message || errorMessage;
+        } catch (e) {
+          console.error("Errore durante il parsing della risposta", e);
+        }
+        throw new Error(errorMessage);
       }
-      return response.json();
+      
+      try {
+        return await response.json();
+      } catch (e) {
+        console.log("La risposta non contiene JSON, consideriamo l'operazione riuscita");
+        return { success: true }; // Restituiamo un oggetto di successo
+      }
     },
     onSuccess: () => {
       toast({

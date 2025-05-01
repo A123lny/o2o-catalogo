@@ -101,10 +101,24 @@ export default function EmailTemplateConfig() {
   const saveMutation = useMutation({
     mutationFn: async (data: EmailTemplateType) => {
       const response = await apiRequest("POST", "/api/admin/integrations/email-template", data);
+      
       if (!response.ok) {
-        throw new Error("Errore durante il salvataggio del template");
+        let errorMessage = "Errore durante il salvataggio del template";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData?.message || errorMessage;
+        } catch (e) {
+          console.error("Errore durante il parsing della risposta", e);
+        }
+        throw new Error(errorMessage);
       }
-      return response.json();
+      
+      try {
+        return await response.json();
+      } catch (e) {
+        console.log("La risposta non contiene JSON, consideriamo l'operazione riuscita");
+        return data; // Restituiamo i dati inviati in caso di errore nel parsing
+      }
     },
     onSuccess: () => {
       toast({
@@ -135,10 +149,24 @@ export default function EmailTemplateConfig() {
         to: testEmail,
         templateName: activeTemplate,
       });
+      
       if (!response.ok) {
-        throw new Error("Errore durante l'invio dell'email di test");
+        let errorMessage = "Errore durante l'invio dell'email di test";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData?.message || errorMessage;
+        } catch (e) {
+          console.error("Errore durante il parsing della risposta", e);
+        }
+        throw new Error(errorMessage);
       }
-      return response.json();
+      
+      try {
+        return await response.json();
+      } catch (e) {
+        console.log("La risposta non contiene JSON, consideriamo l'operazione riuscita");
+        return { success: true }; // Restituiamo un oggetto di successo
+      }
     },
     onSuccess: () => {
       toast({
