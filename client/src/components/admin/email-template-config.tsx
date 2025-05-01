@@ -105,20 +105,27 @@ export default function EmailTemplateConfig() {
       if (!response.ok) {
         let errorMessage = "Errore durante il salvataggio del template";
         try {
-          const errorData = await response.json();
-          errorMessage = errorData?.message || errorMessage;
+          // Verifichiamo se il corpo della risposta contiene testo
+          const text = await response.text();
+          if (text) {
+            try {
+              // Proviamo a convertire il testo in JSON
+              const jsonData = JSON.parse(text);
+              errorMessage = jsonData?.message || errorMessage;
+            } catch (e) {
+              // Se non è JSON, usiamo il testo come messaggio di errore
+              errorMessage = text || errorMessage;
+            }
+          }
         } catch (e) {
-          console.error("Errore durante il parsing della risposta", e);
+          console.error("Errore durante la lettura della risposta", e);
         }
         throw new Error(errorMessage);
       }
       
-      try {
-        return await response.json();
-      } catch (e) {
-        console.log("La risposta non contiene JSON, consideriamo l'operazione riuscita");
-        return data; // Restituiamo i dati inviati in caso di errore nel parsing
-      }
+      // Se la risposta è ok, non proviamo a fare il parsing JSON
+      // ma restituiamo direttamente i dati inviati
+      return data;
     },
     onSuccess: () => {
       toast({
@@ -153,20 +160,26 @@ export default function EmailTemplateConfig() {
       if (!response.ok) {
         let errorMessage = "Errore durante l'invio dell'email di test";
         try {
-          const errorData = await response.json();
-          errorMessage = errorData?.message || errorMessage;
+          // Verifichiamo se il corpo della risposta contiene testo
+          const text = await response.text();
+          if (text) {
+            try {
+              // Proviamo a convertire il testo in JSON
+              const jsonData = JSON.parse(text);
+              errorMessage = jsonData?.message || errorMessage;
+            } catch (e) {
+              // Se non è JSON, usiamo il testo come messaggio di errore
+              errorMessage = text || errorMessage;
+            }
+          }
         } catch (e) {
-          console.error("Errore durante il parsing della risposta", e);
+          console.error("Errore durante la lettura della risposta", e);
         }
         throw new Error(errorMessage);
       }
       
-      try {
-        return await response.json();
-      } catch (e) {
-        console.log("La risposta non contiene JSON, consideriamo l'operazione riuscita");
-        return { success: true }; // Restituiamo un oggetto di successo
-      }
+      // Se la risposta è ok, non proviamo a fare il parsing JSON
+      return { success: true };
     },
     onSuccess: () => {
       toast({

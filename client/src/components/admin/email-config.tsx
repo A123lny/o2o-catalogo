@@ -109,24 +109,30 @@ export default function EmailConfig() {
       
       const response = await apiRequest("POST", "/api/integrations/email", dataToSend);
       
-      // Verifichiamo se response.json è una funzione prima di chiamarla
       if (!response.ok) {
         let errorMessage = "Errore durante il salvataggio";
         try {
-          const errorData = await response.json();
-          errorMessage = errorData?.message || errorMessage;
+          // Verifichiamo se il corpo della risposta contiene testo
+          const text = await response.text();
+          if (text) {
+            try {
+              // Proviamo a convertire il testo in JSON
+              const jsonData = JSON.parse(text);
+              errorMessage = jsonData?.message || errorMessage;
+            } catch (e) {
+              // Se non è JSON, usiamo il testo come messaggio di errore
+              errorMessage = text || errorMessage;
+            }
+          }
         } catch (e) {
-          console.error("Errore durante il parsing della risposta", e);
+          console.error("Errore durante la lettura della risposta", e);
         }
         throw new Error(errorMessage);
       }
       
-      try {
-        return await response.json();
-      } catch (e) {
-        console.log("La risposta non contiene JSON, restituiamo la risposta stessa");
-        return dataToSend; // Restituiamo i dati inviati in caso di errore nel parsing
-      }
+      // Se la risposta è ok, non proviamo a fare il parsing JSON
+      // ma restituiamo direttamente i dati inviati
+      return dataToSend;
     },
     onSuccess: () => {
       toast({
