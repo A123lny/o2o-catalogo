@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
+import AdminProtectedRoute from "@/components/admin/protected-route";
 import SocialLoginConfig from "@/components/admin/social-login-config";
 import EmailConfig from "@/components/admin/email-config";
 import TwilioConfig from "@/components/admin/twilio-config";
@@ -25,17 +26,18 @@ export default function IntegrationsPage() {
   const [activeTab, setActiveTab] = useState<string>("email");
 
   return (
-    <div className="min-h-screen bg-background">
-      <AdminSidebar />
+    <AdminProtectedRoute>
+      <div className="min-h-screen bg-background">
+        <AdminSidebar />
 
-      <div className="pl-64 pb-16">
-        <AdminHeader 
-          title="Integrazioni" 
-          description="Configura le integrazioni con servizi esterni" 
-          icon={<Cog className="w-8 h-8" />} 
-        />
+        <div className="pl-64 pb-16">
+          <AdminHeader 
+            title="Integrazioni" 
+            description="Configura le integrazioni con servizi esterni" 
+            icon={<Cog className="w-8 h-8" />} 
+          />
 
-        <main className="p-6">
+          <main className="p-6">
           <Tabs defaultValue="email" onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="email">Email</TabsTrigger>
@@ -141,6 +143,7 @@ export default function IntegrationsPage() {
           </Tabs>
         </main>
       </div>
-    </div>
+      </div>
+    </AdminProtectedRoute>
   );
 }
