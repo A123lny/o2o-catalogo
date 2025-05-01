@@ -196,7 +196,8 @@ export default function EmailConfig() {
   };
   
   const currentProvider = form.watch("provider");
-  const isEnabled = form.watch("enabled");
+  // Assicuriamoci che la funzionalità di test sia sempre disponibile quando la configurazione è impostata
+  const isEnabled = config?.enabled || form.watch("enabled");
   
   return (
     <Card>
