@@ -70,20 +70,39 @@ export async function setupImageProxy(req: Request, res: Response) {
     }
     
     console.log(`Fetching image from: ${url}`);
-    const response = await axios.get(url, {
-      responseType: 'arraybuffer',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    try {
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5'
+        },
+        timeout: 5000 // 5 secondi di timeout
+      });
+      
+      // Salva l'immagine in cache
+      await writeFileAsync(cacheFilePath, response.data);
+      console.log(`Cached image to: ${cacheFilePath}`);
+      
+      // Imposta il Content-Type corretto
+      res.set('Content-Type', response.headers['content-type'] || 'image/jpeg');
+      res.send(response.data);
+    } catch (error: any) {
+      console.error(`Errore nel recupero dell'immagine da ${url}:`, error.message);
+      
+      // Servi un'immagine di fallback
+      const fallbackPath = path.join(__dirname, '../public/fallback-car-image.svg');
+      
+      // Verifica se esiste l'immagine di fallback
+      if (await existsAsync(fallbackPath)) {
+        console.log(`Serving fallback image for: ${url}`);
+        return res.sendFile(fallbackPath);
+      } else {
+        // Se non esiste, genera un'immagine di fallback e restituiscila
+        console.log(`Fallback image not found, serving 404`);
+        return res.status(404).send('Immagine non trovata');
       }
-    });
-    
-    // Salva l'immagine in cache
-    await writeFileAsync(cacheFilePath, response.data);
-    console.log(`Cached image to: ${cacheFilePath}`);
-    
-    // Imposta il Content-Type corretto
-    res.set('Content-Type', response.headers['content-type'] || 'image/jpeg');
-    res.send(response.data);
+    }
     
   } catch (error) {
     console.error('Errore durante il recupero dell\'immagine:', error);

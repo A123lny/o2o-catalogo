@@ -120,7 +120,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
             </Button>
 
             <img 
-              src={allImages[lightboxIndex] || defaultImage} 
+              src={processImageUrl(allImages[lightboxIndex] || defaultImage)} 
               alt={`${title} - Lightbox ${lightboxIndex + 1}`} 
               className="max-h-full max-w-full object-contain"
             />
