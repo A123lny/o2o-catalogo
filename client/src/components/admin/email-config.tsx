@@ -74,8 +74,9 @@ export default function EmailConfig() {
   // Aggiorna il form quando i dati vengono caricati
   useEffect(() => {
     if (config) {
+      console.log("Config ricevuta:", config);
       form.reset({
-        enabled: config.enabled,
+        enabled: config.enabled === true,
         provider: config.provider || "smtp",
         host: config.host || "",
         port: config.port || 587,
