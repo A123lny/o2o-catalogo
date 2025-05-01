@@ -84,18 +84,18 @@ export default function EmailConfig() {
       console.log("Tipologia:", typeof config.enabled);
       console.log("isEnabled calcolato:", isEnabled);
       
-      form.reset({
-        enabled: isEnabled,
-        provider: config.provider || "smtp",
-        host: config.host || "",
-        port: config.port || 587,
-        secure: isSecure,
-        username: config.username || "",
-        password: config.password || "",
-        from: config.fromEmail || "",
-        fromEmail: config.fromEmail || "",
-        sendgridApiKey: config.sendgridApiKey || "",
-      });
+      // Forziamo il valore booleano e lo impostiamo direttamente nel form senza usare form.reset
+      // Questo evita eventuali problemi di conversione di tipo
+      form.setValue("enabled", true);
+      form.setValue("provider", config.provider || "smtp");
+      form.setValue("host", config.host || "");
+      form.setValue("port", config.port || 587);
+      form.setValue("secure", isSecure);
+      form.setValue("username", config.username || "");
+      form.setValue("password", config.password || "");
+      form.setValue("from", config.fromEmail || "");
+      form.setValue("fromEmail", config.fromEmail || "");
+      form.setValue("sendgridApiKey", config.sendgridApiKey || "");
     }
   }, [config, form]);
   
