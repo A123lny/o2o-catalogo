@@ -1164,16 +1164,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Converti esplicitamente tutti i campi booleani in formato corretto
+      // Assicuriamoci che il valore "enabled" sia esplicitamente booleano nel JSON di risposta
+      // forzandolo come valore primitivo
       const transformedConfig = {
         ...config,
-        enabled: config.enabled === true,
-        secure: config.secure === true
+        enabled: config.enabled === true ? true : false,
+        secure: config.secure === true ? true : false
       };
       
       console.log("Email config dal database:", config);
       console.log("Email config trasformata:", transformedConfig);
+      console.log("enabled è", transformedConfig.enabled, "di tipo", typeof transformedConfig.enabled);
       
+      // Converti in JSON e poi di nuovo in oggetto per assicurarci che i valori booleani siano preservati
+      const jsonString = JSON.stringify(transformedConfig);
+      console.log("JSON inviato al client:", jsonString);
+      
+      // Invia la risposta come JSON
       res.json(transformedConfig);
     } catch (error) {
       console.error("Errore nel caricamento della configurazione email:", error);
