@@ -3,6 +3,7 @@ import { Vehicle } from "@shared/schema";
 import { Calendar, Gauge, Fuel, Settings, Car } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { RentalOption } from "@shared/schema";
+import { processImageUrl } from "../lib/image-utils";
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -37,7 +38,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       <div className="relative">
         <Link href={`/vehicle/${vehicle.id}`}>
           <img 
-            src={vehicle.mainImage || "https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"} 
+            src={processImageUrl(vehicle.mainImage || "https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80")} 
             alt={vehicle.title} 
             className="w-full h-48 object-cover"
           />

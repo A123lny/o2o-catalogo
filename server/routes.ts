@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { generateSecret, verifyToken, verifyBackupCode, disable2FA } from "./2fa-utils";
+import { setupImageProxy } from "./image-proxy";
 import multer from "multer";
 import { 
   insertVehicleSchema, 
@@ -38,6 +39,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Public API routes
+  
+  // Proxy per le immagini esterne
+  app.get("/api/image-proxy", setupImageProxy);
   
   // Get all vehicles with filters
   app.get("/api/vehicles", async (req, res) => {

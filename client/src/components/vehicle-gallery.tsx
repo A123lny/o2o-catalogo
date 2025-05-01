@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Maximize } from "lucide-react";
+import { processImageUrl } from "../lib/image-utils";
 
 interface VehicleGalleryProps {
   mainImage?: string;
@@ -64,7 +65,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
       <div className="relative bg-white rounded-lg overflow-hidden shadow-md">
         <div className="relative">
           <img 
-            src={currentImage || defaultImage} 
+            src={processImageUrl(currentImage || defaultImage)} 
             alt={title} 
             className="w-full h-[450px] object-cover cursor-pointer"
             onClick={() => openLightbox(selectedIndex)}
@@ -91,7 +92,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                   style={{ width: '100px' }}
                 >
                   <img 
-                    src={image} 
+                    src={processImageUrl(image)} 
                     alt={`${title} - Image ${index + 1}`} 
                     className="w-full h-16 object-cover"
                   />
