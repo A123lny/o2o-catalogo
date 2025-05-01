@@ -75,12 +75,21 @@ export default function EmailConfig() {
   useEffect(() => {
     if (config) {
       console.log("Config ricevuta:", config);
+      
+      // Forza il valore booleano in modo esplicito
+      const isEnabled = config.enabled === true || config.enabled === "true";
+      const isSecure = config.secure === true || config.secure === "true";
+      
+      console.log("Valore enabled:", config.enabled);
+      console.log("Tipologia:", typeof config.enabled);
+      console.log("isEnabled calcolato:", isEnabled);
+      
       form.reset({
-        enabled: config.enabled === true,
+        enabled: isEnabled,
         provider: config.provider || "smtp",
         host: config.host || "",
         port: config.port || 587,
-        secure: config.secure || false,
+        secure: isSecure,
         username: config.username || "",
         password: config.password || "",
         from: config.fromEmail || "",
@@ -198,7 +207,8 @@ export default function EmailConfig() {
   
   const currentProvider = form.watch("provider");
   // Assicuriamoci che la funzionalità di test sia sempre disponibile quando la configurazione è impostata
-  const isEnabled = config?.enabled || form.watch("enabled");
+  // Forza il valore booleano in modo esplicito
+  const isEnabled = config?.enabled === true || form.watch("enabled") === true;
   
   return (
     <Card>
@@ -213,22 +223,31 @@ export default function EmailConfig() {
               <FormField
                 control={form.control}
                 name="enabled"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
-                      <FormLabel>Servizio Email</FormLabel>
-                      <FormDescription>
-                        Abilita o disabilita il servizio di invio email
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  // Forza il valore booleano per assicurarsi che sia true o false
+                  const isChecked = field.value === true;
+                  console.log("Switch state:", isChecked, "Field value:", field.value, "Type:", typeof field.value);
+                  
+                  return (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Servizio Email</FormLabel>
+                        <FormDescription>
+                          Abilita o disabilita il servizio di invio email
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            console.log("Switch changed to:", checked);
+                            field.onChange(checked);
+                          }}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  );
+                }}
               />
               
               <div className={isEnabled ? "" : "opacity-50 pointer-events-none"}>
