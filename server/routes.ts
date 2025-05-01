@@ -1063,7 +1063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           secure: false,
           username: "",
           password: "",
-          from: "",
+          fromEmail: "",
           sendgridApiKey: "",
         });
       }

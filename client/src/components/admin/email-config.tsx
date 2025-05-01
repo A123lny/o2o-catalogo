@@ -33,6 +33,7 @@ const emailConfigSchema = z.object({
   username: z.string().optional().nullable(),
   password: z.string().optional().nullable(),
   from: z.string().email("Inserisci un indirizzo email valido").optional().nullable(),
+  fromEmail: z.string().email("Inserisci un indirizzo email valido").optional().nullable(),
   sendgridApiKey: z.string().optional().nullable(),
 });
 
@@ -81,7 +82,8 @@ export default function EmailConfig() {
         secure: config.secure || false,
         username: config.username || "",
         password: config.password || "",
-        from: config.from || "",
+        from: config.fromEmail || "",
+        fromEmail: config.fromEmail || "",
         sendgridApiKey: config.sendgridApiKey || "",
       });
     }
@@ -90,7 +92,11 @@ export default function EmailConfig() {
   // Mutation per salvare la configurazione
   const saveMutation = useMutation({
     mutationFn: async (data: EmailConfigType) => {
-      const response = await apiRequest("POST", "/api/integrations/email", data);
+      const dataToSend = {
+        ...data,
+        fromEmail: data.from // Assicuriamoci che 'from' venga inviato come 'fromEmail'
+      };
+      const response = await apiRequest("POST", "/api/integrations/email", dataToSend);
       if (!response.ok) {
         throw new Error("Errore durante il salvataggio");
       }

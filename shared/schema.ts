@@ -227,7 +227,7 @@ export const emailConfig = pgTable("email_config", {
   secure: boolean("secure").default(false),
   username: text("username"),
   password: text("password"),
-  from: text("from"),
+  fromEmail: text("from_email"), // Corretto nome della colonna per evitare errori
   sendgridApiKey: text("sendgrid_api_key"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
