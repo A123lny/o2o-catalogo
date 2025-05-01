@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { generateSecret, verifyToken, verifyBackupCode, disable2FA } from "./2fa-utils";
 import { setupImageProxy } from "./image-proxy";
+import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 import multer from "multer";
 import { 
   insertVehicleSchema, 
@@ -1557,6 +1559,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error saving social login config:", error);
       res.status(500).json({ message: "Error saving social login configuration" });
+    }
+  });
+  
+  // Test Email Endpoint
+  app.post("/api/admin/integrations/test-email", isAdmin, async (req, res) => {
+    try {
+      const { to, templateName } = req.body;
+      
+      if (!to) {
+        return res.status(400).json({ message: "Indirizzo email destinatario mancante" });
+      }
+      
+      // Recupera la configurazione email
+      const emailConfig = await storage.getEmailConfig();
+      if (!emailConfig || !emailConfig.enabled) {
+        return res.status(400).json({ message: "La configurazione email non è attiva" });
+      }
+      
+      // Recupera il template email
+      const template = await storage.getEmailTemplate(templateName || "welcome");
+      if (!template) {
+        return res.status(404).json({ message: "Template email non trovato" });
+      }
+      
+      // Prepara i dati per l'email
+      let emailData = {
+        to: to,
+        subject: template.subject,
+        html: template.body,
+        from: emailConfig.fromEmail
+      };
+      
+      // Invia l'email utilizzando il servizio email configurato
+      if (emailConfig.provider === "smtp") {
+        // Configurazione SMTP
+        const transporter = nodemailer.createTransport({
+          host: emailConfig.host,
+          port: emailConfig.port,
+          secure: emailConfig.secure,
+          auth: {
+            user: emailConfig.username,
+            pass: emailConfig.password
+          }
+        });
+        
+        await transporter.sendMail(emailData);
+      } else if (emailConfig.provider === "sendgrid" && emailConfig.sendgridApiKey) {
+        // Configurazione SendGrid
+        sgMail.setApiKey(emailConfig.sendgridApiKey);
+        await sgMail.send({
+          to: emailData.to,
+          from: emailData.from,
+          subject: emailData.subject,
+          html: emailData.html
+        });
+      } else {
+        return res.status(400).json({ message: "Configurazione email non valida" });
+      }
+      
+      res.json({ success: true, message: "Email di test inviata con successo" });
+    } catch (error) {
+      console.error("Errore nell'invio dell'email di test:", error);
+      res.status(500).json({ message: "Errore nell'invio dell'email di test" });
     }
   });
   
