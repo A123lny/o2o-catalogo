@@ -65,7 +65,7 @@ export async function setupAuth(app: Express) {
         const lockoutResult = await handleFailedLoginAttempt(username);
         if (lockoutResult.lockedOut) {
           console.log(`Account locked for ${username}: ${lockoutResult.message}`);
-          return done(null, false, { message: lockoutResult.message });
+          return done(null, false, { message: lockoutResult.message || `Account bloccato. Riprova tra ${lockoutResult.lockoutDuration} minuti.` });
         }
         
         const user = await storage.getUserByUsername(username);
@@ -73,6 +73,7 @@ export async function setupAuth(app: Express) {
         
         if (!user) {
           console.log('No user found with that username');
+          // Nasconde se l'utente esiste o meno per motivi di sicurezza
           return done(null, false, { message: "Username o password non validi" });
         }
         
@@ -81,8 +82,15 @@ export async function setupAuth(app: Express) {
         
         if (!passwordMatches) {
           // Aggiorna i tentativi falliti
-          await handleFailedLoginAttempt(username);
-          return done(null, false, { message: "Username o password non validi" });
+          const updatedLockoutStatus = await handleFailedLoginAttempt(username);
+          console.log(`Failed login attempt recorded. Remaining attempts: ${updatedLockoutStatus.remainingAttempts}`);
+          
+          let errorMessage = "Username o password non validi";
+          if (updatedLockoutStatus.remainingAttempts !== undefined) {
+            errorMessage += `. Tentativi rimanenti: ${updatedLockoutStatus.remainingAttempts}`;
+          }
+          
+          return done(null, false, { message: errorMessage });
         } else {
           // Reset dei tentativi falliti dopo login con successo
           await resetFailedLoginAttempts(user.id);
