@@ -26,6 +26,14 @@ const upload = multer({
   }
 });
 
+// Middleware per verificare l'autenticazione
+const authenticated = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Autenticazione richiesta" });
+  }
+  next();
+};
+
 // Middleware per la verifica dell'amministratore
 const isAdmin = (req: Request, res: Response, next: NextFunction) => {
   if (!req.isAuthenticated() || req.user.role !== "admin") {
@@ -37,6 +45,92 @@ const isAdmin = (req: Request, res: Response, next: NextFunction) => {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   await setupAuth(app);
+  
+  // Importare le funzioni di utilità per la sicurezza
+  const { 
+    comparePasswords, 
+    hashPassword, 
+    validatePasswordComplexity, 
+    isPasswordPreviouslyUsed 
+  } = await import("./security-utils");
+  
+  // Endpoint per il cambio password
+  app.post("/api/user/change-password", authenticated, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ 
+          message: "Dati mancanti", 
+          errors: ["È necessario fornire sia la password attuale che quella nuova"] 
+        });
+      }
+      
+      // Verifica la password attuale
+      const user = await storage.getUser(req.user!.id);
+      const passwordMatches = await comparePasswords(currentPassword, user.password);
+      
+      if (!passwordMatches) {
+        return res.status(400).json({ 
+          message: "Password attuale non valida", 
+          errors: ["La password attuale non è corretta"] 
+        });
+      }
+      
+      // Verifica la complessità della nuova password
+      const { isValid, errors } = await validatePasswordComplexity(newPassword);
+      
+      if (!isValid) {
+        return res.status(400).json({ 
+          message: "La password non soddisfa i requisiti di sicurezza", 
+          errors 
+        });
+      }
+      
+      // Verifica se la password è stata usata in precedenza
+      const isReused = await isPasswordPreviouslyUsed(req.user!.id, newPassword);
+      
+      if (isReused) {
+        return res.status(400).json({ 
+          message: "Non puoi riutilizzare una password recente", 
+          errors: ["Questa password è stata utilizzata di recente. Scegli una password diversa"] 
+        });
+      }
+      
+      // Hash della nuova password
+      const hashedPassword = await hashPassword(newPassword);
+      
+      // Aggiorna la password dell'utente
+      await storage.updateUser(req.user!.id, { password: hashedPassword });
+      
+      // Aggiungi la password alla cronologia
+      await storage.addPasswordToHistory(req.user!.id, hashedPassword);
+      
+      // Ottieni le impostazioni di sicurezza
+      const securitySettings = await storage.getSecuritySettings();
+      
+      // Pulisci la cronologia delle password se necessario
+      if (securitySettings && securitySettings.passwordHistoryCount) {
+        await storage.cleanupPasswordHistory(req.user!.id, securitySettings.passwordHistoryCount);
+      }
+      
+      // Registra l'attività
+      await storage.createActivityLog({
+        userId: req.user!.id,
+        action: "update",
+        entityType: "user_password",
+        entityId: req.user!.id,
+        details: "Cambio password",
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] || ''
+      });
+      
+      res.json({ message: "Password aggiornata con successo" });
+    } catch (error) {
+      console.error("Errore durante il cambio password:", error);
+      res.status(500).json({ message: "Errore durante il cambio password" });
+    }
+  });
 
   // Public API routes
   
