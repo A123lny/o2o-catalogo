@@ -3,7 +3,7 @@ import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
 import AdminProtectedRoute from "@/components/admin/protected-route";
 import SocialLoginConfig from "@/components/admin/social-login-config";
-import EmailConfig from "@/components/admin/email-config-new";
+import EmailConfig from "@/components/admin/email-config";
 import TwilioConfig from "@/components/admin/twilio-config";
 import { PaymentConfigs } from "@/components/admin/payment-config";
 import EmailTemplateConfig from "@/components/admin/email-template-config";

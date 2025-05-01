@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
+// UI Components
 import {
   Form,
   FormControl,
@@ -23,29 +24,29 @@ import { Loader2 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
-// Schema per la validazione del form
+// Schema for email configuration
 const emailConfigSchema = z.object({
   provider: z.enum(["smtp", "sendgrid"]).default("smtp"),
-  host: z.string().optional().nullable(),
-  port: z.coerce.number().optional().nullable(),
+  host: z.string().optional(),
+  port: z.coerce.number().optional(),
   secure: z.boolean().default(false),
-  username: z.string().optional().nullable(),
-  password: z.string().optional().nullable(),
-  from: z.string().email("Inserisci un indirizzo email valido").optional().nullable(),
-  fromEmail: z.string().email("Inserisci un indirizzo email valido").optional().nullable(),
-  sendgridApiKey: z.string().optional().nullable(),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  from: z.string().email("Inserisci un indirizzo email valido").optional(),
+  fromEmail: z.string().email("Inserisci un indirizzo email valido").optional(),
+  sendgridApiKey: z.string().optional(),
 });
 
 type EmailConfigType = z.infer<typeof emailConfigSchema>;
 
-export default function EmailConfigNew() {
+export default function EmailConfig() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Usiamo uno stato separato per il toggle di abilitazione
-  const [isServiceEnabled, setIsServiceEnabled] = useState<boolean>(false);
+  // Use separate state for enabled toggle
+  const [isServiceEnabled, setIsServiceEnabled] = useState(false);
   
-  // Carica la configurazione esistente
+  // Load existing configuration
   const { data: config, isLoading } = useQuery({
     queryKey: ["/api/integrations/email"],
     queryFn: async () => {
@@ -57,7 +58,7 @@ export default function EmailConfigNew() {
     },
   });
   
-  // Form per la modifica della configurazione
+  // Form for configuration
   const form = useForm<EmailConfigType>({
     resolver: zodResolver(emailConfigSchema),
     defaultValues: {
@@ -73,21 +74,20 @@ export default function EmailConfigNew() {
     },
   });
   
-  // Aggiorniamo il form quando i dati vengono caricati
+  // Update form when data is loaded
   useEffect(() => {
     if (config) {
-      console.log("CONFIGURAZIONE RICEVUTA:", config);
-      console.log("VALORE ENABLED:", config.enabled, "TIPO:", typeof config.enabled);
+      console.log("CONFIG LOADED:", config);
+      console.log("ENABLED VALUE:", config.enabled, "TYPE:", typeof config.enabled);
       
-      // Impostiamo lo stato separato per l'interruttore
-      setIsServiceEnabled(!!config.enabled);
+      // Set the enabled toggle state
+      setIsServiceEnabled(Boolean(config.enabled));
       
-      // Imposta i valori del form
       form.reset({
         provider: config.provider || "smtp",
         host: config.host || "",
         port: config.port || 587,
-        secure: !!config.secure,
+        secure: Boolean(config.secure),
         username: config.username || "",
         password: config.password || "",
         from: config.fromEmail || "",
@@ -97,11 +97,12 @@ export default function EmailConfigNew() {
     }
   }, [config, form]);
   
-  // Mutation per salvare la configurazione
+  // Save configuration
   const saveMutation = useMutation({
     mutationFn: async (data: EmailConfigType) => {
-      const dataToSend = {
-        enabled: isServiceEnabled, // Usa lo stato locale invece del valore del form
+      // Create payload, using the separate enabled state
+      const payload = {
+        enabled: isServiceEnabled,
         provider: data.provider,
         host: data.host || null,
         port: data.port || 587,
@@ -112,13 +113,13 @@ export default function EmailConfigNew() {
         sendgridApiKey: data.sendgridApiKey || null
       };
       
-      console.log("Invio configurazione:", dataToSend);
+      console.log("SAVING CONFIG:", payload);
       
-      const response = await apiRequest("POST", "/api/integrations/email", dataToSend);
+      const response = await apiRequest("POST", "/api/integrations/email", payload);
       if (!response.ok) {
         throw new Error("Errore durante il salvataggio");
       }
-      return dataToSend;
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -208,7 +209,7 @@ export default function EmailConfigNew() {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Servizio Email Switch - usa lo stato locale */}
+              {/* Email Service Toggle */}
               <div className="flex flex-row items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
                   <FormLabel>Servizio Email</FormLabel>
@@ -219,13 +220,14 @@ export default function EmailConfigNew() {
                 <Switch
                   checked={isServiceEnabled}
                   onCheckedChange={(checked) => {
-                    console.log("Valore switch cambiato a:", checked);
+                    console.log("Changing enabled to:", checked);
                     setIsServiceEnabled(checked);
                   }}
                 />
               </div>
               
               <div className={isServiceEnabled ? "" : "opacity-50 pointer-events-none"}>
+                {/* Provider Selection */}
                 <FormField
                   control={form.control}
                   name="provider"
@@ -253,6 +255,7 @@ export default function EmailConfigNew() {
                   )}
                 />
                 
+                {/* SMTP Fields */}
                 {currentProvider === "smtp" ? (
                   <div className="space-y-4 mt-4">
                     <FormField
@@ -409,6 +412,7 @@ export default function EmailConfigNew() {
                   </div>
                 )}
                 
+                {/* Save Button */}
                 <div className="pt-6">
                   <Button 
                     type="submit" 
@@ -426,6 +430,7 @@ export default function EmailConfigNew() {
                   </Button>
                 </div>
                 
+                {/* Test Email Section */}
                 {isServiceEnabled && (
                   <div className="mt-8 border-t pt-6">
                     <h3 className="text-lg font-medium mb-4">Test Email</h3>
