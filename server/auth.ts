@@ -20,6 +20,11 @@ import {
 
 import type * as SchemaTypes from '@shared/schema';
 
+// Interfaccia estesa per l'utente autenticato che include i flag di autenticazione
+interface AuthenticatedUser extends User {
+  passwordExpired?: boolean;
+}
+
 declare global {
   namespace Express {
     // Use type instead of interface extension to avoid errors
@@ -197,7 +202,7 @@ export async function setupAuth(app: Express) {
       if (!securitySettings || !securitySettings.passwordExpiryDays) return false;
       
       const now = new Date();
-      const lastChange = new Date(lastPasswordChange.changedAt);
+      const lastChange = new Date(lastPasswordChange.createdAt);
       
       // Calcola la differenza in giorni
       const diffTime = Math.abs(now.getTime() - lastChange.getTime());
