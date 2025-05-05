@@ -548,38 +548,26 @@ export default function VehicleEditPage() {
                                 <FormDescription>
                                   Seleziona i badge appropriati per questo veicolo
                                 </FormDescription>
-                                <ul className="list-disc pl-5 mt-2 text-xs text-neutral-500 space-y-1">
-                                  <li><span className="font-medium">Premium:</span> Per veicoli di alta gamma</li>
-                                  <li><span className="font-medium">Promo:</span> Per veicoli in promozione speciale</li>
-                                  <li><span className="font-medium">Economica:</span> Per veicoli a basso costo</li>
-                                  <li><span className="font-medium">Zero Emissioni:</span> Per veicoli elettrici o eco-friendly</li>
-                                  <li><span className="font-medium">Riservato:</span> Per veicoli già prenotati</li>
-                                  <li><span className="font-medium">Assegnato:</span> Per veicoli temporaneamente assegnati</li>
-                                  <li><span className="font-medium">2Life:</span> Per veicoli usati</li>
-                                </ul>
                               </div>
-                              <div className="grid grid-cols-2 gap-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {badgeOptions.map((badge) => (
                                   <FormField
                                     key={badge.id}
                                     control={form.control}
                                     name="badges"
                                     render={({ field }) => {
-                                      // Nella tabella veicoli, i badge vengono visualizzati direttamente dall'array badge come stringhe
-                                      // quindi dobbiamo usare gli stessi valori qui per coerenza
                                       const isChecked = field.value?.includes(badge.id);
                                       return (
                                         <FormItem
                                           key={badge.id}
-                                          className="flex flex-row items-start space-x-3 space-y-0"
+                                          className="flex flex-row items-start space-x-3 space-y-0 p-2 rounded-md hover:bg-neutral-50"
                                         >
                                           <FormControl>
                                             <Checkbox
                                               checked={isChecked}
+                                              className="mt-1"
                                               onCheckedChange={(checked) => {
                                                 const currentValues = field.value || [];
-                                                // Usiamo direttamente badge.id che contiene la stringa (es. "promo", "new")
-                                                // che è lo stesso valore che viene mostrato nella tabella veicoli
                                                 const newValues = checked
                                                   ? [...currentValues, badge.id]
                                                   : currentValues.filter(value => value !== badge.id);
@@ -587,9 +575,20 @@ export default function VehicleEditPage() {
                                               }}
                                             />
                                           </FormControl>
-                                          <FormLabel className="font-normal">
-                                            {badge.label}
-                                          </FormLabel>
+                                          <div>
+                                            <FormLabel className="font-medium text-neutral-800 mb-0">
+                                              {badge.label}
+                                            </FormLabel>
+                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                              {badge.id === "Premium" && "Per veicoli di alta gamma"}
+                                              {badge.id === "Promo" && "Per veicoli in promozione speciale"}
+                                              {badge.id === "Economica" && "Per veicoli a basso costo"}
+                                              {badge.id === "Zero Emissioni" && "Per veicoli elettrici o eco-friendly"}
+                                              {badge.id === "Riservato" && "Per veicoli già prenotati"}
+                                              {badge.id === "Assegnato" && "Per veicoli temporaneamente assegnati"}
+                                              {badge.id === "2Life" && "Per veicoli usati"}
+                                            </p>
+                                          </div>
                                         </FormItem>
                                       );
                                     }}
