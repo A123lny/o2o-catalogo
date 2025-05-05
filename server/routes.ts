@@ -1,12 +1,14 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage as dbStorage } from "./storage";
 import { setupAuth } from "./auth";
 import { generateSecret, verifyToken, verifyBackupCode, disable2FA } from "./2fa-utils";
 import { setupImageProxy } from "./image-proxy";
 import nodemailer from "nodemailer";
 import sgMail from "@sendgrid/mail";
 import multer from "multer";
+import * as fs from 'fs';
+import * as path from 'path';
 import { 
   insertVehicleSchema, 
   insertBrandSchema, 
@@ -20,9 +22,29 @@ import {
   insertActivityLogSchema
 } from "@shared/schema";
 
-// Configure multer for in-memory storage
+// Assicurati che la directory uploads esista
+const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configura multer per salvare i file su disco
+const multerStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    let extension = path.extname(file.originalname);
+    if (!extension) {
+      extension = '.jpg'; // Default extension
+    }
+    cb(null, file.fieldname + '_' + uniqueSuffix + extension);
+  }
+});
+
 const upload = multer({ 
-  storage: multer.memoryStorage(),
+  storage: multerStorage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   }
@@ -483,7 +505,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertBrandSchema.parse(brandData);
       
       if (req.file) {
-        validatedData.logo = `brand_${Date.now()}.jpg`;
+        // Usa il nome del file effettivamente salvato
+        validatedData.logo = `/uploads/${req.file.filename}`;
+        console.log("Brand logo updated:", validatedData.logo);
       }
       
       const brand = await storage.updateBrand(id, validatedData);
@@ -527,7 +551,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertCategorySchema.parse(categoryData);
       
       if (req.file) {
-        validatedData.image = `category_${Date.now()}.jpg`;
+        // Usa il nome del file effettivamente salvato
+        validatedData.image = `/uploads/${req.file.filename}`;
+        console.log("Category image saved:", validatedData.image);
       }
       
       const category = await storage.createCategory(validatedData);
@@ -553,7 +579,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertCategorySchema.parse(categoryData);
       
       if (req.file) {
-        validatedData.image = `category_${Date.now()}.jpg`;
+        // Usa il nome del file effettivamente salvato
+        validatedData.image = `/uploads/${req.file.filename}`;
+        console.log("Category image updated:", validatedData.image);
       }
       
       const category = await storage.updateCategory(id, validatedData);
