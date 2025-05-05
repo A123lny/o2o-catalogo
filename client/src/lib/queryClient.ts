@@ -13,10 +13,25 @@ export async function apiRequest(
   data?: unknown | undefined,
   options?: RequestInit | undefined,
 ): Promise<any> {
+  // Configura headers e body in base al tipo di dati
+  let headers = {};
+  let body = undefined;
+  
+  if (data) {
+    // Se data è una istanza di FormData, non impostare Content-Type (lo fa il browser)
+    if (data instanceof FormData) {
+      body = data;
+    } else {
+      // Per i dati JSON, imposta l'header e serializza
+      headers = { "Content-Type": "application/json" };
+      body = JSON.stringify(data);
+    }
+  }
+  
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers,
+    body,
     credentials: "include",
     ...options,
   });
