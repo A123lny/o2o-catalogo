@@ -479,7 +479,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertBrandSchema.parse(brandData);
       
       if (req.file) {
-        validatedData.logo = `brand_${Date.now()}.jpg`;
+        validatedData.logo = `/uploads/${req.file.filename}`;
+        console.log("Brand logo saved:", validatedData.logo);
       }
       
       const brand = await dbStorage.createBrand(validatedData);
