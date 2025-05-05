@@ -286,7 +286,8 @@ export default function BrandsCategoriesPage() {
     if (!brandToEdit) return;
     
     const formData = new FormData();
-    formData.append('data', JSON.stringify({ name: values.name, logo: brandToEdit.logo }));
+    // Don't include logo in the JSON data - it will be handled by the server
+    formData.append('data', JSON.stringify({ name: values.name }));
     
     if (values.logoFile && values.logoFile.length > 0) {
       formData.append('logo', values.logoFile[0]);
@@ -310,7 +311,8 @@ export default function BrandsCategoriesPage() {
     if (!categoryToEdit) return;
     
     const formData = new FormData();
-    formData.append('data', JSON.stringify({ name: values.name, image: categoryToEdit.image }));
+    // Don't include image in the JSON data - it will be handled by the server
+    formData.append('data', JSON.stringify({ name: values.name }));
     
     if (values.imageFile && values.imageFile.length > 0) {
       formData.append('image', values.imageFile[0]);
