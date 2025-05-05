@@ -546,15 +546,17 @@ export default function VehicleEditPage() {
                               <div className="mb-4">
                                 <FormLabel className="text-base">Badge</FormLabel>
                                 <FormDescription>
-                                  Seleziona i badge appropriati per questo veicolo:
-                                  • Premium: Per veicoli di alta gamma
-                                  • Promo: Per veicoli in promozione speciale
-                                  • Economica: Per veicoli a basso costo
-                                  • Zero Emissioni: Per veicoli elettrici o eco-friendly
-                                  • Riservato: Per veicoli già prenotati
-                                  • Assegnato: Per veicoli temporaneamente assegnati (non visibili nel catalogo)
-                                  • 2Life: Per veicoli usati (assegnato automaticamente sopra i 1000 km)
+                                  Seleziona i badge appropriati per questo veicolo
                                 </FormDescription>
+                                <ul className="list-disc pl-5 mt-2 text-xs text-neutral-500 space-y-1">
+                                  <li><span className="font-medium">Premium:</span> Per veicoli di alta gamma</li>
+                                  <li><span className="font-medium">Promo:</span> Per veicoli in promozione speciale</li>
+                                  <li><span className="font-medium">Economica:</span> Per veicoli a basso costo</li>
+                                  <li><span className="font-medium">Zero Emissioni:</span> Per veicoli elettrici o eco-friendly</li>
+                                  <li><span className="font-medium">Riservato:</span> Per veicoli già prenotati</li>
+                                  <li><span className="font-medium">Assegnato:</span> Per veicoli temporaneamente assegnati</li>
+                                  <li><span className="font-medium">2Life:</span> Per veicoli usati</li>
+                                </ul>
                               </div>
                               <div className="grid grid-cols-2 gap-3">
                                 {badgeOptions.map((badge) => (
