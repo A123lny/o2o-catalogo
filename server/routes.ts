@@ -166,7 +166,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const filters = req.query;
       const vehicles = await dbStorage.getVehicles(filters);
-      res.json(vehicles);
+      
+      // Correggi i percorsi delle immagini principali
+      const vehiclesWithFixedImages = vehicles.map(vehicle => {
+        let fixedVehicle = { ...vehicle };
+        
+        // Correggi mainImage
+        if (fixedVehicle.mainImage && !fixedVehicle.mainImage.startsWith('/uploads/') && !fixedVehicle.mainImage.startsWith('http')) {
+          fixedVehicle.mainImage = `/uploads/${fixedVehicle.mainImage}`;
+        }
+        
+        return fixedVehicle;
+      });
+      
+      res.json(vehiclesWithFixedImages);
     } catch (error) {
       res.status(500).json({ message: "Error fetching vehicles" });
     }
@@ -176,7 +189,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/vehicles/featured", async (req, res) => {
     try {
       const featuredVehicles = await dbStorage.getFeaturedVehicles();
-      res.json(featuredVehicles);
+      
+      // Correggi i percorsi delle immagini principali
+      const vehiclesWithFixedImages = featuredVehicles.map(vehicle => {
+        let fixedVehicle = { ...vehicle };
+        
+        // Correggi mainImage
+        if (fixedVehicle.mainImage && !fixedVehicle.mainImage.startsWith('/uploads/') && !fixedVehicle.mainImage.startsWith('http')) {
+          fixedVehicle.mainImage = `/uploads/${fixedVehicle.mainImage}`;
+        }
+        
+        return fixedVehicle;
+      });
+      
+      res.json(vehiclesWithFixedImages);
     } catch (error) {
       res.status(500).json({ message: "Error fetching featured vehicles" });
     }
@@ -192,7 +218,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Vehicle not found" });
       }
       
-      res.json(vehicle);
+      // Correggi il percorso dell'immagine principale
+      let fixedVehicle = { ...vehicle };
+      
+      if (fixedVehicle.mainImage && !fixedVehicle.mainImage.startsWith('/uploads/') && !fixedVehicle.mainImage.startsWith('http')) {
+        fixedVehicle.mainImage = `/uploads/${fixedVehicle.mainImage}`;
+      }
+      
+      res.json(fixedVehicle);
     } catch (error) {
       res.status(500).json({ message: "Error fetching vehicle" });
     }
@@ -223,7 +256,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/categories/active", async (req, res) => {
     try {
       const categories = await dbStorage.getActiveCategories();
-      res.json(categories);
+      
+      // Correggi i percorsi delle immagini per assicurarsi che inizino con "/uploads/"
+      const categoriesWithFixedImages = categories.map(category => {
+        if (!category.image) return category;
+        
+        // Se l'immagine non include già "/uploads/" all'inizio, aggiungilo
+        if (!category.image.startsWith('/uploads/')) {
+          return {
+            ...category,
+            image: `/uploads/${category.image}`
+          };
+        }
+        
+        return category;
+      });
+      
+      res.json(categoriesWithFixedImages);
     } catch (error) {
       res.status(500).json({ message: "Error fetching active categories" });
     }
@@ -243,7 +292,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/brands/active", async (req, res) => {
     try {
       const brands = await dbStorage.getActiveBrands();
-      res.json(brands);
+      
+      // Correggi i percorsi delle immagini per assicurarsi che inizino con "/uploads/"
+      const brandsWithFixedLogos = brands.map(brand => {
+        if (!brand.logo) return brand;
+        
+        // Se il logo non include già "/uploads/" all'inizio, aggiungilo
+        if (!brand.logo.startsWith('/uploads/')) {
+          return {
+            ...brand,
+            logo: `/uploads/${brand.logo}`
+          };
+        }
+        
+        return brand;
+      });
+      
+      res.json(brandsWithFixedLogos);
     } catch (error) {
       res.status(500).json({ message: "Error fetching active brands" });
     }
