@@ -91,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verifica la password attuale
-      const user = await storage.getUser(req.user!.id);
+      const user = await dbStorage.getUser(req.user!.id);
       const passwordMatches = await comparePasswords(currentPassword, user.password);
       
       if (!passwordMatches) {
@@ -125,21 +125,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await hashPassword(newPassword);
       
       // Aggiorna la password dell'utente
-      await storage.updateUser(req.user!.id, { password: hashedPassword });
+      await dbStorage.updateUser(req.user!.id, { password: hashedPassword });
       
       // Aggiungi la password alla cronologia
-      await storage.addPasswordToHistory(req.user!.id, hashedPassword);
+      await dbStorage.addPasswordToHistory(req.user!.id, hashedPassword);
       
       // Ottieni le impostazioni di sicurezza
-      const securitySettings = await storage.getSecuritySettings();
+      const securitySettings = await dbStorage.getSecuritySettings();
       
       // Pulisci la cronologia delle password se necessario
       if (securitySettings && securitySettings.passwordHistoryCount) {
-        await storage.cleanupPasswordHistory(req.user!.id, securitySettings.passwordHistoryCount);
+        await dbStorage.cleanupPasswordHistory(req.user!.id, securitySettings.passwordHistoryCount);
       }
       
       // Registra l'attività
-      await storage.createActivityLog({
+      await dbStorage.createActivityLog({
         userId: req.user!.id,
         action: "update",
         entityType: "user_password",
@@ -165,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/vehicles", async (req, res) => {
     try {
       const filters = req.query;
-      const vehicles = await storage.getVehicles(filters);
+      const vehicles = await dbStorage.getVehicles(filters);
       res.json(vehicles);
     } catch (error) {
       res.status(500).json({ message: "Error fetching vehicles" });
@@ -175,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get featured vehicles
   app.get("/api/vehicles/featured", async (req, res) => {
     try {
-      const featuredVehicles = await storage.getFeaturedVehicles();
+      const featuredVehicles = await dbStorage.getFeaturedVehicles();
       res.json(featuredVehicles);
     } catch (error) {
       res.status(500).json({ message: "Error fetching featured vehicles" });
@@ -186,7 +186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/vehicles/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const vehicle = await storage.getVehicle(id);
+      const vehicle = await dbStorage.getVehicle(id);
       
       if (!vehicle) {
         return res.status(404).json({ message: "Vehicle not found" });
@@ -202,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/vehicles/:id/related", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const relatedVehicles = await storage.getRelatedVehicles(id);
+      const relatedVehicles = await dbStorage.getRelatedVehicles(id);
       res.json(relatedVehicles);
     } catch (error) {
       res.status(500).json({ message: "Error fetching related vehicles" });
@@ -212,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all categories
   app.get("/api/categories", async (req, res) => {
     try {
-      const categories = await storage.getCategories();
+      const categories = await dbStorage.getCategories();
       res.json(categories);
     } catch (error) {
       res.status(500).json({ message: "Error fetching categories" });
@@ -222,7 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get active categories (con veicoli disponibili)
   app.get("/api/categories/active", async (req, res) => {
     try {
-      const categories = await storage.getActiveCategories();
+      const categories = await dbStorage.getActiveCategories();
       res.json(categories);
     } catch (error) {
       res.status(500).json({ message: "Error fetching active categories" });
@@ -232,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all brands
   app.get("/api/brands", async (req, res) => {
     try {
-      const brands = await storage.getBrands();
+      const brands = await dbStorage.getBrands();
       res.json(brands);
     } catch (error) {
       res.status(500).json({ message: "Error fetching brands" });
@@ -242,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get active brands (con veicoli disponibili)
   app.get("/api/brands/active", async (req, res) => {
     try {
-      const brands = await storage.getActiveBrands();
+      const brands = await dbStorage.getActiveBrands();
       res.json(brands);
     } catch (error) {
       res.status(500).json({ message: "Error fetching active brands" });
@@ -253,7 +253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/requests", async (req, res) => {
     try {
       const validatedData = insertRequestSchema.parse(req.body);
-      const request = await storage.createRequest(validatedData);
+      const request = await dbStorage.createRequest(validatedData);
       res.status(201).json(request);
     } catch (error) {
       res.status(400).json({ message: "Invalid request data" });
@@ -264,7 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/vehicles/:id/rental-options", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const rentalOptions = await storage.getRentalOptions(id);
+      const rentalOptions = await dbStorage.getRentalOptions(id);
       res.json(rentalOptions);
     } catch (error) {
       res.status(500).json({ message: "Error fetching rental options" });
@@ -275,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/rental-options/all", async (req, res) => {
     try {
       // Ottieni tutte le opzioni di noleggio dal database
-      const allOptions = await storage.getAllRentalOptions();
+      const allOptions = await dbStorage.getAllRentalOptions();
       res.json(allOptions);
     } catch (error) {
       res.status(500).json({ message: "Error fetching rental options" });
@@ -287,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard stats
   app.get("/api/admin/stats", isAdmin, async (req, res) => {
     try {
-      const stats = await storage.getStats();
+      const stats = await dbStorage.getStats();
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Error fetching stats" });
@@ -297,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CRUD operations for vehicles
   app.get("/api/admin/vehicles", isAdmin, async (req, res) => {
     try {
-      const vehicles = await storage.getAdminVehicles();
+      const vehicles = await dbStorage.getAdminVehicles();
       res.json(vehicles);
     } catch (error) {
       res.status(500).json({ message: "Error fetching vehicles" });
@@ -338,7 +338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validatedData.mainImage = `image_${Date.now()}.jpg`; // In real app, save to disk/S3
       }
       
-      const vehicle = await storage.createVehicle(validatedData);
+      const vehicle = await dbStorage.createVehicle(validatedData);
       res.status(201).json(vehicle);
     } catch (error) {
       console.error("Error creating vehicle:", error);
@@ -382,7 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validatedData.mainImage = `image_${Date.now()}.jpg`; // In real app, save to disk/S3
       }
       
-      const vehicle = await storage.updateVehicle(id, validatedData);
+      const vehicle = await dbStorage.updateVehicle(id, validatedData);
       res.json(vehicle);
     } catch (error) {
       console.error("Error updating vehicle:", error);
@@ -393,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/vehicles/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      await storage.deleteVehicle(id);
+      await dbStorage.deleteVehicle(id);
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({ message: "Error deleting vehicle" });
@@ -407,7 +407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { assigned } = req.body;
       
       // Recupera il veicolo
-      const vehicle = await storage.getVehicle(id);
+      const vehicle = await dbStorage.getVehicle(id);
       
       if (!vehicle) {
         return res.status(404).json({ message: "Vehicle not found" });
@@ -426,7 +426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { badges: _, ...vehicleData } = vehicle;
       
       // Aggiorna il veicolo
-      const updatedVehicle = await storage.updateVehicle(id, { 
+      const updatedVehicle = await dbStorage.updateVehicle(id, { 
         ...vehicleData, 
         badges: badges 
       });
@@ -448,7 +448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const imageUrls = files.map((file, index) => `image_${id}_${Date.now()}_${index}.jpg`);
-      await storage.addVehicleImages(id, imageUrls);
+      await dbStorage.addVehicleImages(id, imageUrls);
       
       res.status(201).json({ imageUrls });
     } catch (error) {
@@ -459,7 +459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CRUD operations for brands
   app.get("/api/admin/brands", isAdmin, async (req, res) => {
     try {
-      const brands = await storage.getBrands();
+      const brands = await dbStorage.getBrands();
       res.json(brands);
     } catch (error) {
       res.status(500).json({ message: "Error fetching brands" });
@@ -482,7 +482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validatedData.logo = `brand_${Date.now()}.jpg`;
       }
       
-      const brand = await storage.createBrand(validatedData);
+      const brand = await dbStorage.createBrand(validatedData);
       res.status(201).json(brand);
     } catch (error) {
       console.error("Error creating brand:", error);
@@ -510,7 +510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Brand logo updated:", validatedData.logo);
       }
       
-      const brand = await storage.updateBrand(id, validatedData);
+      const brand = await dbStorage.updateBrand(id, validatedData);
       res.json(brand);
     } catch (error) {
       console.error("Error updating brand:", error);
@@ -521,7 +521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/brands/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      await storage.deleteBrand(id);
+      await dbStorage.deleteBrand(id);
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({ message: "Error deleting brand" });
@@ -531,7 +531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CRUD operations for categories
   app.get("/api/admin/categories", isAdmin, async (req, res) => {
     try {
-      const categories = await storage.getCategories();
+      const categories = await dbStorage.getCategories();
       res.json(categories);
     } catch (error) {
       res.status(500).json({ message: "Error fetching categories" });
@@ -556,7 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Category image saved:", validatedData.image);
       }
       
-      const category = await storage.createCategory(validatedData);
+      const category = await dbStorage.createCategory(validatedData);
       res.status(201).json(category);
     } catch (error) {
       console.error("Error creating category:", error);
@@ -584,7 +584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Category image updated:", validatedData.image);
       }
       
-      const category = await storage.updateCategory(id, validatedData);
+      const category = await dbStorage.updateCategory(id, validatedData);
       res.json(category);
     } catch (error) {
       console.error("Error updating category:", error);
@@ -595,7 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/categories/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      await storage.deleteCategory(id);
+      await dbStorage.deleteCategory(id);
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({ message: "Error deleting category" });
@@ -606,7 +606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/vehicles/:id/rental-options", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const rentalOptions = await storage.getRentalOptions(id);
+      const rentalOptions = await dbStorage.getRentalOptions(id);
       res.json(rentalOptions);
     } catch (error) {
       res.status(500).json({ message: "Error fetching rental options" });
@@ -616,7 +616,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/rental-options/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const rentalOption = await storage.getRentalOption(id);
+      const rentalOption = await dbStorage.getRentalOption(id);
       
       if (!rentalOption) {
         return res.status(404).json({ message: "Rental option not found" });
@@ -636,7 +636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         vehicleId
       });
       
-      const rentalOption = await storage.createRentalOption(validatedData);
+      const rentalOption = await dbStorage.createRentalOption(validatedData);
       res.status(201).json(rentalOption);
     } catch (error) {
       res.status(400).json({ message: "Invalid rental option data" });
@@ -648,7 +648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = insertRentalOptionSchema.parse(req.body);
       
-      const rentalOption = await storage.updateRentalOption(id, validatedData);
+      const rentalOption = await dbStorage.updateRentalOption(id, validatedData);
       res.json(rentalOption);
     } catch (error) {
       res.status(400).json({ message: "Invalid rental option data" });
@@ -658,7 +658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/rental-options/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      await storage.deleteRentalOption(id);
+      await dbStorage.deleteRentalOption(id);
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({ message: "Error deleting rental option" });
@@ -668,7 +668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Information requests management
   app.get("/api/admin/requests", isAdmin, async (req, res) => {
     try {
-      const requests = await storage.getRequests();
+      const requests = await dbStorage.getRequests();
       res.json(requests);
     } catch (error) {
       res.status(500).json({ message: "Error fetching requests" });
@@ -684,7 +684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid status" });
       }
       
-      const request = await storage.updateRequestStatus(id, status);
+      const request = await dbStorage.updateRequestStatus(id, status);
       res.json(request);
     } catch (error) {
       res.status(500).json({ message: "Error updating request" });
@@ -694,7 +694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/requests/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      await storage.deleteRequest(id);
+      await dbStorage.deleteRequest(id);
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({ message: "Error deleting request" });
@@ -706,7 +706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Ottieni le impostazioni delle promozioni
   app.get("/api/admin/promo/settings", isAdmin, async (req, res) => {
     try {
-      const settings = await storage.getPromoSettings();
+      const settings = await dbStorage.getPromoSettings();
       res.json(settings);
     } catch (error) {
       res.status(500).json({ message: "Error fetching promo settings" });
@@ -717,7 +717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/promo/settings", isAdmin, async (req, res) => {
     try {
       const validatedData = insertPromoSettingsSchema.parse(req.body);
-      const settings = await storage.updatePromoSettings(validatedData);
+      const settings = await dbStorage.updatePromoSettings(validatedData);
       res.json(settings);
     } catch (error) {
       res.status(400).json({ message: "Invalid promo settings data" });
@@ -727,7 +727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Ottieni i veicoli in promozione con il loro ordine
   app.get("/api/admin/promo/vehicles", isAdmin, async (req, res) => {
     try {
-      const promoVehicles = await storage.getFeaturedPromoVehicles();
+      const promoVehicles = await dbStorage.getFeaturedPromoVehicles();
       res.json(promoVehicles);
     } catch (error) {
       res.status(500).json({ message: "Error fetching promo vehicles" });
@@ -740,7 +740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const vehicleId = parseInt(req.params.id);
       const { displayOrder } = req.body;
       
-      const promoItem = await storage.addVehicleToPromo(
+      const promoItem = await dbStorage.addVehicleToPromo(
         vehicleId, 
         displayOrder !== undefined ? parseInt(displayOrder) : undefined
       );
@@ -755,7 +755,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/promo/vehicles/:id", isAdmin, async (req, res) => {
     try {
       const vehicleId = parseInt(req.params.id);
-      await storage.removeVehicleFromPromo(vehicleId);
+      await dbStorage.removeVehicleFromPromo(vehicleId);
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({ message: "Error removing vehicle from promo" });
@@ -771,7 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid promos data" });
       }
       
-      const updatedPromos = await storage.updatePromoOrder(promos);
+      const updatedPromos = await dbStorage.updatePromoOrder(promos);
       res.json(updatedPromos);
     } catch (error) {
       res.status(500).json({ message: "Error updating promo order" });
@@ -783,7 +783,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Ottiene tutte le province
   app.get("/api/provinces", async (req, res) => {
     try {
-      const provinces = await storage.getProvinces();
+      const provinces = await dbStorage.getProvinces();
       res.json(provinces);
     } catch (error) {
       res.status(500).json({ message: "Errore nel recupero delle province", error });
@@ -793,7 +793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Ottiene solo le province attive
   app.get("/api/provinces/active", async (req, res) => {
     try {
-      const provinces = await storage.getActiveProvinces();
+      const provinces = await dbStorage.getActiveProvinces();
       res.json(provinces);
     } catch (error) {
       res.status(500).json({ message: "Errore nel recupero delle province attive", error });
@@ -803,7 +803,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API per la gestione admin delle province
   app.get("/api/admin/provinces", isAdmin, async (req, res) => {
     try {
-      const provinces = await storage.getProvinces();
+      const provinces = await dbStorage.getProvinces();
       res.json(provinces);
     } catch (error) {
       res.status(500).json({ message: "Errore nel recupero delle province", error });
@@ -813,10 +813,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/provinces", isAdmin, async (req, res) => {
     try {
       const validatedData = insertProvinceSchema.parse(req.body);
-      const province = await storage.createProvince(validatedData);
+      const province = await dbStorage.createProvince(validatedData);
       
       // Registra l'attività
-      await storage.createActivityLog({
+      await dbStorage.createActivityLog({
         userId: req.user!.id,
         action: "create",
         entityType: "province",
@@ -833,10 +833,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/provinces/:id", isAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     try {
-      const province = await storage.updateProvince(id, req.body);
+      const province = await dbStorage.updateProvince(id, req.body);
       
       // Registra l'attività
-      await storage.createActivityLog({
+      await dbStorage.createActivityLog({
         userId: req.user!.id,
         action: "update",
         entityType: "province",
@@ -853,12 +853,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/provinces/:id", isAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     try {
-      const province = await storage.getProvince(id);
-      await storage.deleteProvince(id);
+      const province = await dbStorage.getProvince(id);
+      await dbStorage.deleteProvince(id);
       
       // Registra l'attività
       if (province) {
-        await storage.createActivityLog({
+        await dbStorage.createActivityLog({
           userId: req.user!.id,
           action: "delete",
           entityType: "province",
@@ -876,10 +876,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/provinces/update-status", isAdmin, async (req, res) => {
     const { ids, isActive } = req.body;
     try {
-      await storage.updateProvincesStatus(ids, isActive);
+      await dbStorage.updateProvincesStatus(ids, isActive);
       
       // Registra l'attività
-      await storage.createActivityLog({
+      await dbStorage.createActivityLog({
         userId: req.user!.id,
         action: isActive ? "activate" : "deactivate",
         entityType: "provinces",
@@ -896,7 +896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/settings/general", async (req, res) => {
     try {
-      const settings = await storage.getGeneralSettings();
+      const settings = await dbStorage.getGeneralSettings();
       res.json(settings || {});
     } catch (error) {
       res.status(500).json({ message: "Errore nel recupero delle impostazioni generali", error });
@@ -906,10 +906,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/settings/general", isAdmin, async (req, res) => {
     try {
       const validatedData = insertGeneralSettingsSchema.parse(req.body);
-      const settings = await storage.updateGeneralSettings(validatedData);
+      const settings = await dbStorage.updateGeneralSettings(validatedData);
       
       // Registra l'attività
-      await storage.createActivityLog({
+      await dbStorage.createActivityLog({
         userId: req.user!.id,
         action: "update",
         entityType: "general_settings",
@@ -926,7 +926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/admin/settings/security", isAdmin, async (req, res) => {
     try {
-      const settings = await storage.getSecuritySettings();
+      const settings = await dbStorage.getSecuritySettings();
       res.json(settings || {});
     } catch (error) {
       res.status(500).json({ message: "Errore nel recupero delle impostazioni di sicurezza", error });
@@ -936,10 +936,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/settings/security", isAdmin, async (req, res) => {
     try {
       const validatedData = insertSecuritySettingsSchema.parse(req.body);
-      const settings = await storage.updateSecuritySettings(validatedData);
+      const settings = await dbStorage.updateSecuritySettings(validatedData);
       
       // Registra l'attività
-      await storage.createActivityLog({
+      await dbStorage.createActivityLog({
         userId: req.user!.id,
         action: "update",
         entityType: "security_settings",
@@ -961,7 +961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/activity-logs", isAdmin, async (req, res) => {
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
     try {
-      const logs = await storage.getActivityLogs(limit);
+      const logs = await dbStorage.getActivityLogs(limit);
       res.json(logs);
     } catch (error) {
       res.status(500).json({ message: "Errore nel recupero del registro attività", error });
@@ -970,7 +970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/activity-logs", isAdmin, async (req, res) => {
     try {
-      const log = await storage.createActivityLog({
+      const log = await dbStorage.createActivityLog({
         userId: req.user!.id,
         ...req.body
       });
@@ -984,7 +984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userId = parseInt(req.params.userId);
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
     try {
-      const logs = await storage.getActivityLogsByUser(userId, limit);
+      const logs = await dbStorage.getActivityLogsByUser(userId, limit);
       res.json(logs);
     } catch (error) {
       res.status(500).json({ message: "Errore nel recupero delle attività dell'utente", error });
@@ -994,7 +994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API per le province
   app.get("/api/provinces", async (req, res) => {
     try {
-      const provinces = await storage.getProvinces();
+      const provinces = await dbStorage.getProvinces();
       res.json(provinces);
     } catch (error) {
       res.status(500).json({ message: "Errore nel recupero delle province" });
@@ -1010,8 +1010,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const twoFactorAuth = await storage.getUserTwoFactorAuth(req.user.id);
-      const securitySettings = await storage.getSecuritySettings();
+      const twoFactorAuth = await dbStorage.getUserTwoFactorAuth(req.user.id);
+      const securitySettings = await dbStorage.getSecuritySettings();
       
       res.json({
         isEnabled: !!twoFactorAuth,
@@ -1033,9 +1033,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       // Verifica se l'utente ha già configurato il 2FA
-      const existingSetup = await storage.getUserTwoFactorAuth(req.user.id);
+      const existingSetup = await dbStorage.getUserTwoFactorAuth(req.user.id);
       if (existingSetup) {
-        await storage.deleteTwoFactorAuth(req.user.id);
+        await dbStorage.deleteTwoFactorAuth(req.user.id);
       }
       
       // Genera un nuovo secret
@@ -1068,7 +1068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Perché l'utente deve ancora essere autenticato tramite il flusso di login
         
         // Ottieni i codici di backup per mostrarli all'utente
-        const twoFactorAuth = await storage.getUserTwoFactorAuth(userId);
+        const twoFactorAuth = await dbStorage.getUserTwoFactorAuth(userId);
         
         if (twoFactorAuth && twoFactorAuth.backupCodes) {
           res.json({ 
@@ -1137,7 +1137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/integrations/social/:provider", isAdmin, async (req, res) => {
     try {
       const { provider } = req.params;
-      const config = await storage.getSocialLoginConfig(provider);
+      const config = await dbStorage.getSocialLoginConfig(provider);
       
       if (!config) {
         // Se non esiste configurazione, ritorniamo un oggetto vuoto 
@@ -1165,7 +1165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Assicurati che provider sia nel corpo della richiesta
       data.provider = provider;
       
-      const config = await storage.saveSocialLoginConfig(data);
+      const config = await dbStorage.saveSocialLoginConfig(data);
       res.json(config);
     } catch (error) {
       console.error("Errore nel salvataggio della configurazione social:", error);
@@ -1176,7 +1176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Email Configuration
   app.get("/api/integrations/email", isAdmin, async (req, res) => {
     try {
-      const config = await storage.getEmailConfig();
+      const config = await dbStorage.getEmailConfig();
       
       if (!config) {
         return res.json({
@@ -1219,7 +1219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/integrations/email", isAdmin, async (req, res) => {
     try {
       const data = req.body;
-      const config = await storage.saveEmailConfig(data);
+      const config = await dbStorage.saveEmailConfig(data);
       
       res.json(config);
     } catch (error) {
@@ -1231,7 +1231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Email templates
   app.get("/api/integrations/email-templates", isAdmin, async (req, res) => {
     try {
-      const templates = await storage.getEmailTemplates();
+      const templates = await dbStorage.getEmailTemplates();
       
       // Converte l'array di templates in un oggetto con nome del template come chiave
       const templatesMap = templates.reduce((acc, template) => {
@@ -1257,7 +1257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Campi obbligatori mancanti" });
       }
       
-      const template = await storage.saveEmailTemplate({
+      const template = await dbStorage.saveEmailTemplate({
         name,
         subject,
         body,
@@ -1273,7 +1273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Twilio (SMS) Configuration
   app.get("/api/integrations/twilio", isAdmin, async (req, res) => {
     try {
-      const config = await storage.getTwilioConfig();
+      const config = await dbStorage.getTwilioConfig();
       
       if (!config) {
         return res.json({
@@ -1295,7 +1295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/integrations/twilio", isAdmin, async (req, res) => {
     try {
       const data = req.body;
-      const config = await storage.saveTwilioConfig(data);
+      const config = await dbStorage.saveTwilioConfig(data);
       
       res.json(config);
     } catch (error) {
@@ -1308,7 +1308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/integrations/payment/:provider", isAdmin, async (req, res) => {
     try {
       const { provider } = req.params;
-      const config = await storage.getPaymentConfig(provider);
+      const config = await dbStorage.getPaymentConfig(provider);
       
       if (!config) {
         return res.json({
@@ -1334,7 +1334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Assicurati che provider sia nel corpo della richiesta
       data.provider = provider;
       
-      const config = await storage.savePaymentConfig(data);
+      const config = await dbStorage.savePaymentConfig(data);
       
       res.json(config);
     } catch (error) {
@@ -1351,13 +1351,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       // Get email configuration
-      const emailConfig = await storage.getEmailConfig() || {
+      const emailConfig = await dbStorage.getEmailConfig() || {
         enabled: false,
         provider: "smtp",
       };
       
       // Get email templates
-      const emailTemplates = await storage.getEmailTemplates();
+      const emailTemplates = await dbStorage.getEmailTemplates();
       const templatesMap = emailTemplates.reduce((acc, template) => {
         acc[template.name] = {
           subject: template.subject,
@@ -1367,12 +1367,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }, {});
       
       // Get Twilio configuration
-      const twilioConfig = await storage.getTwilioConfig() || {
+      const twilioConfig = await dbStorage.getTwilioConfig() || {
         enabled: false,
       };
       
       // Get social login configurations
-      const socialLoginConfigs = await storage.getSocialLoginConfigs();
+      const socialLoginConfigs = await dbStorage.getSocialLoginConfigs();
       let socialLogin: {
         googleEnabled: boolean;
         facebookEnabled: boolean;
@@ -1406,7 +1406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Get payment configurations
-      const paymentConfigs = await storage.getPaymentConfigs();
+      const paymentConfigs = await dbStorage.getPaymentConfigs();
       let payment: {
         stripeEnabled: boolean;
         paypalEnabled: boolean;
@@ -1452,7 +1452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const emailConfig = await storage.saveEmailConfig(req.body);
+      const emailConfig = await dbStorage.saveEmailConfig(req.body);
       res.json(emailConfig);
     } catch (error) {
       console.error("Error saving email config:", error);
@@ -1473,7 +1473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required fields" });
       }
       
-      const template = await storage.saveEmailTemplate({
+      const template = await dbStorage.saveEmailTemplate({
         name,
         subject,
         body,
@@ -1499,7 +1499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required fields" });
       }
       
-      const success = await storage.sendEmail(to, templateName, {
+      const success = await dbStorage.sendEmail(to, templateName, {
         username: req.user.username,
         siteName: "o2o Mobility",
         url: process.env.BASE_URL || "https://o2mobility.com",
@@ -1523,7 +1523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const twilioConfig = await storage.saveTwilioConfig(req.body);
+      const twilioConfig = await dbStorage.saveTwilioConfig(req.body);
       res.json(twilioConfig);
     } catch (error) {
       console.error("Error saving Twilio config:", error);
@@ -1544,7 +1544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing phone number" });
       }
       
-      const success = await storage.sendSMS(to, "This is a test message from o2o Mobility");
+      const success = await dbStorage.sendSMS(to, "This is a test message from o2o Mobility");
       
       if (success) {
         res.json({ success: true });
@@ -1572,7 +1572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update Google config
       if (googleEnabled !== undefined) {
-        await storage.saveSocialLoginConfig({
+        await dbStorage.saveSocialLoginConfig({
           provider: "google",
           enabled: googleEnabled,
           clientId: googleClientId || "",
@@ -1582,7 +1582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update Facebook config
       if (facebookEnabled !== undefined) {
-        await storage.saveSocialLoginConfig({
+        await dbStorage.saveSocialLoginConfig({
           provider: "facebook",
           enabled: facebookEnabled,
           clientId: facebookAppId || "",
@@ -1592,7 +1592,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update GitHub config
       if (githubEnabled !== undefined) {
-        await storage.saveSocialLoginConfig({
+        await dbStorage.saveSocialLoginConfig({
           provider: "github",
           enabled: githubEnabled,
           clientId: githubClientId || "",
@@ -1617,13 +1617,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Recupera la configurazione email
-      const emailConfig = await storage.getEmailConfig();
+      const emailConfig = await dbStorage.getEmailConfig();
       if (!emailConfig || !emailConfig.enabled) {
         return res.status(400).json({ message: "La configurazione email non è attiva" });
       }
       
       // Recupera il template email
-      const template = await storage.getEmailTemplate(templateName || "welcome");
+      const template = await dbStorage.getEmailTemplate(templateName || "welcome");
       if (!template) {
         return res.status(404).json({ message: "Template email non trovato" });
       }
@@ -1684,7 +1684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update Stripe config
       if (stripeEnabled !== undefined) {
-        await storage.savePaymentConfig({
+        await dbStorage.savePaymentConfig({
           provider: "stripe",
           enabled: stripeEnabled,
           publicKey: stripePublicKey || "",
@@ -1694,7 +1694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update PayPal config
       if (paypalEnabled !== undefined) {
-        await storage.savePaymentConfig({
+        await dbStorage.savePaymentConfig({
           provider: "paypal",
           enabled: paypalEnabled,
           publicKey: paypalClientId || "",
@@ -1712,7 +1712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Endpoint pubblico per ottenere i provider di social login attivi
   app.get("/api/auth/social-providers", async (req, res) => {
     try {
-      const socialLoginConfigs = await storage.getSocialLoginConfigs();
+      const socialLoginConfigs = await dbStorage.getSocialLoginConfigs();
       
       // Restituisci solo i provider attivi e le informazioni pubbliche (client ID)
       const activeProviders = socialLoginConfigs
