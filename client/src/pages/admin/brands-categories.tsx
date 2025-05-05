@@ -432,7 +432,7 @@ export default function BrandsCategoriesPage() {
                                 <div className="h-10 w-10 rounded bg-neutral-100 flex items-center justify-center overflow-hidden">
                                   {brand.logo ? (
                                     <img 
-                                      src={brand.logo} 
+                                      src={brand.logo.startsWith('/uploads/') || brand.logo.startsWith('http') ? brand.logo : `/uploads/${brand.logo}`} 
                                       alt={brand.name} 
                                       className="h-full w-full object-contain"
                                     />
@@ -521,7 +521,7 @@ export default function BrandsCategoriesPage() {
                                 <div className="h-10 w-10 rounded bg-neutral-100 flex items-center justify-center overflow-hidden">
                                   {category.image ? (
                                     <img 
-                                      src={category.image} 
+                                      src={category.image.startsWith('/uploads/') || category.image.startsWith('http') ? category.image : `/uploads/${category.image}`} 
                                       alt={category.name} 
                                       className="h-full w-full object-cover"
                                     />
