@@ -85,7 +85,8 @@ const badgeOptions = [
 ];
 
 export default function VehicleEditPage() {
-  const [, params] = useRoute("/admin/vehicles/:id/edit");
+  // Intercetta entrambi i percorsi, sia per la modifica che per la creazione
+  const [, params] = useRoute(["/admin/vehicles/:id/edit", "/admin/vehicles/new"]);
   const [location, setLocation] = useLocation();
   const isEditMode = !!params?.id;
   const vehicleId = params?.id ? parseInt(params.id) : null;
