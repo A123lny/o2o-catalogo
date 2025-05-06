@@ -116,7 +116,7 @@ export default function UsersPage() {
 
   // Fetch users
   const { data: users, isLoading: isLoadingUsers } = useQuery<User[]>({
-    queryKey: ['/api/admin/users'],
+    queryKey: ['/api/users'],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/users");
       return await res.json();
@@ -130,7 +130,7 @@ export default function UsersPage() {
       return await apiRequest("POST", "/api/register", userData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       toast({
         title: "Utente creato",
         description: "Il nuovo utente è stato creato con successo.",
@@ -153,7 +153,7 @@ export default function UsersPage() {
       return await apiRequest("DELETE", `/api/admin/users/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       toast({
         title: "Utente eliminato",
         description: "L'utente è stato eliminato con successo.",
