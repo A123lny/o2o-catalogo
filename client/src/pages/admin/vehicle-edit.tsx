@@ -334,8 +334,24 @@ export default function VehicleEditPage() {
           });
         }
       }
-    } catch (error) {
+      
+      // Mostra il toast di successo e reindirizza
+      toast({
+        title: isEditMode ? "Veicolo aggiornato" : "Veicolo creato",
+        description: isEditMode 
+          ? "Il veicolo è stato aggiornato con successo." 
+          : "Il nuovo veicolo è stato creato con successo.",
+      });
+      
+      // Reindirizza all'elenco dei veicoli
+      setLocation('/admin/vehicles');
+    } catch (error: any) {
       console.error("Error submitting form:", error);
+      toast({
+        title: "Errore",
+        description: error.message || `Si è verificato un errore durante il ${isEditMode ? 'aggiornamento' : 'salvataggio'} del veicolo.`,
+        variant: "destructive",
+      });
     }
   };
 
