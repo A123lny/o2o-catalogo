@@ -325,6 +325,12 @@ export default function VehicleEditPage() {
       images: values.images || []
     };
     
+    // Se siamo in modalità modifica e non c'è un'immagine principale ma prima c'era,
+    // segnaliamo al server di rimuovere l'immagine principale
+    if (isEditMode && !mainImageFile && !mainImagePreview && vehicle?.mainImage) {
+      dataToSend.mainImage = null; // Indica al server di eliminare l'immagine principale
+    }
+    
     // Convert the main data to JSON and add it to the form
     formData.append('data', JSON.stringify(dataToSend));
     
@@ -882,18 +888,22 @@ export default function VehicleEditPage() {
                                   alt="Anteprima immagine principale" 
                                   className="max-h-64 mx-auto object-contain rounded-md"
                                 />
-                                <Button
-                                  type="button"
-                                  variant="destructive"
-                                  size="icon"
-                                  className="absolute top-2 right-2"
-                                  onClick={() => {
-                                    setMainImagePreview(null);
-                                    setMainImageFile(null);
-                                  }}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
+                                <div className="absolute top-2 right-2 flex gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    onClick={() => {
+                                      if (window.confirm("Sei sicuro di voler rimuovere l'immagine principale?")) {
+                                        setMainImagePreview(null);
+                                        setMainImageFile(null);
+                                        console.log('Immagine principale rimossa');
+                                      }
+                                    }}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                             ) : (
                               <>
