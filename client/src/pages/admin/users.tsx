@@ -93,7 +93,7 @@ export default function UsersPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
 
   // Form utente
   const form = useForm<UserFormValues>({
@@ -184,7 +184,7 @@ export default function UsersPage() {
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.fullName.toLowerCase().includes(searchTerm.toLowerCase());
       
-    const matchesRole = roleFilter === "" || user.role === roleFilter;
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
     
     return matchesSearch && matchesRole;
   });
@@ -247,7 +247,7 @@ export default function UsersPage() {
                   <SelectValue placeholder="Filtra per ruolo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tutti i ruoli</SelectItem>
+                  <SelectItem value="all">Tutti i ruoli</SelectItem>
                   <SelectItem value="admin">Amministratori</SelectItem>
                   <SelectItem value="user">Utenti</SelectItem>
                 </SelectContent>
@@ -343,7 +343,7 @@ export default function UsersPage() {
                   <UserIcon className="h-12 w-12 text-neutral-300 mb-4" />
                   <h3 className="text-lg font-medium text-neutral-800 mb-1">Nessun utente trovato</h3>
                   <p className="text-neutral-500 mb-4">
-                    {searchTerm || roleFilter 
+                    {searchTerm || roleFilter !== "all" 
                       ? 'Nessun utente corrisponde ai criteri di ricerca' 
                       : 'Aggiungi il primo utente per iniziare'}
                   </p>
