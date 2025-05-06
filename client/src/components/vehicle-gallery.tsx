@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Maximize } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize, ImageIcon } from "lucide-react";
 
 interface VehicleGalleryProps {
   mainImage?: string;
@@ -15,9 +15,15 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [validImages, setValidImages] = useState<string[]>([]);
-
-  // Default fallback image
-  const defaultImage = "/no-photo.jpg";
+  
+  // Per debug
+  useEffect(() => {
+    console.log("VehicleGallery montato con:", { 
+      mainImage, 
+      imagesCount: images?.length,
+      validImagesCount: validImages.length
+    });
+  }, []);
 
   // Process images on component mount and when props change
   useEffect(() => {
@@ -68,7 +74,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
 
   // Process image URL for API proxy if needed
   const processImageUrl = (url: string) => {
-    if (!url) return defaultImage;
+    if (!url) return "";
     
     // For external images, use the proxy
     if (url.startsWith("http")) {
@@ -101,16 +107,18 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
       <div className="relative bg-white rounded-lg overflow-hidden shadow-md">
         <div className="relative">
           {/* Main image display */}
-          <img 
-            src={currentImage ? processImageUrl(currentImage) : defaultImage} 
-            alt={title} 
-            className="w-full h-[450px] object-cover cursor-pointer"
-            onClick={() => validImages.length > 0 && openLightbox(selectedIndex)}
-            onError={(e) => {
-              e.currentTarget.onerror = null; // Prevent infinite loops
-              e.currentTarget.src = defaultImage;
-            }}
-          />
+          {currentImage ? (
+            <img 
+              src={processImageUrl(currentImage)} 
+              alt={title} 
+              className="w-full h-[450px] object-cover cursor-pointer"
+              onClick={() => validImages.length > 0 && openLightbox(selectedIndex)}
+            />
+          ) : (
+            <div className="w-full h-[450px] bg-neutral-100 flex items-center justify-center">
+              <ImageIcon className="h-20 w-20 text-neutral-300" />
+            </div>
+          )}
           
           {/* Fullscreen button */}
           {validImages.length > 0 && (
@@ -141,10 +149,6 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                     src={processImageUrl(image)} 
                     alt={`${title} - Image ${index + 1}`} 
                     className="w-full h-16 object-cover"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = defaultImage;
-                    }}
                   />
                 </div>
               ))}
@@ -169,15 +173,17 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
               <ChevronLeft className="h-8 w-8" />
             </Button>
 
-            <img 
-              src={validImages.length > 0 ? processImageUrl(validImages[lightboxIndex]) : defaultImage} 
-              alt={`${title} - Lightbox ${lightboxIndex + 1}`} 
-              className="max-h-full max-w-full object-contain"
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = defaultImage;
-              }}
-            />
+            {validImages.length > 0 ? (
+              <img 
+                src={processImageUrl(validImages[lightboxIndex])} 
+                alt={`${title} - Lightbox ${lightboxIndex + 1}`} 
+                className="max-h-full max-w-full object-contain"
+              />
+            ) : (
+              <div className="flex items-center justify-center w-full h-full">
+                <ImageIcon className="h-20 w-20 text-neutral-400" />
+              </div>
+            )}
 
             <Button 
               className="absolute right-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white" 

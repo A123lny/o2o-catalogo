@@ -35,8 +35,8 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
   // Funzione per gestire l'immagine
   const getImageUrl = () => {
     if (!vehicle.mainImage || vehicle.mainImage.trim() === "") {
-      // Utilizziamo una immagine statica fallback
-      return "/no-photo.jpg";
+      // Nessuna immagine, restituiamo stringa vuota e gestiamo con CSS
+      return "";
     }
     
     // Per le immagini esterne, aggiungiamo il proxy
@@ -51,15 +51,17 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <div className="relative">
         <Link href={`/vehicle/${vehicle.id}`}>
-          <img 
-            src={getImageUrl()} 
-            alt={vehicle.title} 
-            className="w-full h-48 object-cover"
-            onError={(e) => {
-              e.currentTarget.onerror = null; // Prevent infinite loops
-              e.currentTarget.src = "/no-photo.jpg";
-            }}
-          />
+          {vehicle.mainImage ? (
+            <img 
+              src={getImageUrl()} 
+              alt={vehicle.title} 
+              className="w-full h-48 object-cover"
+            />
+          ) : (
+            <div className="w-full h-48 bg-neutral-100 flex items-center justify-center">
+              <Car className="h-12 w-12 text-neutral-300" />
+            </div>
+          )}
         </Link>
         
         {/* Badge sul lato sinistro */}
