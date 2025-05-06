@@ -9,6 +9,11 @@ import sgMail from "@sendgrid/mail";
 import multer from "multer";
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+// Ottieni il percorso assoluto per __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { 
   insertVehicleSchema, 
   insertBrandSchema, 
