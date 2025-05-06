@@ -100,7 +100,19 @@ export default function AuthPage() {
       {/* Left Column - Auth Form */}
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
-          <CardHeader>
+          <CardHeader className="relative">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute left-0 top-0 m-2"
+              onClick={() => window.history.back()}
+              aria-label="Torna indietro"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left">
+                <path d="m12 19-7-7 7-7"></path>
+                <path d="M19 12H5"></path>
+              </svg>
+            </Button>
             <CardTitle className="text-2xl text-center">
               {isLoadingSettings ? (
                 <div className="flex items-center justify-center">
@@ -270,13 +282,16 @@ export default function AuthPage() {
               </TabsContent>
             </Tabs>
           </CardContent>
-          <CardFooter className="flex justify-center">
-            <p className="text-sm text-muted-foreground">
+          <CardFooter className="flex flex-col space-y-3 px-4">
+            <p className="text-sm text-muted-foreground text-center">
               {activeTab === 'login' ? (
                 <>Non hai un account? <Button variant="link" className="p-0" onClick={() => setActiveTab('register')}>Registrati</Button></>
               ) : (
                 <>Hai già un account? <Button variant="link" className="p-0" onClick={() => setActiveTab('login')}>Accedi</Button></>
               )}
+            </p>
+            <p className="text-center text-sm text-muted-foreground">
+              Effettuando l'accesso o la registrazione, accetti i nostri <a href="#" className="underline">Termini di servizio</a> e <a href="#" className="underline">Privacy Policy</a>.
             </p>
           </CardFooter>
         </Card>
