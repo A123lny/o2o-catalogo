@@ -91,18 +91,9 @@ export async function setupImageProxy(req: Request, res: Response) {
     } catch (error: any) {
       console.error(`Errore nel recupero dell'immagine da ${url}:`, error.message);
       
-      // Servi un'immagine di fallback
-      const fallbackPath = path.join(__dirname, '../public/fallback-car-image.svg');
-      
-      // Verifica se esiste l'immagine di fallback
-      if (await existsAsync(fallbackPath)) {
-        console.log(`Serving fallback image for: ${url}`);
-        return res.sendFile(fallbackPath);
-      } else {
-        // Se non esiste, genera un'immagine di fallback e restituiscila
-        console.log(`Fallback image not found, serving 404`);
-        return res.status(404).send('Immagine non trovata');
-      }
+      // Invece di un'immagine fallback, restituiamo un errore 404 che verrà gestito dal frontend
+      console.log(`Serving 404 for image: ${url}`);
+      return res.status(404).send('Immagine non trovata');
     }
     
   } catch (error) {

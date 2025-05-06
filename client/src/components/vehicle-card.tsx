@@ -44,6 +44,11 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       return `/api/image-proxy?url=${encodeURIComponent(vehicle.mainImage)}`;
     }
     
+    // Assicurati che il percorso inizi con /uploads/
+    if (!vehicle.mainImage.startsWith('/uploads/')) {
+      return `/uploads/${vehicle.mainImage}`;
+    }
+    
     return vehicle.mainImage;
   };
 

@@ -15,15 +15,6 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [validImages, setValidImages] = useState<string[]>([]);
-  
-  // Per debug
-  useEffect(() => {
-    console.log("VehicleGallery montato con:", { 
-      mainImage, 
-      imagesCount: images?.length,
-      validImagesCount: validImages.length
-    });
-  }, []);
 
   // Process images on component mount and when props change
   useEffect(() => {
@@ -79,6 +70,11 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
     // For external images, use the proxy
     if (url.startsWith("http")) {
       return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    
+    // Assicurati che il percorso inizi con /uploads/
+    if (!url.startsWith('/uploads/')) {
+      return `/uploads/${url}`;
     }
     
     return url;
