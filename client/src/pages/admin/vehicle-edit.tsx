@@ -230,32 +230,105 @@ export default function VehicleEditPage() {
     },
   });
 
+  // Gestisce il caricamento dell'immagine principale
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Verifica dimensione massima (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Errore caricamento",
+          description: "L'immagine selezionata supera la dimensione massima di 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Verifica tipo file
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Errore caricamento",
+          description: "Il file selezionato non è un'immagine valida",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Aggiorna lo stato locale
       setMainImageFile(file);
       setMainImagePreview(URL.createObjectURL(file));
+      
+      console.log('Immagine principale selezionata:', file.name);
     }
   };
 
+  // Gestisce il caricamento delle immagini di galleria
   const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      setImagesFiles(prev => [...prev, ...newFiles]);
       
-      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      // Valida ogni file
+      const validFiles = newFiles.filter(file => {
+        // Verifica dimensione massima (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: "File ignorato",
+            description: `L'immagine ${file.name} supera la dimensione massima di 5MB`,
+            variant: "destructive"
+          });
+          return false;
+        }
+        
+        // Verifica tipo file
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: "File ignorato",
+            description: `Il file ${file.name} non è un'immagine valida`,
+            variant: "destructive"
+          });
+          return false;
+        }
+        
+        return true;
+      });
+      
+      if (validFiles.length === 0) return;
+      
+      // Aggiorna lo stato locale
+      setImagesFiles(prev => [...prev, ...validFiles]);
+      
+      // Crea gli URL per le anteprime
+      const newPreviews = validFiles.map(file => URL.createObjectURL(file));
       setImagesPreview(prev => [...prev, ...newPreviews]);
+      
+      console.log(`Aggiunte ${validFiles.length} immagini alla galleria`);
     }
   };
 
+  // Rimuove un'immagine dalla galleria
   const removeImagePreview = (index: number) => {
     // Aggiorna le immagini di anteprima
-    setImagesPreview(prev => prev.filter((_, i) => i !== index));
-    setImagesFiles(prev => prev.filter((_, i) => i !== index));
+    setImagesPreview(prev => {
+      const newPreviews = [...prev];
+      // Rilascia l'URL dell'oggetto per evitare memory leak
+      if (newPreviews[index] && newPreviews[index].startsWith('blob:')) {
+        URL.revokeObjectURL(newPreviews[index]);
+      }
+      newPreviews.splice(index, 1);
+      return newPreviews;
+    });
     
-    // Importante: aggiorna direttamente il valore 'images' nel form quando l'utente rimuove un'immagine
-    if (isEditMode && vehicle?.images) {
-      // Ottieni tutti i valori attuali del form
+    // Aggiorna i file
+    setImagesFiles(prev => {
+      const newFiles = [...prev];
+      newFiles.splice(index, 1);
+      return newFiles;
+    });
+    
+    // Se siamo in modalità modifica e l'immagine è già nel database
+    if (isEditMode && vehicle?.images && Array.isArray(vehicle.images)) {
+      // Ottieni il valore attuale dal form
       const currentValues = form.getValues();
       
       // Ottieni l'array images corrente, o usa quello del veicolo se non presente nel form
@@ -264,12 +337,14 @@ export default function VehicleEditPage() {
         : [...(vehicle.images as string[])];
       
       // Rimuovi l'immagine all'indice specificato
-      const updatedImages = currentImages.filter((_, i) => i !== index);
-      
-      // Aggiorna il valore nel form
-      form.setValue('images', updatedImages);
-      
-      console.log('Immagini rimaste dopo eliminazione:', updatedImages);
+      if (index < currentImages.length) {
+        const updatedImages = currentImages.filter((_, i) => i !== index);
+        
+        // Aggiorna il valore nel form
+        form.setValue('images', updatedImages);
+        
+        console.log('Immagine rimossa dalla galleria, indice:', index);
+      }
     }
   };
 
@@ -316,60 +391,79 @@ export default function VehicleEditPage() {
   });
 
   const onSubmit = async (values: VehicleFormValues) => {
+    // Crea FormData per l'invio dei dati e delle immagini
     const formData = new FormData();
     
-    // Assicuriamo che il campo images sia mantenuto se vuoto (importante per l'eliminazione)
+    // Prepara i dati da inviare
     const dataToSend = {
       ...values,
       // Assicura che images sia un array vuoto se non ci sono immagini
       images: values.images || []
     };
     
-    // Se siamo in modalità modifica e non c'è un'immagine principale ma prima c'era,
-    // segnaliamo al server di rimuovere l'immagine principale
+    // Gestione speciale per cancellazione immagine principale esistente
     if (isEditMode && !mainImageFile && !mainImagePreview && vehicle?.mainImage) {
-      dataToSend.mainImage = null; // Indica al server di eliminare l'immagine principale
+      dataToSend.mainImage = null; // Segnala al server di eliminare l'immagine principale
+      console.log("Richiesta cancellazione immagine principale");
     }
     
-    // Convert the main data to JSON and add it to the form
+    // Converti i dati in JSON e aggiungi al FormData
     formData.append('data', JSON.stringify(dataToSend));
     
-    // Add main image if selected
+    // Aggiungi l'immagine principale, se presente
     if (mainImageFile) {
+      console.log("Aggiunta immagine principale al FormData:", mainImageFile.name);
       formData.append('mainImage', mainImageFile);
     }
     
-    // Submit the main vehicle data
     try {
-      console.log("Sending data:", dataToSend); // Log per debug
+      console.log("Invio dati veicolo al server");
       const response = await mutation.mutateAsync(formData);
-      
       const newVehicleId = isEditMode ? vehicleId! : (response as any)?.id;
       
-      // If we have additional images and we have a vehicle id
-      if (imagesFiles.length > 0 && newVehicleId) {
-        const imagesFormData = new FormData();
-        imagesFiles.forEach((file) => {
-          imagesFormData.append('images', file);
-        });
-        
-        await imagesMutation.mutateAsync({ id: newVehicleId, formData: imagesFormData });
-      }
-      
-      // If we're creating a new vehicle and have temporary contracts, add them to the new vehicle
-      if (!isEditMode && tempContracts.length > 0 && newVehicleId) {
-        for (const contract of tempContracts) {
-          await rentalOptionMutation.mutateAsync({
-            vehicleId: newVehicleId,
-            contractData: {
-              ...contract,
-              vehicleId: newVehicleId
-            }
+      // Se abbiamo un ID veicolo valido e immagini aggiuntive da caricare
+      if (newVehicleId) {
+        // Carica immagini aggiuntive, se presenti
+        if (imagesFiles.length > 0) {
+          console.log(`Caricamento di ${imagesFiles.length} immagini aggiuntive`);
+          
+          const imagesFormData = new FormData();
+          imagesFiles.forEach((file, index) => {
+            console.log(`Aggiunta immagine ${index + 1} al FormData: ${file.name}`);
+            imagesFormData.append('images', file);
+          });
+          
+          await imagesMutation.mutateAsync({ 
+            id: newVehicleId, 
+            formData: imagesFormData 
           });
         }
+        
+        // Carica contratti temporanei per i nuovi veicoli
+        if (!isEditMode && tempContracts.length > 0) {
+          console.log(`Caricamento di ${tempContracts.length} contratti di noleggio`);
+          
+          for (const contract of tempContracts) {
+            await rentalOptionMutation.mutateAsync({
+              vehicleId: newVehicleId,
+              contractData: {
+                ...contract,
+                vehicleId: newVehicleId
+              }
+            });
+          }
+        }
+      } else {
+        console.error("ID veicolo non disponibile");
+        toast({
+          title: "Errore",
+          description: "Errore durante il salvataggio del veicolo: ID non disponibile",
+          variant: "destructive",
+        });
+        return;
       }
       
-      // Mostra il toast di successo e reindirizza
+      // Operazione completata con successo
       toast({
         title: isEditMode ? "Veicolo aggiornato" : "Veicolo creato",
         description: isEditMode 
@@ -377,10 +471,13 @@ export default function VehicleEditPage() {
           : "Il nuovo veicolo è stato creato con successo.",
       });
       
+      // Log finale per conferma
+      console.log(`Veicolo ${isEditMode ? 'aggiornato' : 'creato'} con successo, ID: ${newVehicleId}`);
+      
       // Reindirizza all'elenco dei veicoli
       setLocation('/admin/vehicles');
     } catch (error: any) {
-      console.error("Error submitting form:", error);
+      console.error("Errore durante il salvataggio del veicolo:", error);
       toast({
         title: "Errore",
         description: error.message || `Si è verificato un errore durante il ${isEditMode ? 'aggiornamento' : 'salvataggio'} del veicolo.`,
@@ -869,43 +966,88 @@ export default function VehicleEditPage() {
                   </Card>
                 </TabsContent>
                 
-                {/* Images Tab */}
+                {/* Images Tab - Completamente rinnovato */}
                 <TabsContent value="images">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Immagine principale */}
                     <Card>
-                      <CardHeader>
+                      <CardHeader className="pb-3">
                         <CardTitle>Immagine Principale</CardTitle>
                         <CardDescription>
-                          Carica l'immagine principale del veicolo che verrà visualizzata nel catalogo
+                          L'immagine principale del veicolo mostrata in catalogo e anteprima
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center">
+                          {/* Area di caricamento immagine principale */}
+                          <div 
+                            className={`border-2 ${mainImagePreview ? 'border-solid border-gray-200' : 'border-dashed border-gray-300'} rounded-lg p-4 transition-all`}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              e.currentTarget.classList.add('border-primary', 'bg-primary/5');
+                            }}
+                            onDragLeave={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              e.currentTarget.classList.remove('border-primary', 'bg-primary/5');
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              e.currentTarget.classList.remove('border-primary', 'bg-primary/5');
+                              
+                              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                const file = e.dataTransfer.files[0];
+                                // Simula il cambio dell'input file
+                                const input = document.getElementById('mainImage') as HTMLInputElement;
+                                if (input) {
+                                  const dataTransfer = new DataTransfer();
+                                  dataTransfer.items.add(file);
+                                  input.files = dataTransfer.files;
+                                  
+                                  // Trigger del change event manualmente
+                                  const event = new Event('change', { bubbles: true });
+                                  input.dispatchEvent(event);
+                                }
+                              }
+                            }}
+                          >
                             {mainImagePreview ? (
                               <div className="relative w-full">
-                                <img 
-                                  src={mainImagePreview && typeof mainImagePreview === 'string' 
-                                    ? (mainImagePreview.startsWith('/uploads/') || mainImagePreview.startsWith('http') 
-                                      ? mainImagePreview 
-                                      : `/uploads/${mainImagePreview}`)
-                                    : mainImagePreview}
-                                  alt="Anteprima immagine principale" 
-                                  className="max-h-64 mx-auto object-contain rounded-md"
-                                  onError={(e) => {
-                                    e.currentTarget.onerror = null;
-                                    e.currentTarget.src = "/no-photo.jpg";
-                                  }}
-                                />
+                                <div className="flex items-center justify-center bg-gray-50 rounded overflow-hidden" style={{ height: '220px' }}>
+                                  <img 
+                                    src={mainImagePreview}
+                                    alt="Anteprima immagine principale" 
+                                    className="max-h-full max-w-full object-contain"
+                                    onError={(e) => {
+                                      e.currentTarget.onerror = null;
+                                      e.currentTarget.src = "/no-photo.jpg";
+                                      console.error("Errore caricamento immagine principale");
+                                    }}
+                                  />
+                                </div>
                                 <div className="absolute top-2 right-2 flex gap-2">
                                   <Button
                                     type="button"
                                     variant="destructive"
                                     size="icon"
+                                    className="h-8 w-8 rounded-full bg-white bg-opacity-80 text-red-600 hover:bg-white hover:text-red-700"
                                     onClick={() => {
                                       if (window.confirm("Sei sicuro di voler rimuovere l'immagine principale?")) {
+                                        // Rilascia l'oggetto URL
+                                        if (mainImagePreview && mainImagePreview.startsWith('blob:')) {
+                                          URL.revokeObjectURL(mainImagePreview);
+                                        }
+                                        
+                                        // Reimposta lo stato
                                         setMainImagePreview(null);
                                         setMainImageFile(null);
+                                        
+                                        // Resetta il valore dell'input file
+                                        const input = document.getElementById('mainImage') as HTMLInputElement;
+                                        if (input) input.value = '';
+                                        
                                         console.log('Immagine principale rimossa');
                                       }
                                     }}
@@ -913,22 +1055,36 @@ export default function VehicleEditPage() {
                                     <X className="h-4 w-4" />
                                   </Button>
                                 </div>
+                                <div className="mt-3 text-center">
+                                  <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => document.getElementById('mainImage')?.click()}
+                                  >
+                                    Cambia Immagine
+                                  </Button>
+                                </div>
                               </div>
                             ) : (
-                              <>
-                                <Image className="h-12 w-12 text-neutral-400 mb-2" />
-                                <p className="text-sm text-neutral-500 mb-2">
-                                  Trascina e rilascia un'immagine oppure
+                              <div className="flex flex-col items-center justify-center text-center p-6">
+                                <div className="bg-gray-100 rounded-full p-4 mb-4">
+                                  <Image className="h-10 w-10 text-gray-400" />
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-700 mb-2">
+                                  Carica un'immagine
+                                </h3>
+                                <p className="text-sm text-gray-500 mb-4">
+                                  Trascina e rilascia un'immagine qui o clicca sul pulsante sotto
                                 </p>
                                 <Button 
                                   type="button" 
-                                  variant="outline" 
-                                  size="sm" 
+                                  variant="default" 
                                   onClick={() => document.getElementById('mainImage')?.click()}
                                 >
                                   Seleziona File
                                 </Button>
-                              </>
+                              </div>
                             )}
                             <input
                               id="mainImage"
