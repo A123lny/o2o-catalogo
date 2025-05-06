@@ -35,6 +35,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserPassword(id: number, newPasswordHash: string): Promise<User | undefined>;
   updateUserSocialProfile(userId: number, data: { profileId: string, provider: string }): Promise<User>;
+  updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
   getUsers(): Promise<User[]>;
   
   // Brands
@@ -258,8 +259,33 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    try {
+      // Rimuovi eventuali campi che non dovrebbero essere aggiornati
+      const { id: _, createdAt, ...updateData } = userData as any;
+      
+      const [updatedUser] = await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, id))
+        .returning();
+      
+      return updatedUser;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
+  }
+
   async getUsers(): Promise<User[]> {
-    return db.select().from(users);
+    try {
+      const allUsers = await db.select().from(users);
+      console.log(`Recuperati ${allUsers.length} utenti dal database`);
+      return allUsers;
+    } catch (error) {
+      console.error('Error getting users:', error);
+      return [];
+    }
   }
   
   async getBrands(): Promise<Brand[]> {

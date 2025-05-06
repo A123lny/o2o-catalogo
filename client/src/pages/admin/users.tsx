@@ -90,8 +90,10 @@ export default function UsersPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
 
@@ -182,9 +184,54 @@ export default function UsersPage() {
     return matchesSearch && matchesRole;
   });
 
-  // Form submission
+  // Update user mutation
+  const updateUserMutation = useMutation({
+    mutationFn: async (values: UserFormValues) => {
+      if (!userToEdit) return;
+      
+      // Remove confirmPassword and include only the necessary fields
+      const { confirmPassword, ...userData } = values;
+      
+      // If password is empty, don't send it (keep existing password)
+      const dataToSend = userData.password ? userData : {
+        username: userData.username,
+        email: userData.email,
+        fullName: userData.fullName,
+        role: userData.role,
+      };
+      
+      const res = await apiRequest("PUT", `/api/admin/users/${userToEdit.id}`, dataToSend);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Errore nell'aggiornamento dell'utente");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: "Utente aggiornato",
+        description: "L'utente è stato aggiornato con successo.",
+      });
+      setIsEditUserOpen(false);
+      setUserToEdit(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Si è verificato un errore durante l'aggiornamento dell'utente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Form submission handler for create and update
   const onSubmit = (values: UserFormValues) => {
-    createUserMutation.mutate(values);
+    if (userToEdit) {
+      updateUserMutation.mutate(values);
+    } else {
+      createUserMutation.mutate(values);
+    }
   };
 
   // Handle delete
@@ -313,7 +360,21 @@ export default function UsersPage() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Azioni</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    setUserToEdit(user);
+                                    setIsEditUserOpen(true);
+                                    // Precompiliamo il form con i dati dell'utente
+                                    form.reset({
+                                      username: user.username,
+                                      email: user.email,
+                                      fullName: user.fullName,
+                                      role: user.role,
+                                      password: "",
+                                      confirmPassword: "",
+                                    });
+                                  }}
+                                >
                                   <Edit className="h-4 w-4 mr-2" /> Modifica
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
@@ -502,6 +563,165 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
       
+      {/* Edit User Dialog */}
+      <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifica Utente</DialogTitle>
+            <DialogDescription>
+              Modifica i dettagli dell'utente
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome Completo*</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Es. Mario Rossi" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username*</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Es. mario.rossi" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email*</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="email" 
+                          placeholder="Es. mario.rossi@email.it" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ruolo*</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleziona un ruolo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="admin">Amministratore</SelectItem>
+                        <SelectItem value="user">Utente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Gli amministratori hanno accesso completo al pannello di controllo
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Password
+                        {userToEdit && (
+                          <span className="ml-1 text-neutral-500 text-xs font-normal">
+                            (lascia vuoto per mantenere invariata)
+                          </span>
+                        )}
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder={userToEdit ? "••••••••" : "Inserisci password"}
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Conferma Password</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder={userToEdit ? "••••••••" : "Conferma password"}
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsEditUserOpen(false);
+                    setUserToEdit(null);
+                  }}
+                >
+                  Annulla
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={updateUserMutation.isPending}
+                >
+                  {updateUserMutation.isPending && (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  )}
+                  Salva Modifiche
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete User Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
