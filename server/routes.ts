@@ -363,8 +363,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/vehicles", isAdmin, async (req, res) => {
     try {
       const vehicles = await dbStorage.getAdminVehicles();
-      res.json(vehicles);
+      
+      // Correggi i percorsi delle immagini per ogni veicolo
+      const vehiclesWithFixedImages = vehicles.map(vehicle => {
+        let fixedVehicle = { ...vehicle };
+        
+        // Correggi mainImage
+        if (fixedVehicle.mainImage && !fixedVehicle.mainImage.startsWith('/uploads/') && !fixedVehicle.mainImage.startsWith('http')) {
+          fixedVehicle.mainImage = `/uploads/${fixedVehicle.mainImage}`;
+        }
+        
+        // Correggi tutte le immagini secondarie
+        if (fixedVehicle.images && Array.isArray(fixedVehicle.images)) {
+          fixedVehicle.images = fixedVehicle.images.map(img => {
+            if (img && typeof img === 'string' && !img.startsWith('/uploads/') && !img.startsWith('http')) {
+              return `/uploads/${img}`;
+            }
+            return img;
+          });
+        }
+        
+        return fixedVehicle;
+      });
+      
+      res.json(vehiclesWithFixedImages);
     } catch (error) {
+      console.error("Error fetching admin vehicles:", error);
       res.status(500).json({ message: "Error fetching vehicles" });
     }
   });
@@ -400,7 +424,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle image upload here
       if (req.file) {
-        validatedData.mainImage = `image_${Date.now()}.jpg`; // In real app, save to disk/S3
+        // Crea il nome del file per l'immagine principale
+        const mainImageFileName = `image_${Date.now()}.jpg`;
+        // Salva il percorso completo nel database
+        validatedData.mainImage = `/uploads/${mainImageFileName}`;
+        console.log("Vehicle main image saved:", validatedData.mainImage);
       }
       
       const vehicle = await dbStorage.createVehicle(validatedData);
@@ -447,7 +475,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle image upload here
       if (req.file) {
-        validatedData.mainImage = `image_${Date.now()}.jpg`; // In real app, save to disk/S3
+        // Crea il nome del file per l'immagine principale
+        const mainImageFileName = `image_${Date.now()}.jpg`;
+        // Salva il percorso completo nel database
+        validatedData.mainImage = `/uploads/${mainImageFileName}`;
+        console.log("Vehicle main image updated:", validatedData.mainImage);
       }
       
       // Gestisci il reset delle immagini
@@ -524,11 +556,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No images uploaded" });
       }
       
-      const imageUrls = files.map((file, index) => `image_${id}_${Date.now()}_${index}.jpg`);
+      // Crea i nomi dei file che saranno salvati effettivamente sul disco
+      const fileNames = files.map((file, index) => `image_${id}_${Date.now()}_${index}.jpg`);
+      
+      // Crea i percorsi URL completi da salvare nel database (con /uploads/ prefisso)
+      const imageUrls = fileNames.map(fileName => `/uploads/${fileName}`);
+      
+      // Aggiunge i percorsi completi al veicolo
       await dbStorage.addVehicleImages(id, imageUrls);
       
+      // Risponde con i percorsi completi
       res.status(201).json({ imageUrls });
     } catch (error) {
+      console.error("Error uploading images:", error);
       res.status(500).json({ message: "Error uploading images" });
     }
   });
