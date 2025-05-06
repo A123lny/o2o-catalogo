@@ -393,14 +393,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create Vehicle - Completamente ristrutturato per gestione file migliore
   app.post("/api/admin/vehicles", isAdmin, upload.single("mainImage"), async (req, res) => {
     try {
+      // Analizza i dati JSON dalla richiesta
       let vehicleData;
       try {
         vehicleData = JSON.parse(req.body.data);
+        console.log("Dati veicolo ricevuti:", {
+          title: vehicleData.title,
+          model: vehicleData.model, 
+          hasMainImage: !!req.file
+        });
       } catch (parseError) {
-        console.error("Error parsing vehicle data:", parseError);
-        return res.status(400).json({ message: "Invalid JSON format in vehicle data" });
+        console.error("Errore analisi dati JSON del veicolo:", parseError);
+        return res.status(400).json({ message: "Formato JSON non valido nei dati del veicolo" });
       }
       
       // Trasforma eventuali campi JSON
@@ -420,15 +427,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Validazione dei dati
       const validatedData = insertVehicleSchema.parse(vehicleData);
       
-      // Handle image upload here
+      // Gestione immagine principale
       if (req.file) {
         // Crea il nome del file per l'immagine principale
-        const mainImageFileName = `image_${Date.now()}.jpg`;
-        // Salva il percorso completo nel database
-        validatedData.mainImage = `/uploads/${mainImageFileName}`;
-        console.log("Vehicle main image saved:", validatedData.mainImage);
+        const timestamp = Date.now();
+        const mainImageFileName = `image_${timestamp}.jpg`;
+        
+        // Salva il file fisicamente con il nome corretto
+        try {
+          const oldPath = req.file.path;
+          const newPath = path.join(__dirname, '..', 'public', 'uploads', mainImageFileName);
+          
+          // Assicurati che la directory esista
+          const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          
+          // Copia e rinomina il file
+          fs.copyFileSync(oldPath, newPath);
+          fs.unlinkSync(oldPath); // Rimuovi il file temporaneo
+          
+          // Salva il percorso completo nel database
+          validatedData.mainImage = `/uploads/${mainImageFileName}`;
+          console.log("Immagine principale del veicolo salvata:", validatedData.mainImage);
+        } catch (fsError) {
+          console.error("Errore durante il salvataggio dell'immagine principale:", fsError);
+          // Continua comunque con la creazione del veicolo
+        }
       }
       
       const vehicle = await dbStorage.createVehicle(validatedData);
@@ -439,16 +468,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update Vehicle - Completamente ristrutturato con migliore gestione delle immagini
   app.put("/api/admin/vehicles/:id", isAdmin, upload.single("mainImage"), async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const vehicleId = parseInt(req.params.id);
       
+      // Ottieni il veicolo esistente prima dell'aggiornamento
+      const existingVehicle = await dbStorage.getVehicle(vehicleId);
+      if (!existingVehicle) {
+        return res.status(404).json({ message: "Veicolo non trovato" });
+      }
+      
+      // Ottiene i dati inviati come JSON
       let vehicleData;
       try {
         vehicleData = JSON.parse(req.body.data);
+        console.log("Dati veicolo ricevuti per l'aggiornamento:", {
+          id: vehicleId,
+          title: vehicleData.title,
+          hasMainImage: !!req.file,
+          mainImageStatus: vehicleData.mainImage === null ? "richiesta rimozione" : (vehicleData.mainImage ? "esistente" : "non specificata")
+        });
       } catch (parseError) {
-        console.error("Error parsing vehicle data:", parseError);
-        return res.status(400).json({ message: "Invalid JSON format in vehicle data" });
+        console.error("Errore analisi dati JSON del veicolo:", parseError);
+        return res.status(400).json({ message: "Formato JSON non valido nei dati del veicolo" });
       }
       
       // Trasforma eventuali campi JSON
@@ -471,31 +514,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verifica se c'è una richiesta esplicita di reset delle immagini
       const shouldResetImages = vehicleData.images && vehicleData.images.length === 0;
       
+      // Validazione dei dati
       const validatedData = insertVehicleSchema.parse(vehicleData);
       
-      // Handle image upload here
+      // Gestione immagine principale
       if (req.file) {
-        // Crea il nome del file per l'immagine principale
-        const mainImageFileName = `image_${Date.now()}.jpg`;
-        // Salva il percorso completo nel database
-        validatedData.mainImage = `/uploads/${mainImageFileName}`;
-        console.log("Vehicle main image updated:", validatedData.mainImage);
+        // È stata caricata una nuova immagine principale
+        const timestamp = Date.now();
+        const mainImageFileName = `image_${timestamp}.jpg`;
+        
+        // Salva il file fisicamente con il nome corretto
+        try {
+          const oldPath = req.file.path;
+          const newPath = path.join(__dirname, '..', 'public', 'uploads', mainImageFileName);
+          
+          // Assicurati che la directory esista
+          const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          
+          // Copia e rinomina il file
+          fs.copyFileSync(oldPath, newPath);
+          fs.unlinkSync(oldPath); // Rimuovi il file temporaneo
+          
+          // Aggiorna il percorso nel database
+          validatedData.mainImage = `/uploads/${mainImageFileName}`;
+          
+          console.log("Immagine principale del veicolo aggiornata:", validatedData.mainImage);
+        } catch (fsError) {
+          console.error("Errore durante il salvataggio dell'immagine principale:", fsError);
+          return res.status(500).json({ message: "Errore durante il salvataggio dell'immagine" });
+        }
+      } else if (vehicleData.mainImage === null) {
+        // L'utente ha richiesto esplicitamente di rimuovere l'immagine principale
+        // Se c'era un'immagine principale esistente, elimina il file
+        if (existingVehicle.mainImage) {
+          try {
+            const imagePath = path.join(__dirname, '..', 'public', existingVehicle.mainImage);
+            if (fs.existsSync(imagePath)) {
+              fs.unlinkSync(imagePath);
+              console.log("File immagine principale eliminato:", existingVehicle.mainImage);
+            }
+          } catch (fsError) {
+            console.warn("Impossibile eliminare il file immagine principale:", fsError);
+            // Continua comunque con l'aggiornamento anche se la rimozione fisica del file è fallita
+          }
+        }
+        
+        console.log("Immagine principale del veicolo rimossa");
+      } else {
+        // Nessuna modifica all'immagine principale, mantieni il valore esistente
+        // se non specificato altrimenti
+        if (!validatedData.mainImage && existingVehicle.mainImage) {
+          validatedData.mainImage = existingVehicle.mainImage;
+        }
       }
       
-      // Gestisci il reset delle immagini
+      // Gestione delle immagini della galleria
       if (shouldResetImages) {
-        // Assicurati che images sia un array vuoto
+        // L'utente ha richiesto di rimuovere tutte le immagini della galleria
+        if (existingVehicle.images && Array.isArray(existingVehicle.images)) {
+          // Elimina i file fisici delle immagini
+          for (const imagePath of existingVehicle.images) {
+            try {
+              const fullPath = path.join(__dirname, '..', 'public', imagePath);
+              if (fs.existsSync(fullPath)) {
+                fs.unlinkSync(fullPath);
+                console.log("File immagine galleria eliminato:", imagePath);
+              }
+            } catch (fsError) {
+              console.warn(`Impossibile eliminare il file immagine: ${imagePath}`, fsError);
+              // Continua comunque con le altre immagini
+            }
+          }
+        }
+        
+        // Imposta un array vuoto per images
         validatedData.images = [];
+        console.log("Tutte le immagini della galleria sono state rimosse");
       } else if (!validatedData.images || !Array.isArray(validatedData.images)) {
         // Se non ci sono immagini nel payload, non aggiornare il campo images
         delete validatedData.images;
       }
       
-      const vehicle = await dbStorage.updateVehicle(id, validatedData);
-      res.json(vehicle);
+      // Aggiorna il veicolo nel database
+      const updatedVehicle = await dbStorage.updateVehicle(vehicleId, validatedData);
+      console.log(`Veicolo ID ${vehicleId} aggiornato con successo`);
+      res.json(updatedVehicle);
     } catch (error) {
-      console.error("Error updating vehicle:", error);
-      res.status(400).json({ message: "Invalid vehicle data", error: error.message });
+      console.error("Errore aggiornamento veicolo:", error);
+      res.status(400).json({ message: "Dati veicolo non validi", error: error.message });
     }
   });
 
@@ -546,30 +655,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload additional vehicle images
+  // Upload additional vehicle images - Completamente riscritta per migliore gestione file
   app.post("/api/admin/vehicles/:id/images", isAdmin, upload.array("images", 10), async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const vehicleId = parseInt(req.params.id);
       const files = req.files as Express.Multer.File[];
       
-      if (!files || files.length === 0) {
-        return res.status(400).json({ message: "No images uploaded" });
+      // Verifica che il veicolo esista
+      const vehicle = await dbStorage.getVehicle(vehicleId);
+      if (!vehicle) {
+        return res.status(404).json({ message: "Veicolo non trovato" });
       }
       
-      // Crea i nomi dei file che saranno salvati effettivamente sul disco
-      const fileNames = files.map((file, index) => `image_${id}_${Date.now()}_${index}.jpg`);
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "Nessuna immagine caricata" });
+      }
       
-      // Crea i percorsi URL completi da salvare nel database (con /uploads/ prefisso)
-      const imageUrls = fileNames.map(fileName => `/uploads/${fileName}`);
+      console.log(`Ricevute ${files.length} immagini aggiuntive per il veicolo ID: ${vehicleId}`);
       
-      // Aggiunge i percorsi completi al veicolo
-      await dbStorage.addVehicleImages(id, imageUrls);
+      // Assicurati che la directory degli upload esista
+      const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
       
-      // Risponde con i percorsi completi
-      res.status(201).json({ imageUrls });
+      // Elabora ogni file caricato
+      const imageUrls: string[] = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const timestamp = Date.now() + i; // Aggiunge l'indice per evitare conflitti se caricati nello stesso millisecondo
+        const fileName = `image_${vehicleId}_${timestamp}.jpg`;
+        const filePath = path.join(uploadDir, fileName);
+        
+        try {
+          // Copia e rinomina il file
+          fs.copyFileSync(file.path, filePath);
+          fs.unlinkSync(file.path); // Rimuovi il file temporaneo
+          
+          // Aggiungi l'URL dell'immagine all'array per il database
+          imageUrls.push(`/uploads/${fileName}`);
+          
+          console.log(`Immagine ${i+1}/${files.length} salvata: /uploads/${fileName}`);
+        } catch (fsError) {
+          console.error(`Errore durante il salvataggio dell'immagine ${i+1}:`, fsError);
+          // Continua con le altre immagini anche se una fallisce
+        }
+      }
+      
+      if (imageUrls.length === 0) {
+        return res.status(500).json({ message: "Errore: nessuna immagine è stata salvata correttamente" });
+      }
+      
+      // Aggiunge i percorsi completi al veicolo nel database
+      await dbStorage.addVehicleImages(vehicleId, imageUrls);
+      
+      console.log(`Aggiunte ${imageUrls.length} immagini al veicolo ID: ${vehicleId}`);
+      res.status(201).json({ 
+        message: `${imageUrls.length} immagini caricate con successo`,
+        imageUrls 
+      });
     } catch (error) {
-      console.error("Error uploading images:", error);
-      res.status(500).json({ message: "Error uploading images" });
+      console.error("Errore caricamento immagini:", error);
+      res.status(500).json({ message: "Errore durante il caricamento delle immagini" });
     }
   });
 
