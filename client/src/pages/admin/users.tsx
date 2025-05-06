@@ -35,13 +35,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -49,6 +42,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,56 +59,50 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Loader2,
-  Plus,
-  MoreHorizontal,
-  UserPlus,
   Edit,
-  Trash2,
-  ShieldCheck,
-  User as UserIcon,
+  Loader2,
+  MoreHorizontal,
   Search,
+  ShieldCheck,
+  Trash2,
+  UserIcon,
+  UserPlus,
 } from "lucide-react";
 
-// Extended user form schema with password confirmation
+// Schema di validazione per il form utente
 const userFormSchema = insertUserSchema.extend({
-  password: z.string().min(8, "La password deve essere di almeno 8 caratteri"),
-  confirmPassword: z.string(),
+  confirmPassword: z.string().min(6, {
+    message: "La password deve essere lunga almeno 6 caratteri",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Le password non corrispondono",
+  message: "Le password non coincidono",
   path: ["confirmPassword"],
 });
 
-// Form values type
+// Tipo per i valori del form utente
 type UserFormValues = z.infer<typeof userFormSchema>;
 
 export default function UsersPage() {
-  const { user } = useAuth();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<number | null>(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // Form
+  // Form utente
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
       username: "",
-      email: "",
       password: "",
       confirmPassword: "",
+      email: "",
       fullName: "",
       role: "user",
     },
@@ -119,6 +113,10 @@ export default function UsersPage() {
     queryKey: ['/api/users'],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/users");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Errore nel recupero degli utenti");
+      }
       return await res.json();
     },
   });
@@ -127,7 +125,12 @@ export default function UsersPage() {
   const createUserMutation = useMutation({
     mutationFn: async (values: UserFormValues) => {
       const { confirmPassword, ...userData } = values;
-      return await apiRequest("POST", "/api/register", userData);
+      const res = await apiRequest("POST", "/api/register", userData);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Errore nella creazione dell'utente");
+      }
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -150,7 +153,12 @@ export default function UsersPage() {
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest("DELETE", `/api/admin/users/${id}`);
+      const res = await apiRequest("DELETE", `/api/admin/users/${id}`);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Errore nell'eliminazione dell'utente");
+      }
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -239,7 +247,7 @@ export default function UsersPage() {
                   <SelectValue placeholder="Filtra per ruolo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tutti i ruoli</SelectItem>
+                  <SelectItem value="">Tutti i ruoli</SelectItem>
                   <SelectItem value="admin">Amministratori</SelectItem>
                   <SelectItem value="user">Utenti</SelectItem>
                 </SelectContent>
@@ -487,18 +495,13 @@ export default function UsersPage() {
                   Annulla
                 </Button>
                 <Button 
-                  type="submit"
+                  type="submit" 
                   disabled={createUserMutation.isPending}
                 >
-                  {createUserMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creazione...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" /> Crea Utente
-                    </>
+                  {createUserMutation.isPending && (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   )}
+                  Salva
                 </Button>
               </DialogFooter>
             </form>
@@ -506,25 +509,25 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Delete User Confirmation */}
+      {/* Delete User Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Sei sicuro di voler eliminare questo utente?</AlertDialogTitle>
+            <AlertDialogTitle>Conferma eliminazione</AlertDialogTitle>
             <AlertDialogDescription>
-              Questa azione non può essere annullata. L'utente verrà rimosso definitivamente dal sistema.
+              Sei sicuro di voler eliminare questo utente? Questa azione non può essere annullata.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annulla</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete}
-              className="bg-destructive hover:bg-destructive/90"
-              disabled={deleteUserMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteUserMutation.isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Eliminazione...
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Eliminazione...
                 </>
               ) : (
                 'Elimina'
