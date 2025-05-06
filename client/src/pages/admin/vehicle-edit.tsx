@@ -249,8 +249,16 @@ export default function VehicleEditPage() {
   };
 
   const removeImagePreview = (index: number) => {
+    // Aggiorna le immagini di anteprima
     setImagesPreview(prev => prev.filter((_, i) => i !== index));
     setImagesFiles(prev => prev.filter((_, i) => i !== index));
+    
+    // Importante: aggiorna anche il valore 'images' nel form quando l'utente rimuove un'immagine
+    if (isEditMode && vehicle?.images) {
+      const currentImages = [...(vehicle.images as string[])];
+      const updatedImages = currentImages.filter((_, i) => i !== index);
+      form.setValue('images', updatedImages);
+    }
   };
 
   // Create rental option mutation
@@ -298,8 +306,15 @@ export default function VehicleEditPage() {
   const onSubmit = async (values: VehicleFormValues) => {
     const formData = new FormData();
     
+    // Assicuriamo che il campo images sia mantenuto se vuoto (importante per l'eliminazione)
+    const dataToSend = {
+      ...values,
+      // Assicura che images sia un array vuoto se non ci sono immagini
+      images: values.images || []
+    };
+    
     // Convert the main data to JSON and add it to the form
-    formData.append('data', JSON.stringify(values));
+    formData.append('data', JSON.stringify(dataToSend));
     
     // Add main image if selected
     if (mainImageFile) {
@@ -308,6 +323,7 @@ export default function VehicleEditPage() {
     
     // Submit the main vehicle data
     try {
+      console.log("Sending data:", dataToSend); // Log per debug
       const response = await mutation.mutateAsync(formData);
       
       const newVehicleId = isEditMode ? vehicleId! : (response as any)?.id;
