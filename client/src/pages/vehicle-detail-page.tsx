@@ -366,8 +366,12 @@ export default function VehicleDetailPage() {
                     title={vehicle.title}
                   />
                 ) : (
-                  <div className="h-[400px] bg-gray-100 flex items-center justify-center">
-                    <p className="text-gray-400">Nessuna immagine disponibile</p>
+                  <div className="h-[400px] bg-white flex items-center justify-center">
+                    <img 
+                      src="/no-photo.jpg" 
+                      alt="Immagine non disponibile" 
+                      className="max-h-[400px] max-w-full object-contain"
+                    />
                   </div>
                 )}
               </div>

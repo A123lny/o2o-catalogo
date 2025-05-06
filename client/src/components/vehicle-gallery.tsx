@@ -22,7 +22,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
     : images;
 
   // Set a default image if none provided
-  const defaultImage = "https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&h=600&q=80";
+  const defaultImage = "/no-photo.jpg";
 
   const handleThumbnailClick = (image: string, index: number) => {
     setCurrentImage(image);
