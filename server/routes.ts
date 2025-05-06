@@ -355,9 +355,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin API routes
 
   // Get all users (admin only)
-  app.get("/api/users", isAdmin, async (req, res) => {
+  app.get("/api/users", authenticated, async (req, res) => {
     try {
+      // Solo gli admin possono vedere tutti gli utenti
+      if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Accesso negato" });
+      }
+      
       const users = await dbStorage.getUsers();
+      console.log(`Recuperati ${users.length} utenti dal database`);
       res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
