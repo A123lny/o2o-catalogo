@@ -32,7 +32,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white shadow-md relative z-10">
+    <header className="bg-white shadow-md relative z-20">
       <div className="container mx-auto px-4 py-4 flex flex-wrap items-center justify-between">
         <div className="flex items-center">
           <Link href="/" className="flex items-center">
@@ -93,7 +93,7 @@ export default function Header() {
       </div>
 
       {/* Mobile menu - Solo Home, Catalogo e Contatti */}
-      <div className={`md:hidden bg-white px-4 py-2 shadow-md absolute top-full left-0 w-full z-50 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+      <div className={`md:hidden bg-white px-4 py-2 shadow-md fixed top-16 left-0 w-full z-[1000] ${mobileMenuOpen ? 'block' : 'hidden'}`}>
         <nav className="flex flex-col space-y-3 py-3">
           <a 
             href="/" 
