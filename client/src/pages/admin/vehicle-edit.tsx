@@ -885,9 +885,17 @@ export default function VehicleEditPage() {
                             {mainImagePreview ? (
                               <div className="relative w-full">
                                 <img 
-                                  src={mainImagePreview} 
+                                  src={mainImagePreview && typeof mainImagePreview === 'string' 
+                                    ? (mainImagePreview.startsWith('/uploads/') || mainImagePreview.startsWith('http') 
+                                      ? mainImagePreview 
+                                      : `/uploads/${mainImagePreview}`)
+                                    : mainImagePreview}
                                   alt="Anteprima immagine principale" 
                                   className="max-h-64 mx-auto object-contain rounded-md"
+                                  onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = "/no-photo.jpg";
+                                  }}
                                 />
                                 <div className="absolute top-2 right-2 flex gap-2">
                                   <Button
@@ -995,9 +1003,17 @@ export default function VehicleEditPage() {
                               {imagesPreview.map((src, index) => (
                                 <div key={index} className="relative h-32 bg-neutral-100 rounded-md overflow-hidden">
                                   <img
-                                    src={src}
+                                    src={src && typeof src === 'string' 
+                                      ? (src.startsWith('/uploads/') || src.startsWith('http') 
+                                        ? src 
+                                        : `/uploads/${src}`)
+                                      : src}
                                     alt={`Anteprima ${index + 1}`}
                                     className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.onerror = null;
+                                      e.currentTarget.src = "/no-photo.jpg";
+                                    }}
                                   />
                                   <Button
                                     type="button"
