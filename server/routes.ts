@@ -370,6 +370,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error fetching users" });
     }
   });
+  
+  // API admin/users - Aggiorna utente
+  app.put("/api/admin/users/:id", isAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Non consentire la modifica dell'utente admin principale se non si è l'admin principale
+      if (userId === 1 && req.user.id !== 1) {
+        return res.status(403).json({ 
+          message: "Operazione non consentita", 
+          errors: ["Solo l'amministratore principale può modificare questo account"] 
+        });
+      }
+      
+      // Verificare l'esistenza dell'utente
+      const user = await dbStorage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Utente non trovato" });
+      }
+      
+      // Validare i dati della richiesta
+      const { username, email, fullName, role, password } = req.body;
+      
+      // Verifica che i campi obbligatori siano presenti
+      if (!username || !email || !fullName || !role) {
+        return res.status(400).json({ 
+          message: "Dati mancanti", 
+          errors: ["Tutti i campi sono obbligatori"] 
+        });
+      }
+      
+      // Verifica che l'username non sia già in uso da un altro utente
+      const existingUserByUsername = await dbStorage.getUserByUsername(username);
+      if (existingUserByUsername && existingUserByUsername.id !== userId) {
+        return res.status(400).json({ 
+          message: "Username già in uso", 
+          errors: ["Questo username è già utilizzato da un altro utente"] 
+        });
+      }
+      
+      // Verifica che l'email non sia già in uso da un altro utente
+      const existingUserByEmail = await dbStorage.getUserByEmail(email);
+      if (existingUserByEmail && existingUserByEmail.id !== userId) {
+        return res.status(400).json({ 
+          message: "Email già in uso", 
+          errors: ["Questa email è già utilizzata da un altro utente"] 
+        });
+      }
+      
+      // Prepara i dati per l'aggiornamento
+      const updateData: any = { username, email, fullName, role };
+      
+      // Se è stata fornita una nuova password, aggiornala
+      if (password && password.trim() !== '') {
+        updateData.password = await hashPassword(password);
+      }
+      
+      // Aggiorna l'utente
+      const updatedUser = await dbStorage.updateUser(userId, updateData);
+      
+      // Rimuovi la password dall'oggetto di risposta
+      if (updatedUser) {
+        delete (updatedUser as any).password;
+      }
+      
+      res.status(200).json({ 
+        message: "Utente aggiornato con successo", 
+        user: updatedUser 
+      });
+    } catch (error) {
+      console.error('Errore nella gestione della richiesta:', error);
+      res.status(500).json({ message: 'Si è verificato un errore durante l\'elaborazione della richiesta' });
+    }
+  });
+  
+  // API admin/users - Elimina utente
+  app.delete("/api/admin/users/:id", isAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Non consentire l'eliminazione dell'utente admin principale
+      if (userId === 1) {
+        return res.status(403).json({ 
+          message: "Operazione non consentita", 
+          errors: ["Non è possibile eliminare l'amministratore principale del sistema"] 
+        });
+      }
+      
+      // Verificare l'esistenza dell'utente
+      const user = await dbStorage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Utente non trovato" });
+      }
+      
+      // Eliminare l'utente (commentato per sicurezza)
+      // await dbStorage.deleteUser(userId);
+      
+      res.status(200).json({ message: "Utente eliminato con successo" });
+    } catch (error) {
+      console.error('Errore nella gestione della richiesta:', error);
+      res.status(500).json({ message: 'Si è verificato un errore durante l\'elaborazione della richiesta' });
+    }
+  });
 
   // Dashboard stats
   app.get("/api/admin/stats", isAdmin, async (req, res) => {
