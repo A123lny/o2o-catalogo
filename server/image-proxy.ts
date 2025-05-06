@@ -21,7 +21,8 @@ const ALLOWED_DOMAINS = [
   'www.audi.it',
   'media.mercedes-benz.it',
   'cdn.motor1.com',
-  'upload.wikimedia.org'
+  'upload.wikimedia.org',
+  'images.unsplash.com'
 ];
 
 // Assicurati che la directory di cache esista
