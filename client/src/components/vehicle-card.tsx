@@ -33,18 +33,32 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     ? Math.min(...rentalOptions.map(option => option.monthlyPrice))
     : null;
 
+  // Funzione per verificare se un'immagine esiste
+  const hasValidImage = () => {
+    return vehicle.mainImage && vehicle.mainImage.trim() !== "";
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <div className="relative">
         <Link href={`/vehicle/${vehicle.id}`}>
-          <img 
-            src={vehicle.mainImage && vehicle.mainImage.trim() !== "" ? processImageUrl(vehicle.mainImage) : "/no-photo.jpg"} 
-            alt={vehicle.title} 
-            className="w-full h-48 object-cover"
-            onError={(e) => {
-              e.currentTarget.src = "/no-photo.jpg";
-            }}
-          />
+          {hasValidImage() ? (
+            <img 
+              src={processImageUrl(vehicle.mainImage as string)} 
+              alt={vehicle.title} 
+              className="w-full h-48 object-cover"
+              onError={(e) => {
+                e.currentTarget.onerror = null; // Previene il loop infinito
+                e.currentTarget.src = "/no-photo.jpg";
+              }}
+            />
+          ) : (
+            <img 
+              src="/no-photo.jpg" 
+              alt={vehicle.title} 
+              className="w-full h-48 object-cover"
+            />
+          )}
         </Link>
         
         {/* Badge sul lato sinistro */}

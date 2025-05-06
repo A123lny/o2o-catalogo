@@ -11,21 +11,23 @@ interface VehicleGalleryProps {
 }
 
 export default function VehicleGallery({ mainImage, images = [], title }: VehicleGalleryProps) {
-  const [currentImage, setCurrentImage] = useState(mainImage || (images.length > 0 ? images[0] : ""));
+  // Imposta l'immagine di fallback
+  const defaultImage = "/no-photo.jpg";
+  
+  // Filtra immagini valide
+  const validImages = [
+    ...(mainImage && mainImage.trim() !== "" ? [mainImage] : []),
+    ...images.filter(img => img && img.trim() !== "" && img !== mainImage)
+  ];
+  
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  // Combine main image with other images
-  const allImages = mainImage 
-    ? [mainImage, ...images.filter(img => img !== mainImage)] 
-    : images;
+  // Calcola l'immagine corrente
+  const currentImage = validImages.length > 0 ? validImages[selectedIndex] : null;
 
-  // Set a default image if none provided
-  const defaultImage = "/no-photo.jpg";
-
-  const handleThumbnailClick = (image: string, index: number) => {
-    setCurrentImage(image);
+  const handleThumbnailClick = (index: number) => {
     setSelectedIndex(index);
   };
 
@@ -35,11 +37,11 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
   };
 
   const goToPrevious = () => {
-    setLightboxIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
+    setLightboxIndex((prev) => (prev === 0 ? validImages.length - 1 : prev - 1));
   };
 
   const goToNext = () => {
-    setLightboxIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
+    setLightboxIndex((prev) => (prev === validImages.length - 1 ? 0 : prev + 1));
   };
 
   // Keyboard navigation for lightbox
@@ -64,15 +66,25 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
     <div className="image-gallery">
       <div className="relative bg-white rounded-lg overflow-hidden shadow-md">
         <div className="relative">
-          <img 
-            src={processImageUrl(currentImage || defaultImage)} 
-            alt={title} 
-            className="w-full h-[450px] object-cover cursor-pointer"
-            onClick={() => openLightbox(selectedIndex)}
-            onError={(e) => {
-              e.currentTarget.src = defaultImage;
-            }}
-          />
+          {currentImage ? (
+            <img 
+              src={processImageUrl(currentImage)} 
+              alt={title} 
+              className="w-full h-[450px] object-cover cursor-pointer"
+              onClick={() => openLightbox(selectedIndex)}
+              onError={(e) => {
+                e.currentTarget.onerror = null; // Previene loop infiniti
+                e.currentTarget.src = defaultImage;
+              }}
+            />
+          ) : (
+            <img 
+              src={defaultImage} 
+              alt={title}
+              className="w-full h-[450px] object-cover cursor-pointer"
+            />
+          )}
+          
           <button 
             onClick={() => openLightbox(selectedIndex)}
             className="absolute bottom-4 right-4 bg-white/80 hover:bg-white p-2 rounded-full text-primary transition-colors"
@@ -82,16 +94,16 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
           </button>
         </div>
         
-        {allImages.length > 0 && (
+        {validImages.length > 0 && (
           <div className="bg-neutral-50 p-3 border-t border-neutral-100">
             <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-thin scrollbar-thumb-neutral-300">
-              {allImages.map((image, index) => (
+              {validImages.map((image, index) => (
                 <div 
                   key={index}
                   className={`flex-shrink-0 cursor-pointer hover:opacity-75 transition-opacity rounded overflow-hidden ${
                     index === selectedIndex ? 'ring-2 ring-primary border-2 border-white' : 'opacity-70'
                   }`}
-                  onClick={() => handleThumbnailClick(image, index)}
+                  onClick={() => handleThumbnailClick(index)}
                   style={{ width: '100px' }}
                 >
                   <img 
@@ -99,6 +111,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                     alt={`${title} - Image ${index + 1}`} 
                     className="w-full h-16 object-cover"
                     onError={(e) => {
+                      e.currentTarget.onerror = null; // Previene loop infiniti
                       e.currentTarget.src = defaultImage;
                     }}
                   />
@@ -126,10 +139,11 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
             </Button>
 
             <img 
-              src={processImageUrl(allImages[lightboxIndex] || defaultImage)} 
+              src={validImages.length > 0 ? processImageUrl(validImages[lightboxIndex]) : defaultImage} 
               alt={`${title} - Lightbox ${lightboxIndex + 1}`} 
               className="max-h-full max-w-full object-contain"
               onError={(e) => {
+                e.currentTarget.onerror = null; // Previene loop infiniti
                 e.currentTarget.src = defaultImage;
               }}
             />
@@ -148,7 +162,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
 
             <div className="absolute bottom-4 left-0 right-0 flex justify-center">
               <div className="bg-black/50 rounded-full px-4 py-1 text-white text-sm">
-                {lightboxIndex + 1} / {allImages.length}
+                {lightboxIndex + 1} / {validImages.length}
               </div>
             </div>
           </div>

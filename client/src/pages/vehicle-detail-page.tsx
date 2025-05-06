@@ -359,21 +359,11 @@ export default function VehicleDetailPage() {
             <div className="lg:col-span-7">
               {/* Galleria immagini */}
               <div className="bg-white rounded-lg overflow-hidden shadow-sm mb-6">
-                {allImages.length > 0 ? (
-                  <VehicleGallery 
-                    mainImage={vehicle.mainImage || allImages[0]} 
-                    images={allImages.slice(1)} 
-                    title={vehicle.title}
-                  />
-                ) : (
-                  <div className="h-[400px] bg-white flex items-center justify-center">
-                    <img 
-                      src="/no-photo.jpg" 
-                      alt="Immagine non disponibile" 
-                      className="max-h-[400px] max-w-full object-contain"
-                    />
-                  </div>
-                )}
+                <VehicleGallery 
+                  mainImage={vehicle.mainImage || ""} 
+                  images={allImages} 
+                  title={vehicle.title}
+                />
               </div>
 
               {/* Tabs dettagli veicolo */}
