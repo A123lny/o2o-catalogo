@@ -93,27 +93,67 @@ export default function Header() {
       </div>
 
       {/* Mobile menu - Solo Home, Catalogo e Contatti */}
-      <div className={`md:hidden bg-white px-4 py-2 shadow-md absolute top-full left-0 w-full ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+      <div className={`md:hidden bg-white px-4 py-2 shadow-md absolute top-full left-0 w-full z-50 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
         <nav className="flex flex-col space-y-3 py-3">
-          <Link href="/" className={`font-medium py-2 px-2 rounded ${isActive('/') ? 'text-primary-dark bg-neutral-100' : 'text-neutral-600 hover:bg-neutral-100'}`}>
+          <a 
+            href="/" 
+            onClick={(e) => {
+              e.preventDefault();
+              setMobileMenuOpen(false);
+              window.location.href = '/';
+            }}
+            className={`font-medium py-2 px-2 rounded ${isActive('/') ? 'text-primary-dark bg-neutral-100' : 'text-neutral-600 hover:bg-neutral-100'}`}
+          >
             Home
-          </Link>
-          <Link href="/catalog" className={`font-medium py-2 px-2 rounded ${isActive('/catalog') ? 'text-primary-dark bg-neutral-100' : 'text-neutral-600 hover:bg-neutral-100'}`}>
+          </a>
+          <a 
+            href="/catalog" 
+            onClick={(e) => {
+              e.preventDefault();
+              setMobileMenuOpen(false);
+              window.location.href = '/catalog';
+            }}
+            className={`font-medium py-2 px-2 rounded ${isActive('/catalog') ? 'text-primary-dark bg-neutral-100' : 'text-neutral-600 hover:bg-neutral-100'}`}
+          >
             Catalogo
-          </Link>
-          <Link href="#contact" className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100">
+          </a>
+          <a 
+            href="#contact" 
+            onClick={(e) => {
+              e.preventDefault();
+              setMobileMenuOpen(false);
+              window.location.href = '/#contact';
+            }}
+            className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100"
+          >
             Contatti
-          </Link>
+          </a>
           
           {/* Auth mobile menu items */}
           {user ? (
-            <Link href="/logout" className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100">
+            <a 
+              href="/logout" 
+              onClick={(e) => {
+                e.preventDefault();
+                setMobileMenuOpen(false);
+                window.location.href = '/logout';
+              }}
+              className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100"
+            >
               Logout
-            </Link>
+            </a>
           ) : (
-            <Link href="/auth" className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100">
+            <a 
+              href="/auth" 
+              onClick={(e) => {
+                e.preventDefault();
+                setMobileMenuOpen(false);
+                window.location.href = '/auth';
+              }}
+              className="text-neutral-600 font-medium py-2 px-2 rounded hover:bg-neutral-100"
+            >
               Login
-            </Link>
+            </a>
           )}
         </nav>
       </div>
