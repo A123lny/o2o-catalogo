@@ -531,10 +531,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Salva il file fisicamente con il nome corretto
         try {
           const oldPath = req.file.path;
-          const newPath = path.join(__dirname, '..', 'public', 'uploads', mainImageFileName);
+          const newPath = path.join(process.cwd(), 'public', 'uploads', mainImageFileName);
           
           // Assicurati che la directory esista
-          const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+          const uploadDir = path.join(process.cwd(), 'public', 'uploads');
           if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
           }
@@ -556,7 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Se c'era un'immagine principale esistente, elimina il file
         if (existingVehicle.mainImage) {
           try {
-            const imagePath = path.join(__dirname, '..', 'public', existingVehicle.mainImage);
+            const imagePath = path.join(process.cwd(), 'public', existingVehicle.mainImage);
             if (fs.existsSync(imagePath)) {
               fs.unlinkSync(imagePath);
               console.log("File immagine principale eliminato:", existingVehicle.mainImage);
@@ -583,7 +583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Elimina i file fisici delle immagini
           for (const imagePath of existingVehicle.images) {
             try {
-              const fullPath = path.join(__dirname, '..', 'public', imagePath);
+              const fullPath = path.join(process.cwd(), 'public', imagePath);
               if (fs.existsSync(fullPath)) {
                 fs.unlinkSync(fullPath);
                 console.log("File immagine galleria eliminato:", imagePath);
@@ -679,7 +679,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Ricevute ${files.length} immagini aggiuntive per il veicolo ID: ${vehicleId}`);
       
       // Assicurati che la directory degli upload esista
-      const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
