@@ -17,7 +17,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
   const [validImages, setValidImages] = useState<string[]>([]);
 
   // Default fallback image
-  const defaultImage = "/fallback-car-image.svg";
+  const defaultImage = "/no-photo.jpg";
 
   // Process images on component mount and when props change
   useEffect(() => {
