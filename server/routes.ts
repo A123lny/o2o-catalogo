@@ -440,11 +440,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Verifica se c'è una richiesta esplicita di reset delle immagini
+      const shouldResetImages = vehicleData.images && vehicleData.images.length === 0;
+      
       const validatedData = insertVehicleSchema.parse(vehicleData);
       
       // Handle image upload here
       if (req.file) {
         validatedData.mainImage = `image_${Date.now()}.jpg`; // In real app, save to disk/S3
+      }
+      
+      // Gestisci il reset delle immagini
+      if (shouldResetImages) {
+        // Assicurati che images sia un array vuoto
+        validatedData.images = [];
+      } else if (!validatedData.images || !Array.isArray(validatedData.images)) {
+        // Se non ci sono immagini nel payload, non aggiornare il campo images
+        delete validatedData.images;
       }
       
       const vehicle = await dbStorage.updateVehicle(id, validatedData);
