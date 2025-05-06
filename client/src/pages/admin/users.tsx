@@ -108,17 +108,10 @@ export default function UsersPage() {
     },
   });
 
-  // Fetch users
+  // Fetch users - Utilizziamo apiRequest direttamente invece di una QueryFn
   const { data: users, isLoading: isLoadingUsers } = useQuery<User[]>({
     queryKey: ['/api/users'],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/users");
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Errore nel recupero degli utenti");
-      }
-      return await res.json();
-    },
+    staleTime: 10000, // Cache per 10 secondi
   });
 
   // Create user mutation
