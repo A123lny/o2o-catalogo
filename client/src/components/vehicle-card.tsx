@@ -41,6 +41,9 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             src={vehicle.mainImage && vehicle.mainImage.trim() !== "" ? processImageUrl(vehicle.mainImage) : "/no-photo.jpg"} 
             alt={vehicle.title} 
             className="w-full h-48 object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "/no-photo.jpg";
+            }}
           />
         </Link>
         

@@ -69,6 +69,9 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
             alt={title} 
             className="w-full h-[450px] object-cover cursor-pointer"
             onClick={() => openLightbox(selectedIndex)}
+            onError={(e) => {
+              e.currentTarget.src = defaultImage;
+            }}
           />
           <button 
             onClick={() => openLightbox(selectedIndex)}
@@ -95,6 +98,9 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                     src={processImageUrl(image)} 
                     alt={`${title} - Image ${index + 1}`} 
                     className="w-full h-16 object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = defaultImage;
+                    }}
                   />
                 </div>
               ))}
@@ -123,6 +129,9 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
               src={processImageUrl(allImages[lightboxIndex] || defaultImage)} 
               alt={`${title} - Lightbox ${lightboxIndex + 1}`} 
               className="max-h-full max-w-full object-contain"
+              onError={(e) => {
+                e.currentTarget.src = defaultImage;
+              }}
             />
 
             <Button 
