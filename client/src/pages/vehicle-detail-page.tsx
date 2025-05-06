@@ -308,10 +308,21 @@ export default function VehicleDetailPage() {
     return null;
   }
   
-  // Prepara le immagini per la galleria
-  const allImages = vehicle.mainImage 
-    ? [vehicle.mainImage, ...(Array.isArray(vehicle.images) ? vehicle.images : [])] 
-    : (Array.isArray(vehicle.images) ? vehicle.images : []);
+  // Prepara le immagini per la galleria e correggi i percorsi
+  const fixImagePath = (imagePath: string) => {
+    if (!imagePath) return "";
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath.startsWith('/uploads/') ? imagePath : `/uploads/${imagePath}`;
+  };
+  
+  const vehicleMainImage = vehicle.mainImage ? fixImagePath(vehicle.mainImage) : "";
+  const vehicleImages = Array.isArray(vehicle.images) 
+    ? vehicle.images.map(img => typeof img === 'string' ? fixImagePath(img) : "") 
+    : [];
+  
+  const allImages = vehicleMainImage 
+    ? [vehicleMainImage, ...vehicleImages.filter(img => img !== "" && img !== vehicleMainImage)] 
+    : vehicleImages.filter(img => img !== "");
   
   // Filtra le opzioni per il tipo corrente
   const filteredOptions = enhancedRentalOptions.filter(option => option.type === activeContractType);
@@ -360,8 +371,8 @@ export default function VehicleDetailPage() {
               {/* Galleria immagini */}
               <div className="bg-white rounded-lg overflow-hidden shadow-sm mb-6">
                 <VehicleGallery 
-                  mainImage={vehicle.mainImage || ""} 
-                  images={allImages} 
+                  mainImage={vehicleMainImage} 
+                  images={vehicleImages} 
                   title={vehicle.title}
                 />
               </div>
