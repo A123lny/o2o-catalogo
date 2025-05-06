@@ -3,7 +3,6 @@ import { Vehicle } from "@shared/schema";
 import { Calendar, Gauge, Fuel, Settings, Car } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { RentalOption } from "@shared/schema";
-import { processImageUrl } from "../lib/image-utils";
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -33,32 +32,33 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     ? Math.min(...rentalOptions.map(option => option.monthlyPrice))
     : null;
 
-  // Funzione per verificare se un'immagine esiste
-  const hasValidImage = () => {
-    return vehicle.mainImage && vehicle.mainImage.trim() !== "";
+  // Funzione per gestire l'immagine
+  const getImageUrl = () => {
+    if (!vehicle.mainImage || vehicle.mainImage.trim() === "") {
+      return "/no-photo.jpg";
+    }
+    
+    // Per le immagini esterne, aggiungiamo il proxy
+    if (vehicle.mainImage.startsWith("http")) {
+      return `/api/image-proxy?url=${encodeURIComponent(vehicle.mainImage)}`;
+    }
+    
+    return vehicle.mainImage;
   };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <div className="relative">
         <Link href={`/vehicle/${vehicle.id}`}>
-          {hasValidImage() ? (
-            <img 
-              src={processImageUrl(vehicle.mainImage as string)} 
-              alt={vehicle.title} 
-              className="w-full h-48 object-cover"
-              onError={(e) => {
-                e.currentTarget.onerror = null; // Previene il loop infinito
-                e.currentTarget.src = "/no-photo.jpg";
-              }}
-            />
-          ) : (
-            <img 
-              src="/no-photo.jpg" 
-              alt={vehicle.title} 
-              className="w-full h-48 object-cover"
-            />
-          )}
+          <img 
+            src={getImageUrl()} 
+            alt={vehicle.title} 
+            className="w-full h-48 object-cover"
+            onError={(e) => {
+              e.currentTarget.onerror = null; // Prevent infinite loops
+              e.currentTarget.src = "/no-photo.jpg";
+            }}
+          />
         </Link>
         
         {/* Badge sul lato sinistro */}

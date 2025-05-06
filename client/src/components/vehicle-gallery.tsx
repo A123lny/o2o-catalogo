@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Maximize } from "lucide-react";
-import { processImageUrl } from "../lib/image-utils";
 
 interface VehicleGalleryProps {
   mainImage?: string;
@@ -11,23 +10,46 @@ interface VehicleGalleryProps {
 }
 
 export default function VehicleGallery({ mainImage, images = [], title }: VehicleGalleryProps) {
-  // Imposta l'immagine di fallback
-  const defaultImage = "/no-photo.jpg";
-  
-  // Filtra immagini valide
-  const validImages = [
-    ...(mainImage && mainImage.trim() !== "" ? [mainImage] : []),
-    ...images.filter(img => img && img.trim() !== "" && img !== mainImage)
-  ];
-  
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [validImages, setValidImages] = useState<string[]>([]);
 
-  // Calcola l'immagine corrente
-  const currentImage = validImages.length > 0 ? validImages[selectedIndex] : null;
+  // Default fallback image
+  const defaultImage = "/no-photo.jpg";
 
-  const handleThumbnailClick = (index: number) => {
+  // Process images on component mount and when props change
+  useEffect(() => {
+    // Filter out empty images and create clean list
+    const filtered = [];
+    
+    // Add main image if valid
+    if (mainImage && mainImage.trim() !== "") {
+      filtered.push(mainImage);
+    }
+    
+    // Add additional images if valid
+    if (images && images.length > 0) {
+      images.forEach(img => {
+        if (img && img.trim() !== "" && (mainImage !== img)) {
+          filtered.push(img);
+        }
+      });
+    }
+    
+    setValidImages(filtered);
+    
+    // Set current image
+    if (filtered.length > 0) {
+      setCurrentImage(filtered[0]);
+    } else {
+      setCurrentImage(null);
+    }
+  }, [mainImage, images]);
+
+  const handleThumbnailClick = (img: string, index: number) => {
+    setCurrentImage(img);
     setSelectedIndex(index);
   };
 
@@ -42,6 +64,18 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
 
   const goToNext = () => {
     setLightboxIndex((prev) => (prev === validImages.length - 1 ? 0 : prev + 1));
+  };
+
+  // Process image URL for API proxy if needed
+  const processImageUrl = (url: string) => {
+    if (!url) return defaultImage;
+    
+    // For external images, use the proxy
+    if (url.startsWith("http")) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    
+    return url;
   };
 
   // Keyboard navigation for lightbox
@@ -66,34 +100,31 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
     <div className="image-gallery">
       <div className="relative bg-white rounded-lg overflow-hidden shadow-md">
         <div className="relative">
-          {currentImage ? (
-            <img 
-              src={processImageUrl(currentImage)} 
-              alt={title} 
-              className="w-full h-[450px] object-cover cursor-pointer"
-              onClick={() => openLightbox(selectedIndex)}
-              onError={(e) => {
-                e.currentTarget.onerror = null; // Previene loop infiniti
-                e.currentTarget.src = defaultImage;
-              }}
-            />
-          ) : (
-            <img 
-              src={defaultImage} 
-              alt={title}
-              className="w-full h-[450px] object-cover cursor-pointer"
-            />
-          )}
+          {/* Main image display */}
+          <img 
+            src={currentImage ? processImageUrl(currentImage) : defaultImage} 
+            alt={title} 
+            className="w-full h-[450px] object-cover cursor-pointer"
+            onClick={() => validImages.length > 0 && openLightbox(selectedIndex)}
+            onError={(e) => {
+              e.currentTarget.onerror = null; // Prevent infinite loops
+              e.currentTarget.src = defaultImage;
+            }}
+          />
           
-          <button 
-            onClick={() => openLightbox(selectedIndex)}
-            className="absolute bottom-4 right-4 bg-white/80 hover:bg-white p-2 rounded-full text-primary transition-colors"
-            title="Visualizza a schermo intero"
-          >
-            <Maximize size={20} />
-          </button>
+          {/* Fullscreen button */}
+          {validImages.length > 0 && (
+            <button 
+              onClick={() => openLightbox(selectedIndex)}
+              className="absolute bottom-4 right-4 bg-white/80 hover:bg-white p-2 rounded-full text-primary transition-colors"
+              title="Visualizza a schermo intero"
+            >
+              <Maximize size={20} />
+            </button>
+          )}
         </div>
         
+        {/* Thumbnails */}
         {validImages.length > 0 && (
           <div className="bg-neutral-50 p-3 border-t border-neutral-100">
             <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-thin scrollbar-thumb-neutral-300">
@@ -103,7 +134,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                   className={`flex-shrink-0 cursor-pointer hover:opacity-75 transition-opacity rounded overflow-hidden ${
                     index === selectedIndex ? 'ring-2 ring-primary border-2 border-white' : 'opacity-70'
                   }`}
-                  onClick={() => handleThumbnailClick(index)}
+                  onClick={() => handleThumbnailClick(image, index)}
                   style={{ width: '100px' }}
                 >
                   <img 
@@ -111,7 +142,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                     alt={`${title} - Image ${index + 1}`} 
                     className="w-full h-16 object-cover"
                     onError={(e) => {
-                      e.currentTarget.onerror = null; // Previene loop infiniti
+                      e.currentTarget.onerror = null;
                       e.currentTarget.src = defaultImage;
                     }}
                   />
@@ -143,7 +174,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
               alt={`${title} - Lightbox ${lightboxIndex + 1}`} 
               className="max-h-full max-w-full object-contain"
               onError={(e) => {
-                e.currentTarget.onerror = null; // Previene loop infiniti
+                e.currentTarget.onerror = null;
                 e.currentTarget.src = defaultImage;
               }}
             />
