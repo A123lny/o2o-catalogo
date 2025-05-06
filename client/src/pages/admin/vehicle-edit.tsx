@@ -351,10 +351,10 @@ export default function VehicleEditPage() {
   }
 
   return (
-    <div className="flex h-screen bg-neutral-100">
+    <div className="flex h-full min-h-screen bg-neutral-100">
       <AdminSidebar />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col pl-64 overflow-hidden">
         <AdminHeader user={user} />
         
         <main className="flex-1 overflow-y-auto p-4">

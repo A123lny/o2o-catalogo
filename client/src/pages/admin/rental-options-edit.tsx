@@ -194,9 +194,9 @@ export default function RentalOptionsEditPage() {
 
   if (isLoadingVehicle || (isEditMode && isLoadingRentalOption)) {
     return (
-      <div className="flex h-screen">
+      <div className="flex h-full min-h-screen">
         <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 pl-64 flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       </div>
@@ -205,9 +205,9 @@ export default function RentalOptionsEditPage() {
 
   if (!vehicle) {
     return (
-      <div className="flex h-screen">
+      <div className="flex h-full min-h-screen">
         <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 pl-64 flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2">Veicolo non trovato</h2>
             <p className="text-gray-500 mb-4">Impossibile trovare il veicolo specificato.</p>
@@ -221,10 +221,10 @@ export default function RentalOptionsEditPage() {
   }
 
   return (
-    <div className="flex h-screen bg-neutral-100">
+    <div className="flex h-full min-h-screen bg-neutral-100">
       <AdminSidebar />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col pl-64 overflow-hidden">
         <AdminHeader user={user} />
         
         <main className="flex-1 overflow-y-auto p-4">
