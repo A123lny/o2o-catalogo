@@ -253,11 +253,23 @@ export default function VehicleEditPage() {
     setImagesPreview(prev => prev.filter((_, i) => i !== index));
     setImagesFiles(prev => prev.filter((_, i) => i !== index));
     
-    // Importante: aggiorna anche il valore 'images' nel form quando l'utente rimuove un'immagine
+    // Importante: aggiorna direttamente il valore 'images' nel form quando l'utente rimuove un'immagine
     if (isEditMode && vehicle?.images) {
-      const currentImages = [...(vehicle.images as string[])];
+      // Ottieni tutti i valori attuali del form
+      const currentValues = form.getValues();
+      
+      // Ottieni l'array images corrente, o usa quello del veicolo se non presente nel form
+      const currentImages = Array.isArray(currentValues.images) && currentValues.images.length > 0 
+        ? [...currentValues.images] 
+        : [...(vehicle.images as string[])];
+      
+      // Rimuovi l'immagine all'indice specificato
       const updatedImages = currentImages.filter((_, i) => i !== index);
+      
+      // Aggiorna il valore nel form
       form.setValue('images', updatedImages);
+      
+      console.log('Immagini rimaste dopo eliminazione:', updatedImages);
     }
   };
 
@@ -928,14 +940,35 @@ export default function VehicleEditPage() {
                             <p className="text-sm text-neutral-500 mb-2">
                               Trascina e rilascia le immagini oppure
                             </p>
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => document.getElementById('images')?.click()}
-                            >
-                              Seleziona File
-                            </Button>
+                            <div className="flex flex-wrap gap-2 justify-center">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => document.getElementById('images')?.click()}
+                              >
+                                Seleziona File
+                              </Button>
+                              
+                              {imagesPreview.length > 0 && (
+                                <Button 
+                                  type="button"
+                                  variant="destructive" 
+                                  size="sm" 
+                                  onClick={() => {
+                                    if (window.confirm("Sei sicuro di voler rimuovere tutte le immagini?")) {
+                                      setImagesPreview([]);
+                                      setImagesFiles([]);
+                                      // Aggiorna il valore del form con un array vuoto
+                                      form.setValue('images', []);
+                                      console.log('Tutte le immagini sono state rimosse');
+                                    }
+                                  }}
+                                >
+                                  Rimuovi Tutte
+                                </Button>
+                              )}
+                            </div>
                             <input
                               id="images"
                               type="file"
