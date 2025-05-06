@@ -425,8 +425,7 @@ export default function VehicleEditPage() {
             </div>
             
             <Button 
-              type="button"
-              onClick={form.handleSubmit(onSubmit)}
+              type="submit"
               disabled={mutation.isPending || imagesMutation.isPending}
             >
               {mutation.isPending || imagesMutation.isPending ? (
@@ -442,7 +441,7 @@ export default function VehicleEditPage() {
           </div>
           
           <Form {...form}>
-            <form className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="mb-4">
                   <TabsTrigger value="details">Dettagli Veicolo</TabsTrigger>
