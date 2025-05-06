@@ -38,7 +38,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       <div className="relative">
         <Link href={`/vehicle/${vehicle.id}`}>
           <img 
-            src={vehicle.mainImage ? processImageUrl(vehicle.mainImage) : "/fallback-car-image.svg"} 
+            src={vehicle.mainImage && vehicle.mainImage.trim() !== "" ? processImageUrl(vehicle.mainImage) : "/fallback-car-image.svg"} 
             alt={vehicle.title} 
             className="w-full h-48 object-cover"
           />
