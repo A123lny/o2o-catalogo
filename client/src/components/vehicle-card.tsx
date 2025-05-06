@@ -35,7 +35,8 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
   // Funzione per gestire l'immagine
   const getImageUrl = () => {
     if (!vehicle.mainImage || vehicle.mainImage.trim() === "") {
-      return "/no-photo.jpg";
+      // Utilizziamo una immagine statica fallback
+      return "/fallback-car-image.svg";
     }
     
     // Per le immagini esterne, aggiungiamo il proxy
@@ -56,7 +57,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             className="w-full h-48 object-cover"
             onError={(e) => {
               e.currentTarget.onerror = null; // Prevent infinite loops
-              e.currentTarget.src = "/no-photo.jpg";
+              e.currentTarget.src = "/fallback-car-image.svg";
             }}
           />
         </Link>
