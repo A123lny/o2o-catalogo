@@ -1407,7 +1407,8 @@ export default function VehicleEditPage() {
                 </Button>
                 
                 <Button 
-                  type="submit"
+                  type="button"
+                  onClick={form.handleSubmit(onSubmit)}
                   disabled={mutation.isPending || imagesMutation.isPending}
                 >
                   {mutation.isPending || imagesMutation.isPending ? (
