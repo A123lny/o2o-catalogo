@@ -354,6 +354,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin API routes
 
+  // Get all users (admin only)
+  app.get("/api/users", isAdmin, async (req, res) => {
+    try {
+      const users = await dbStorage.getUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Error fetching users" });
+    }
+  });
+
   // Dashboard stats
   app.get("/api/admin/stats", isAdmin, async (req, res) => {
     try {
