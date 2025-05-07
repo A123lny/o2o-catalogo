@@ -199,7 +199,7 @@ export default function UsersPage() {
   // Update user mutation
   const updateUserMutation = useMutation({
     mutationFn: async (values: UserFormValues) => {
-      if (!userToEdit) return;
+      if (!userToEdit) return null;
       
       // Remove confirmPassword and include only the necessary fields
       const { confirmPassword, ...userData } = values;
@@ -214,10 +214,17 @@ export default function UsersPage() {
       
       const res = await apiRequest("PUT", `/api/admin/users/${userToEdit.id}`, dataToSend);
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Errore nell'aggiornamento dell'utente");
+        const errorData = await res.json().catch(() => ({ message: "Errore sconosciuto" }));
+        throw new Error(errorData.message || "Errore nell'aggiornamento dell'utente");
       }
-      return await res.json();
+      
+      try {
+        return await res.json();
+      } catch (err) {
+        console.log("Risposta dal server:", res);
+        // Se non c'è JSON da analizzare, restituisci almeno un valore
+        return { success: true };
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -229,6 +236,7 @@ export default function UsersPage() {
       setUserToEdit(null);
     },
     onError: (error: Error) => {
+      console.error('Errore nell\'aggiornamento:', error);
       toast({
         title: "Errore",
         description: error.message || "Si è verificato un errore durante l'aggiornamento dell'utente.",
@@ -709,26 +717,31 @@ export default function UsersPage() {
                   )}
                 />
                 
-                {/* Mostra il campo di conferma password solo se è stata inserita una password */}
-                {form.watch("password") ? (
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Conferma Password</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="password" 
-                            placeholder="Conferma password"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ) : null}
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Conferma Password
+                        {userToEdit && !form.watch("password") && (
+                          <span className="ml-1 text-neutral-500 text-xs font-normal">
+                            (opzionale)
+                          </span>
+                        )}
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="Conferma password"
+                          {...field} 
+                          disabled={userToEdit && !form.watch("password") ? true : undefined}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
               
               <DialogFooter>

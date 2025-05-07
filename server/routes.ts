@@ -435,13 +435,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         delete (updatedUser as any).password;
       }
       
-      res.status(200).json({ 
-        message: "Utente aggiornato con successo", 
-        user: updatedUser 
+      // Invia la risposta senza includere dati complessi che potrebbero creare problemi di serializzazione
+      return res.status(200).json({ 
+        success: true,
+        message: "Utente aggiornato con successo"
       });
     } catch (error) {
       console.error('Errore nella gestione della richiesta:', error);
-      res.status(500).json({ message: 'Si è verificato un errore durante l\'elaborazione della richiesta' });
+      return res.status(500).json({ message: 'Si è verificato un errore durante l\'elaborazione della richiesta' });
     }
   });
   
