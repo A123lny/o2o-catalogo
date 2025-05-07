@@ -212,18 +212,25 @@ export default function UsersPage() {
         role: userData.role,
       };
       
-      const res = await apiRequest("PUT", `/api/admin/users/${userToEdit.id}`, dataToSend);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ message: "Errore sconosciuto" }));
-        throw new Error(errorData.message || "Errore nell'aggiornamento dell'utente");
-      }
-      
       try {
-        return await res.json();
+        const res = await apiRequest("PUT", `/api/admin/users/${userToEdit.id}`, dataToSend);
+        
+        if (!res.ok) {
+          let errorMessage = "Errore nell'aggiornamento dell'utente";
+          try {
+            const errorData = await res.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (e) {
+            console.error("Errore nel parsing della risposta di errore:", e);
+          }
+          throw new Error(errorMessage);
+        }
+        
+        // Non cercare di interpretare la risposta come JSON, poiché potrebbe non esserlo
+        return { success: true, userId: userToEdit.id };
       } catch (err) {
-        console.log("Risposta dal server:", res);
-        // Se non c'è JSON da analizzare, restituisci almeno un valore
-        return { success: true };
+        console.error("Errore nella richiesta di aggiornamento:", err);
+        throw err;
       }
     },
     onSuccess: () => {
