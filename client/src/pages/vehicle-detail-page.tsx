@@ -380,33 +380,53 @@ export default function VehicleDetailPage() {
               {/* Tabs dettagli veicolo */}
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab}>
-                  <div className="overflow-x-auto pb-1.5 -mb-1.5">
-                    <TabsList className="border-b border-gray-200 w-max min-w-full flex-nowrap justify-start bg-transparent mb-6">
-                      <TabsTrigger 
-                        value="description" 
-                        className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
-                      >
-                        Descrizione
-                      </TabsTrigger>
-                      <TabsTrigger 
-                        value="colors" 
-                        className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
-                      >
-                        Colore
-                      </TabsTrigger>
-                      <TabsTrigger 
-                        value="features" 
-                        className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
-                      >
-                        Equipaggiamenti
-                      </TabsTrigger>
-                      <TabsTrigger 
-                        value="details" 
-                        className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
-                      >
-                        Specifiche
-                      </TabsTrigger>
-                    </TabsList>
+                  <div className="relative">
+                    {/* Indicatore di scorrimento a sinistra */}
+                    <div className="sm:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                      <div className="w-10 h-10 flex items-center justify-start bg-gradient-to-r from-white to-transparent">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 ml-1">
+                          <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    <div className="overflow-x-auto pb-1.5 -mb-1.5 scrollbar-hide">
+                      <TabsList className="border-b border-gray-200 w-max min-w-full flex-nowrap justify-start bg-transparent mb-6 px-6">
+                        <TabsTrigger 
+                          value="description" 
+                          className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
+                        >
+                          Descrizione
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="colors" 
+                          className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
+                        >
+                          Colore
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="features" 
+                          className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
+                        >
+                          Equipaggiamenti
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="details" 
+                          className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
+                        >
+                          Specifiche
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+
+                    {/* Indicatore di scorrimento a destra */}
+                    <div className="sm:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                      <div className="w-10 h-10 flex items-center justify-end bg-gradient-to-l from-white to-transparent">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 mr-1">
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                   
                   <TabsContent value="description" className="text-gray-600 leading-relaxed">
