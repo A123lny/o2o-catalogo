@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Maximize, ImageIcon } from "lucide-react";
 
@@ -198,10 +198,15 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
 
       {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-6xl p-0 bg-transparent border-none">
+        <DialogContent className="max-w-6xl p-0 bg-transparent border-none" aria-describedby="lightbox-desc" aria-labelledby="lightbox-title">
+          <div className="sr-only" id="lightbox-title">Galleria immagini {title}</div>
+          <div id="lightbox-desc" className="sr-only">
+            Visualizzazione immagine a schermo intero. Utilizzare le frecce per navigare tra le immagini o ESC per chiudere.
+          </div>
           <div className="relative bg-black rounded-lg flex items-center justify-center h-[80vh]">
+            {/* Freccia sinistra - versione mobile (più piccola) */}
             <Button 
-              className="absolute left-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white" 
+              className="absolute left-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white block sm:hidden" 
               variant="ghost"
               size="icon"
               onClick={(e) => {
@@ -210,6 +215,19 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
               }}
             >
               <ChevronLeft className="h-8 w-8" />
+            </Button>
+            
+            {/* Freccia sinistra - versione desktop (più grande e visibile) */}
+            <Button 
+              className="absolute left-4 z-10 rounded-full bg-black/60 hover:bg-black/80 text-white hidden sm:flex p-6 shadow-lg transition-all transform hover:scale-105" 
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrevious();
+              }}
+            >
+              <ChevronLeft className="h-10 w-10" />
             </Button>
 
             {validImages.length > 0 ? (
@@ -224,8 +242,9 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
               </div>
             )}
 
+            {/* Freccia destra - versione mobile (più piccola) */}
             <Button 
-              className="absolute right-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white" 
+              className="absolute right-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white block sm:hidden" 
               variant="ghost"
               size="icon"
               onClick={(e) => {
@@ -234,6 +253,19 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
               }}
             >
               <ChevronRight className="h-8 w-8" />
+            </Button>
+            
+            {/* Freccia destra - versione desktop (più grande e visibile) */}
+            <Button 
+              className="absolute right-4 z-10 rounded-full bg-black/60 hover:bg-black/80 text-white hidden sm:flex p-6 shadow-lg transition-all transform hover:scale-105" 
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNext();
+              }}
+            >
+              <ChevronRight className="h-10 w-10" />
             </Button>
 
             <div className="absolute bottom-4 left-0 right-0 flex justify-center">
