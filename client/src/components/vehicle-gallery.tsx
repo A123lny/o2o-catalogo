@@ -204,7 +204,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
             Visualizzazione immagine a schermo intero. Utilizzare le frecce per navigare tra le immagini o ESC per chiudere.
           </div>
           <div className="relative bg-black rounded-lg flex items-center justify-center h-[80vh]">
-            {/* Freccia sinistra - versione mobile (più piccola) */}
+            {/* Freccia sinistra - versione mobile (più piccola e semplice) */}
             <Button 
               className="absolute left-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white block sm:hidden" 
               variant="ghost"
@@ -214,12 +214,12 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                 goToPrevious();
               }}
             >
-              <ChevronLeft className="h-8 w-8" />
+              <ChevronLeft className="h-6 w-6" />
             </Button>
             
             {/* Freccia sinistra - versione desktop (più grande e visibile) */}
             <Button 
-              className="absolute left-4 z-10 rounded-full bg-black/60 hover:bg-black/80 text-white hidden sm:flex p-6 shadow-lg transition-all transform hover:scale-105" 
+              className="absolute left-12 z-10 rounded-full bg-black/60 hover:bg-black/80 text-white hidden sm:flex p-6 shadow-lg transition-all transform hover:scale-105" 
               variant="ghost"
               size="icon"
               onClick={(e) => {
@@ -242,7 +242,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
               </div>
             )}
 
-            {/* Freccia destra - versione mobile (più piccola) */}
+            {/* Freccia destra - versione mobile (più piccola e semplice) */}
             <Button 
               className="absolute right-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white block sm:hidden" 
               variant="ghost"
@@ -252,12 +252,12 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                 goToNext();
               }}
             >
-              <ChevronRight className="h-8 w-8" />
+              <ChevronRight className="h-6 w-6" />
             </Button>
             
             {/* Freccia destra - versione desktop (più grande e visibile) */}
             <Button 
-              className="absolute right-4 z-10 rounded-full bg-black/60 hover:bg-black/80 text-white hidden sm:flex p-6 shadow-lg transition-all transform hover:scale-105" 
+              className="absolute right-12 z-10 rounded-full bg-black/60 hover:bg-black/80 text-white hidden sm:flex p-6 shadow-lg transition-all transform hover:scale-105" 
               variant="ghost"
               size="icon"
               onClick={(e) => {
