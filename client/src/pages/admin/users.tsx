@@ -132,12 +132,14 @@ export default function UsersPage() {
   const createUserMutation = useMutation({
     mutationFn: async (values: UserFormValues) => {
       const { confirmPassword, ...userData } = values;
-      const res = await apiRequest("POST", "/api/register", userData);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Errore nella creazione dell'utente");
+      try {
+        const result = await apiRequest("POST", "/api/register", userData);
+        console.log("Risultato creazione utente:", result);
+        return result;
+      } catch (err) {
+        console.error("Errore nella creazione dell'utente:", err);
+        throw err;
       }
-      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -160,12 +162,14 @@ export default function UsersPage() {
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest("DELETE", `/api/admin/users/${id}`);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Errore nell'eliminazione dell'utente");
+      try {
+        const result = await apiRequest("DELETE", `/api/admin/users/${id}`);
+        console.log("Risultato eliminazione utente:", result);
+        return result;
+      } catch (err) {
+        console.error("Errore nell'eliminazione dell'utente:", err);
+        throw err;
       }
-      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -212,22 +216,12 @@ export default function UsersPage() {
         role: userData.role,
       };
       
+      // apiRequest ora gestisce già internamente gli errori HTTP e non restituisce l'oggetto Response
+      // ma direttamente i dati JSON o un oggetto di successo personalizzato
       try {
-        const res = await apiRequest("PUT", `/api/admin/users/${userToEdit.id}`, dataToSend);
-        
-        if (!res.ok) {
-          let errorMessage = "Errore nell'aggiornamento dell'utente";
-          try {
-            const errorData = await res.json();
-            errorMessage = errorData.message || errorMessage;
-          } catch (e) {
-            console.error("Errore nel parsing della risposta di errore:", e);
-          }
-          throw new Error(errorMessage);
-        }
-        
-        // Non cercare di interpretare la risposta come JSON, poiché potrebbe non esserlo
-        return { success: true, userId: userToEdit.id };
+        const result = await apiRequest("PUT", `/api/admin/users/${userToEdit.id}`, dataToSend);
+        console.log("Risultato aggiornamento utente:", result);
+        return result;
       } catch (err) {
         console.error("Errore nella richiesta di aggiornamento:", err);
         throw err;
