@@ -145,20 +145,15 @@ export default function VehicleEditModal({ vehicleId, isOpen, onClose }: Vehicle
     // Crea un oggetto FormData per l'invio dei dati e dei file
     const formData = new FormData();
     
-    // Aggiungi tutti i campi tranne quelli speciali
-    for (const [key, value] of Object.entries(values)) {
-      if (key !== 'images' && key !== 'features' && key !== 'badges') {
-        formData.append(key, String(value));
-      }
-    }
+    // Prepara i dati completi del veicolo come un oggetto
+    const vehicleData = {
+      ...values,
+      // Se non c'è stata una rimozione del campo condition, aggiungiamo un valore di default
+      condition: values.condition || existingVehicle?.condition || "Nuovo"
+    };
     
-    // Gestisci caratteristiche (features) come array JSON
-    formData.append('features', JSON.stringify(values.features));
-    
-    // Gestisci badge come array JSON
-    if (values.badges && values.badges.length > 0) {
-      formData.append('badges', JSON.stringify(values.badges));
-    }
+    // Converti l'intero oggetto in JSON e aggiungilo come 'data'
+    formData.append('data', JSON.stringify(vehicleData));
     
     // Invia la mutation
     mutation.mutate(formData);
