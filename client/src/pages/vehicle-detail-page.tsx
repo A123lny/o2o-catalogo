@@ -380,32 +380,34 @@ export default function VehicleDetailPage() {
               {/* Tabs dettagli veicolo */}
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="border-b border-gray-200 w-full justify-start bg-transparent mb-6">
-                    <TabsTrigger 
-                      value="description" 
-                      className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium"
-                    >
-                      Descrizione
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="colors" 
-                      className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium"
-                    >
-                      Colore
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="features" 
-                      className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium"
-                    >
-                      Equipaggiamenti
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="details" 
-                      className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium"
-                    >
-                      Specifiche
-                    </TabsTrigger>
-                  </TabsList>
+                  <div className="overflow-x-auto pb-1.5 -mb-1.5">
+                    <TabsList className="border-b border-gray-200 w-max min-w-full flex-nowrap justify-start bg-transparent mb-6">
+                      <TabsTrigger 
+                        value="description" 
+                        className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
+                      >
+                        Descrizione
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="colors" 
+                        className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
+                      >
+                        Colore
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="features" 
+                        className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
+                      >
+                        Equipaggiamenti
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="details" 
+                        className="px-4 py-3 text-gray-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 font-medium whitespace-nowrap"
+                      >
+                        Specifiche
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
                   
                   <TabsContent value="description" className="text-gray-600 leading-relaxed">
                     <p className="whitespace-pre-line">{vehicle.description}</p>
