@@ -115,7 +115,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
               </div>
               
               {/* Fullscreen button - versione desktop (visibile solo su desktop) */}
-              <div className="absolute top-0 right-0 p-2 hidden sm:block">
+              <div className="absolute bottom-3 right-3 p-2 hidden sm:block">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
