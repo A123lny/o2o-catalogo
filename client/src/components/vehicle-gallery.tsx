@@ -119,7 +119,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                     e.stopPropagation();
                     openLightbox(selectedIndex);
                   }}
-                  className="absolute top-3 right-3 bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-blue-500 sm:text-primary transition-colors z-10"
+                  className="absolute bottom-3 right-3 bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-blue-500 sm:text-primary transition-colors z-10"
                   title="Visualizza a schermo intero"
                 >
                   <Maximize size={20} />
