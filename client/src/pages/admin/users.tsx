@@ -75,9 +75,7 @@ import {
 
 // Schema di validazione per il form utente
 const userFormSchema = insertUserSchema.extend({
-  confirmPassword: z.string().min(6, {
-    message: "La password deve essere lunga almeno 6 caratteri",
-  }).optional(),
+  confirmPassword: z.string().optional(),
 }).superRefine((data, ctx) => {
   // Se la password è stata fornita, la conferma è obbligatoria
   if (data.password && data.password.trim() !== '') {
@@ -241,6 +239,15 @@ export default function UsersPage() {
 
   // Form submission handler for create and update
   const onSubmit = (values: UserFormValues) => {
+    console.log("Form values:", values);
+    console.log("Form errors:", form.formState.errors);
+    
+    // Se siamo in modalità modifica e non è stata inserita alcuna password,
+    // assicuriamoci che non ci siano problemi di validazione con confirmPassword
+    if (userToEdit && (!values.password || values.password.trim() === '')) {
+      values.confirmPassword = undefined;
+    }
+    
     if (userToEdit) {
       updateUserMutation.mutate(values);
     } else {
@@ -688,7 +695,11 @@ export default function UsersPage() {
                             field.onChange(e);
                             // Se il campo password è vuoto, resetta anche il campo confirmPassword
                             if (e.target.value === "") {
-                              form.setValue("confirmPassword", "", { shouldValidate: true });
+                              form.setValue("confirmPassword", "", { shouldValidate: false });
+                              form.clearErrors("confirmPassword");
+                            } else {
+                              // Se viene inserita una password, valida il campo confirmPassword
+                              form.trigger("confirmPassword");
                             }
                           }}
                         />
