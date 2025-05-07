@@ -785,13 +785,35 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(requests.createdAt))
       .limit(5);
     
+    // Correggi i percorsi delle immagini per ogni veicolo
+    const recentVehiclesWithFixedImages = recentVehicles.map(vehicle => {
+      let fixedVehicle = { ...vehicle };
+      
+      // Correggi mainImage
+      if (fixedVehicle.mainImage && !fixedVehicle.mainImage.startsWith('/uploads/') && !fixedVehicle.mainImage.startsWith('http')) {
+        fixedVehicle.mainImage = `/uploads/${fixedVehicle.mainImage}`;
+      }
+      
+      // Correggi tutte le immagini secondarie
+      if (fixedVehicle.images && Array.isArray(fixedVehicle.images)) {
+        fixedVehicle.images = fixedVehicle.images.map(img => {
+          if (img && typeof img === 'string' && !img.startsWith('/uploads/') && !img.startsWith('http')) {
+            return `/uploads/${img}`;
+          }
+          return img;
+        });
+      }
+      
+      return fixedVehicle;
+    });
+    
     return {
       users: Number(userCount.count),
       vehicles: Number(vehicleCount.count),
       requests: Number(requestCount.count),
       pendingRequests: Number(pendingCount.count),
       completedRequests: Number(completedCount.count),
-      recentVehicles,
+      recentVehicles: recentVehiclesWithFixedImages,
       recentRequests
     };
   }
