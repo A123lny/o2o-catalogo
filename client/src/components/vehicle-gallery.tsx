@@ -119,7 +119,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                     e.stopPropagation();
                     openLightbox(selectedIndex);
                   }}
-                  className="absolute bottom-3 right-3 bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-blue-500 sm:text-primary transition-colors z-10"
+                  className="absolute top-3 right-3 bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-blue-500 sm:text-primary transition-colors z-10"
                   title="Visualizza a schermo intero"
                 >
                   <Maximize size={20} />
@@ -145,23 +145,25 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
               </div>
             </div>
             
-            <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-hide px-4">
+            <div className="flex overflow-x-auto gap-3 pb-1 pt-1 scrollbar-hide px-4">
               {validImages.map((image, index) => (
                 <div 
                   key={index}
-                  className={`flex-shrink-0 cursor-pointer transition-all rounded-md overflow-hidden ${
+                  className={`flex-shrink-0 cursor-pointer transition-all rounded overflow-hidden ${
                     index === selectedIndex 
-                      ? 'ring-2 ring-blue-500 border border-white shadow-md scale-105' 
-                      : 'opacity-70 hover:opacity-100 hover:scale-105'
+                      ? 'ring-2 ring-blue-500 shadow-md' 
+                      : 'opacity-70 hover:opacity-100'
                   }`}
                   onClick={() => handleThumbnailClick(image, index)}
-                  style={{ width: '80px' }}
+                  style={{ width: '75px' }}
                 >
-                  <img 
-                    src={processImageUrl(image)} 
-                    alt={`${title} - Image ${index + 1}`} 
-                    className="w-full h-14 object-contain sm:object-cover"
-                  />
+                  <div className="p-0.5 bg-white rounded overflow-hidden">
+                    <img 
+                      src={processImageUrl(image)} 
+                      alt={`${title} - Image ${index + 1}`} 
+                      className="w-full h-12 object-contain sm:object-cover rounded"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
