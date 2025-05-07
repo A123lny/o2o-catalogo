@@ -338,10 +338,25 @@ export const insertProvinceSchema = createInsertSchema(provinces).omit({
   id: true,
 });
 
-export const insertGeneralSettingsSchema = createInsertSchema(generalSettings).omit({
-  id: true,
-  updatedAt: true,
-});
+export const insertGeneralSettingsSchema = createInsertSchema(generalSettings)
+  .omit({
+    id: true,
+    updatedAt: true,
+  })
+  .extend({
+    siteName: z.string().min(1, "Il nome del sito è obbligatorio"),
+    logoPath: z.string().optional().nullable(),
+    primaryColor: z.string().optional().nullable(),
+    secondaryColor: z.string().optional().nullable(),
+    contactEmail: z.string().email("Inserisci un indirizzo email valido").optional().nullable(),
+    contactPhone: z.string().optional().nullable(),
+    address: z.string().optional().nullable(),
+    vatNumber: z.string().optional().nullable(),
+    socialFacebook: z.string().optional().nullable(),
+    socialInstagram: z.string().optional().nullable(),
+    socialLinkedin: z.string().optional().nullable(),
+    footerText: z.string().optional().nullable(),
+  });
 
 export const insertSecuritySettingsSchema = createInsertSchema(securitySettings).omit({
   id: true,
