@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
@@ -46,6 +46,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { HexColorPicker } from "react-colorful";
 
 const generalSettingsSchema = z.object({
   siteName: z.string().min(1, "Il nome del sito è obbligatorio"),
@@ -90,6 +91,8 @@ export default function SettingsPage() {
   const [has2FAEnabled, setHas2FAEnabled] = useState(false);
   const [isDisabling2FA, setIsDisabling2FA] = useState(false);
   const [isLoading2FAStatus, setIsLoading2FAStatus] = useState(false);
+  const [showPrimaryColorPicker, setShowPrimaryColorPicker] = useState(false);
+  const [showSecondaryColorPicker, setShowSecondaryColorPicker] = useState(false);
 
   // Fetch general settings
   const { data: generalSettings, isLoading: isLoadingGeneral } = useQuery({
@@ -428,12 +431,49 @@ export default function SettingsPage() {
                               <FormLabel>Colore Primario</FormLabel>
                               <div className="flex gap-2">
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input 
+                                    {...field} 
+                                    onChange={(e) => field.onChange(e.target.value)}
+                                    onClick={() => setShowPrimaryColorPicker(!showPrimaryColorPicker)}
+                                  />
                                 </FormControl>
-                                <div className="w-10 h-10 rounded border" style={{ backgroundColor: field.value || '#3b82f6' }} />
+                                <div 
+                                  className="w-10 h-10 rounded border cursor-pointer" 
+                                  style={{ backgroundColor: field.value || '#3b82f6' }}
+                                  onClick={() => setShowPrimaryColorPicker(!showPrimaryColorPicker)}
+                                />
                               </div>
+                              
+                              {showPrimaryColorPicker && (
+                                <div className="relative mt-1 z-10">
+                                  <div 
+                                    className="fixed inset-0" 
+                                    onClick={() => setShowPrimaryColorPicker(false)}
+                                  />
+                                  <div className="absolute">
+                                    <HexColorPicker 
+                                      color={field.value} 
+                                      onChange={(color) => {
+                                        field.onChange(color);
+                                      }} 
+                                    />
+                                    <div className="mt-2 bg-white p-2 rounded shadow flex items-center justify-between border">
+                                      <span className="text-sm font-medium">Codice colore: {field.value}</span>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setShowPrimaryColorPicker(false)}
+                                      >
+                                        Chiudi
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
                               <FormDescription>
-                                Colore primario (es. #3b82f6)
+                                Colore primario - Clicca per scegliere il colore
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -448,12 +488,49 @@ export default function SettingsPage() {
                               <FormLabel>Colore Secondario</FormLabel>
                               <div className="flex gap-2">
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input 
+                                    {...field} 
+                                    onChange={(e) => field.onChange(e.target.value)}
+                                    onClick={() => setShowSecondaryColorPicker(!showSecondaryColorPicker)}
+                                  />
                                 </FormControl>
-                                <div className="w-10 h-10 rounded border" style={{ backgroundColor: field.value || '#f97316' }} />
+                                <div 
+                                  className="w-10 h-10 rounded border cursor-pointer" 
+                                  style={{ backgroundColor: field.value || '#f97316' }}
+                                  onClick={() => setShowSecondaryColorPicker(!showSecondaryColorPicker)}
+                                />
                               </div>
+                              
+                              {showSecondaryColorPicker && (
+                                <div className="relative mt-1 z-10">
+                                  <div 
+                                    className="fixed inset-0" 
+                                    onClick={() => setShowSecondaryColorPicker(false)}
+                                  />
+                                  <div className="absolute">
+                                    <HexColorPicker 
+                                      color={field.value} 
+                                      onChange={(color) => {
+                                        field.onChange(color);
+                                      }} 
+                                    />
+                                    <div className="mt-2 bg-white p-2 rounded shadow flex items-center justify-between border">
+                                      <span className="text-sm font-medium">Codice colore: {field.value}</span>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setShowSecondaryColorPicker(false)}
+                                      >
+                                        Chiudi
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
                               <FormDescription>
-                                Colore secondario (es. #f97316)
+                                Colore secondario - Clicca per scegliere il colore
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
