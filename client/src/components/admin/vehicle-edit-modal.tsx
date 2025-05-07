@@ -286,17 +286,18 @@ export default function VehicleEditModal({ vehicleId, isOpen, onClose }: Vehicle
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Condizione</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Seleziona condizione" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="new">Nuovo</SelectItem>
-                          <SelectItem value="used">Usato</SelectItem>
-                          <SelectItem value="demo">Demo</SelectItem>
-                          <SelectItem value="zero_km">Km Zero</SelectItem>
+                          <SelectItem value="Nuovo">Nuovo</SelectItem>
+                          <SelectItem value="Usato">Usato</SelectItem>
+                          <SelectItem value="Demo">Demo</SelectItem>
+                          <SelectItem value="Km Zero">Km Zero</SelectItem>
+                          <SelectItem value="2Life">2Life</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -312,7 +313,7 @@ export default function VehicleEditModal({ vehicleId, isOpen, onClose }: Vehicle
                       <FormLabel>Categoria</FormLabel>
                       <Select 
                         onValueChange={(value) => field.onChange(parseInt(value))}
-                        value={field.value.toString()}
+                        value={field.value ? field.value.toString() : ""}
                       >
                         <FormControl>
                           <SelectTrigger>
