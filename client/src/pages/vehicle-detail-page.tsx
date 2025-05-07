@@ -804,6 +804,18 @@ export default function VehicleDetailPage() {
               </div>
             </div>
           </div>
+          
+          {/* Veicoli correlati - visualizzati solo su mobile alla fine della pagina */}
+          {relatedVehicles && relatedVehicles.length > 0 && (
+            <div className="mt-8 sm:hidden">
+              <h2 className="text-2xl font-bold mb-6">Auto simili</h2>
+              <div className="grid grid-cols-1 gap-6">
+                {relatedVehicles.slice(0, 3).map(relatedVehicle => (
+                  <VehicleCard key={relatedVehicle.id} vehicle={relatedVehicle} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </main>
       <Footer />
