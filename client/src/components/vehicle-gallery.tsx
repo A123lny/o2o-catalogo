@@ -114,14 +114,28 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                 />
               </div>
               
-              {/* Fullscreen button - identico sia per desktop che mobile */}
-              <div className="absolute top-0 right-0 p-2">
+              {/* Fullscreen button - versione desktop (visibile solo su desktop) */}
+              <div className="absolute top-0 right-0 p-2 hidden sm:block">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
                     openLightbox(selectedIndex);
                   }}
-                  className="bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-blue-500 sm:text-primary transition-colors z-10"
+                  className="bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-primary transition-colors z-10"
+                  title="Visualizza a schermo intero"
+                >
+                  <Maximize size={20} />
+                </button>
+              </div>
+              
+              {/* Fullscreen button - versione mobile (visibile solo su mobile) */}
+              <div className="absolute bottom-3 right-3 block sm:hidden">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openLightbox(selectedIndex);
+                  }}
+                  className="bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-blue-500 transition-colors z-10"
                   title="Visualizza a schermo intero"
                 >
                   <Maximize size={20} />
