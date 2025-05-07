@@ -107,11 +107,11 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
             <img 
               src={processImageUrl(currentImage)} 
               alt={title} 
-              className="w-full h-[450px] object-cover cursor-pointer"
+              className="w-full h-[300px] sm:h-[450px] object-contain sm:object-cover cursor-pointer"
               onClick={() => validImages.length > 0 && openLightbox(selectedIndex)}
             />
           ) : (
-            <div className="w-full h-[450px] bg-neutral-100 flex items-center justify-center">
+            <div className="w-full h-[300px] sm:h-[450px] bg-neutral-100 flex items-center justify-center">
               <ImageIcon className="h-20 w-20 text-neutral-300" />
             </div>
           )}
@@ -144,7 +144,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                   <img 
                     src={processImageUrl(image)} 
                     alt={`${title} - Image ${index + 1}`} 
-                    className="w-full h-16 object-cover"
+                    className="w-full h-16 object-contain sm:object-cover"
                   />
                 </div>
               ))}
