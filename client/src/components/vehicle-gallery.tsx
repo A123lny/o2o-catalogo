@@ -100,27 +100,40 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
 
   return (
     <div className="image-gallery">
-      <div className="relative bg-white rounded-lg overflow-hidden shadow-md">
+      <div className="relative bg-white rounded-lg overflow-hidden shadow-md sm:shadow-lg">
         <div className="relative">
           {/* Main image display */}
           {currentImage ? (
-            <img 
-              src={processImageUrl(currentImage)} 
-              alt={title} 
-              className="w-full h-[300px] sm:h-[450px] object-contain sm:object-cover cursor-pointer"
-              onClick={() => validImages.length > 0 && openLightbox(selectedIndex)}
-            />
+            <div className="relative bg-gradient-to-b from-gray-50 to-white flex justify-center">
+              <img 
+                src={processImageUrl(currentImage)} 
+                alt={title} 
+                className="w-full h-[300px] sm:h-[450px] object-contain sm:object-cover cursor-pointer"
+                onClick={() => validImages.length > 0 && openLightbox(selectedIndex)}
+              />
+              
+              {/* Fullscreen button - visibile solo su mobile */}
+              {validImages.length > 0 && (
+                <button 
+                  onClick={() => openLightbox(selectedIndex)}
+                  className="absolute bottom-3 right-3 bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-blue-500 transition-colors z-10"
+                  title="Visualizza a schermo intero"
+                >
+                  <Maximize size={20} />
+                </button>
+              )}
+            </div>
           ) : (
-            <div className="w-full h-[300px] sm:h-[450px] bg-neutral-100 flex items-center justify-center">
-              <ImageIcon className="h-20 w-20 text-neutral-300" />
+            <div className="w-full h-[300px] sm:h-[450px] bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+              <ImageIcon className="h-16 w-16 text-gray-300" />
             </div>
           )}
           
-          {/* Fullscreen button */}
-          {validImages.length > 0 && (
+          {/* Fullscreen button per desktop e tablet */}
+          {validImages.length > 0 && currentImage && (
             <button 
               onClick={() => openLightbox(selectedIndex)}
-              className="absolute bottom-4 right-4 bg-white/80 hover:bg-white p-2 rounded-full text-primary transition-colors"
+              className="absolute bottom-4 right-4 bg-white/80 hover:bg-white p-2 rounded-full text-primary transition-colors hidden sm:flex"
               title="Visualizza a schermo intero"
             >
               <Maximize size={20} />
@@ -130,24 +143,44 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
         
         {/* Thumbnails */}
         {validImages.length > 0 && (
-          <div className="bg-neutral-50 p-3 border-t border-neutral-100">
-            <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-thin scrollbar-thumb-neutral-300">
+          <div className="bg-white p-3 border-t border-gray-100 relative">
+            {/* Indicatore scorrimento sx per thumbnails (solo mobile) */}
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10 pointer-events-none h-full sm:hidden">
+              <div className="w-8 h-full flex items-center justify-start bg-gradient-to-r from-white to-transparent">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 ml-1">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </div>
+            </div>
+            
+            <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-hide px-4">
               {validImages.map((image, index) => (
                 <div 
                   key={index}
-                  className={`flex-shrink-0 cursor-pointer hover:opacity-75 transition-opacity rounded overflow-hidden ${
-                    index === selectedIndex ? 'ring-2 ring-primary border-2 border-white' : 'opacity-70'
+                  className={`flex-shrink-0 cursor-pointer transition-all rounded-md overflow-hidden ${
+                    index === selectedIndex 
+                      ? 'ring-2 ring-blue-500 border border-white shadow-md scale-105' 
+                      : 'opacity-70 hover:opacity-100 hover:scale-105'
                   }`}
                   onClick={() => handleThumbnailClick(image, index)}
-                  style={{ width: '100px' }}
+                  style={{ width: '80px' }}
                 >
                   <img 
                     src={processImageUrl(image)} 
                     alt={`${title} - Image ${index + 1}`} 
-                    className="w-full h-16 object-contain sm:object-cover"
+                    className="w-full h-14 object-contain sm:object-cover"
                   />
                 </div>
               ))}
+            </div>
+            
+            {/* Indicatore scorrimento dx per thumbnails (solo mobile) */}
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10 pointer-events-none h-full sm:hidden">
+              <div className="w-8 h-full flex items-center justify-end bg-gradient-to-l from-white to-transparent">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 mr-1">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
             </div>
           </div>
         )}
