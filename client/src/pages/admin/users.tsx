@@ -665,7 +665,7 @@ export default function UsersPage() {
                 )}
               />
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="password"
@@ -684,6 +684,13 @@ export default function UsersPage() {
                           type="password" 
                           placeholder={userToEdit ? "••••••••" : "Inserisci password"}
                           {...field} 
+                          onChange={(e) => {
+                            field.onChange(e);
+                            // Se il campo password è vuoto, resetta anche il campo confirmPassword
+                            if (e.target.value === "") {
+                              form.setValue("confirmPassword", "", { shouldValidate: true });
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -691,23 +698,26 @@ export default function UsersPage() {
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Conferma Password</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder={userToEdit ? "••••••••" : "Conferma password"}
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Mostra il campo di conferma password solo se è stata inserita una password */}
+                {form.watch("password") ? (
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Conferma Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Conferma password"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : null}
               </div>
               
               <DialogFooter>
