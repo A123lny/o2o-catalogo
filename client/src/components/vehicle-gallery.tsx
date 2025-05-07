@@ -112,11 +112,14 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                 onClick={() => validImages.length > 0 && openLightbox(selectedIndex)}
               />
               
-              {/* Fullscreen button - visibile solo su mobile */}
+              {/* Fullscreen button - responsive per entrambe le versioni */}
               {validImages.length > 0 && (
                 <button 
-                  onClick={() => openLightbox(selectedIndex)}
-                  className="absolute bottom-3 right-3 bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-blue-500 transition-colors z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openLightbox(selectedIndex);
+                  }}
+                  className="absolute bottom-3 right-3 bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-blue-500 sm:text-primary transition-colors z-10"
                   title="Visualizza a schermo intero"
                 >
                   <Maximize size={20} />
@@ -127,17 +130,6 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
             <div className="w-full h-[300px] sm:h-[450px] bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
               <ImageIcon className="h-16 w-16 text-gray-300" />
             </div>
-          )}
-          
-          {/* Fullscreen button per desktop e tablet */}
-          {validImages.length > 0 && currentImage && (
-            <button 
-              onClick={() => openLightbox(selectedIndex)}
-              className="absolute bottom-4 right-4 bg-white/80 hover:bg-white p-2 rounded-full text-primary transition-colors hidden sm:flex"
-              title="Visualizza a schermo intero"
-            >
-              <Maximize size={20} />
-            </button>
           )}
         </div>
         
