@@ -77,10 +77,24 @@ import {
 const userFormSchema = insertUserSchema.extend({
   confirmPassword: z.string().min(6, {
     message: "La password deve essere lunga almeno 6 caratteri",
-  }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Le password non coincidono",
-  path: ["confirmPassword"],
+  }).optional(),
+}).superRefine((data, ctx) => {
+  // Se la password è stata fornita, la conferma è obbligatoria
+  if (data.password && data.password.trim() !== '') {
+    if (!data.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "La conferma password è richiesta",
+        path: ["confirmPassword"],
+      });
+    } else if (data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Le password non coincidono",
+        path: ["confirmPassword"],
+      });
+    }
+  }
 });
 
 // Tipo per i valori del form utente
