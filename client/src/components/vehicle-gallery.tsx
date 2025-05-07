@@ -206,7 +206,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
           <div className="relative bg-black rounded-lg flex items-center justify-center h-[80vh]">
             {/* Freccia sinistra - versione mobile (più piccola e semplice) */}
             <Button 
-              className="absolute left-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white block sm:hidden" 
+              className="absolute left-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white sm:hidden flex items-center justify-center p-1.5" 
               variant="ghost"
               size="icon"
               onClick={(e) => {
@@ -214,7 +214,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                 goToPrevious();
               }}
             >
-              <ChevronLeft className="h-6 w-6" />
+              <ChevronLeft className="h-5 w-5" />
             </Button>
             
             {/* Freccia sinistra - versione desktop (più grande e visibile) */}
@@ -244,7 +244,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
 
             {/* Freccia destra - versione mobile (più piccola e semplice) */}
             <Button 
-              className="absolute right-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white block sm:hidden" 
+              className="absolute right-2 z-10 rounded-full bg-black/30 hover:bg-black/50 text-white sm:hidden flex items-center justify-center p-1.5" 
               variant="ghost"
               size="icon"
               onClick={(e) => {
@@ -252,7 +252,7 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
                 goToNext();
               }}
             >
-              <ChevronRight className="h-6 w-6" />
+              <ChevronRight className="h-5 w-5" />
             </Button>
             
             {/* Freccia destra - versione desktop (più grande e visibile) */}
