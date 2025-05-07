@@ -771,11 +771,11 @@ export class DatabaseStorage implements IStorage {
       .from(requests)
       .where(eq(requests.status, "completed"));
     
-    // Recent vehicles
+    // Recent vehicles - ordinati per data di ultima modifica/creazione
     const recentVehicles = await db
       .select()
       .from(vehicles)
-      .orderBy(desc(vehicles.createdAt))
+      .orderBy(desc(vehicles.updatedAt), desc(vehicles.createdAt))
       .limit(5);
     
     // Recent requests

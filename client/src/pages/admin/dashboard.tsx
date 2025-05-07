@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import AdminSidebar from "@/components/admin/sidebar";
 import AdminHeader from "@/components/admin/header";
+import VehicleEditModal from "@/components/admin/vehicle-edit-modal";
 import { 
   Car, 
   Users, 
@@ -10,12 +12,15 @@ import {
   ShoppingCart, 
   TrendingUp, 
   TrendingDown, 
-  MinusIcon 
+  MinusIcon,
+  Edit,
+  ArrowRight
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
 import { Vehicle, Request } from "@shared/schema";
 import { formatDistance } from "date-fns";
 import { it } from "date-fns/locale";
@@ -81,10 +86,19 @@ function StatCard({
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const [vehicleToEdit, setVehicleToEdit] = useState<number | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  
   const { data: stats, isLoading } = useQuery({
     queryKey: ["/api/admin/stats"],
     retry: false,
   });
+  
+  const handleEditClick = (vehicleId: number) => {
+    setVehicleToEdit(vehicleId);
+    setShowEditModal(true);
+  };
 
   return (
     <div className="flex h-full min-h-screen bg-neutral-100">
@@ -151,7 +165,7 @@ export default function AdminDashboard() {
             <TabsContent value="vehicles" className="mt-0">
               <Card>
                 <CardHeader>
-                  <CardTitle>Ultimi Veicoli Aggiunti</CardTitle>
+                  <CardTitle>Ultimi Veicoli Aggiunti o Modificati</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="divide-y">
@@ -178,12 +192,15 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Link
-                              href={`/admin/vehicles/${vehicle.id}`}
-                              className="text-blue-600 hover:underline text-sm"
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-blue-600 h-8"
+                              onClick={() => handleEditClick(vehicle.id)}
                             >
+                              <Edit className="h-3.5 w-3.5 mr-1" />
                               Modifica
-                            </Link>
+                            </Button>
                           </div>
                         </div>
                       ))
@@ -194,6 +211,16 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </CardContent>
+                <CardFooter className="flex justify-center border-t pt-4">
+                  <Button 
+                    variant="outline"
+                    className="w-full justify-between"
+                    onClick={() => setLocation('/admin/vehicles')}
+                  >
+                    Vedi tutti i veicoli
+                    <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </CardFooter>
               </Card>
             </TabsContent>
 
@@ -272,6 +299,15 @@ export default function AdminDashboard() {
       )}
         </main>
       </div>
+      
+      {/* Modale di modifica veicolo */}
+      {showEditModal && (
+        <VehicleEditModal
+          vehicleId={vehicleToEdit}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
     </div>
   );
 }
