@@ -279,32 +279,7 @@ export default function VehicleEditModal({ vehicleId, isOpen, onClose }: Vehicle
                     </FormItem>
                   )}
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="condition"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Condizione</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleziona condizione" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Nuovo">Nuovo</SelectItem>
-                          <SelectItem value="Usato">Usato</SelectItem>
-                          <SelectItem value="Demo">Demo</SelectItem>
-                          <SelectItem value="Km Zero">Km Zero</SelectItem>
-                          <SelectItem value="2Life">2Life</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
+
                 <FormField
                   control={form.control}
                   name="categoryId"
