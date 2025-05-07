@@ -26,10 +26,14 @@ export default function Header() {
     // Chiudi il menu quando l'utente clicca fuori da esso
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      // Se il menu è aperto e il click non è sul pulsante del menu o all'interno del menu
-      if (mobileMenuOpen && 
-          !target.closest('button[aria-label="Toggle menu"]') && 
-          !target.closest('.mobile-menu-container')) {
+      
+      // Ignora completamente i click sul pulsante del menu per evitare conflitti
+      if (target.closest('button[aria-label="Toggle menu"]')) {
+        return;
+      }
+      
+      // Se il menu è aperto e il click non è all'interno del menu, chiudilo
+      if (mobileMenuOpen && !target.closest('.mobile-menu-container')) {
         setMobileMenuOpen(false);
       }
     };
@@ -84,7 +88,10 @@ export default function Header() {
 
         {/* Mobile menu button */}
         <button 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          onClick={(e) => {
+            e.stopPropagation(); // Ferma la propagazione per evitare che altri handler catturino l'evento
+            setMobileMenuOpen(!mobileMenuOpen);
+          }}
           className="md:hidden rounded-md p-2 text-neutral-500 hover:bg-neutral-100"
           aria-label="Toggle menu"
         >
