@@ -293,8 +293,33 @@ export default function SettingsPage() {
   const updateGeneralSettings = useMutation({
     mutationFn: async (data: GeneralSettingsValues) => {
       setIsSubmitting(true);
-      const response = await apiRequest('PATCH', '/api/admin/settings/general', data);
-      return response.json();
+      try {
+        // Assicuriamoci che i colori non siano undefined o null
+        const safeData = {
+          ...data,
+          primaryColor: data.primaryColor || "#3b82f6",
+          secondaryColor: data.secondaryColor || "#f97316"
+        };
+        
+        const response = await fetch('/api/admin/settings/general', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(safeData),
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Errore nel salvataggio delle impostazioni");
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error("Error during fetch:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -432,7 +457,7 @@ export default function SettingsPage() {
                               <div className="flex gap-2">
                                 <FormControl>
                                   <Input 
-                                    {...field} 
+                                    value={field.value || "#3b82f6"}
                                     onChange={(e) => field.onChange(e.target.value)}
                                     onClick={() => setShowPrimaryColorPicker(!showPrimaryColorPicker)}
                                   />
@@ -452,18 +477,23 @@ export default function SettingsPage() {
                                   />
                                   <div className="absolute">
                                     <HexColorPicker 
-                                      color={field.value} 
+                                      color={field.value || "#3b82f6"} 
                                       onChange={(color) => {
                                         field.onChange(color);
                                       }} 
                                     />
                                     <div className="mt-2 bg-white p-2 rounded shadow flex items-center justify-between border">
-                                      <span className="text-sm font-medium">Codice colore: {field.value}</span>
+                                      <span className="text-sm font-medium">Codice colore: {field.value || "#3b82f6"}</span>
                                       <Button
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setShowPrimaryColorPicker(false)}
+                                        onClick={() => {
+                                          if (!field.value) {
+                                            field.onChange("#3b82f6");
+                                          }
+                                          setShowPrimaryColorPicker(false);
+                                        }}
                                       >
                                         Chiudi
                                       </Button>
@@ -489,7 +519,7 @@ export default function SettingsPage() {
                               <div className="flex gap-2">
                                 <FormControl>
                                   <Input 
-                                    {...field} 
+                                    value={field.value || "#f97316"}
                                     onChange={(e) => field.onChange(e.target.value)}
                                     onClick={() => setShowSecondaryColorPicker(!showSecondaryColorPicker)}
                                   />
@@ -509,18 +539,23 @@ export default function SettingsPage() {
                                   />
                                   <div className="absolute">
                                     <HexColorPicker 
-                                      color={field.value} 
+                                      color={field.value || "#f97316"} 
                                       onChange={(color) => {
                                         field.onChange(color);
                                       }} 
                                     />
                                     <div className="mt-2 bg-white p-2 rounded shadow flex items-center justify-between border">
-                                      <span className="text-sm font-medium">Codice colore: {field.value}</span>
+                                      <span className="text-sm font-medium">Codice colore: {field.value || "#f97316"}</span>
                                       <Button
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setShowSecondaryColorPicker(false)}
+                                        onClick={() => {
+                                          if (!field.value) {
+                                            field.onChange("#f97316");
+                                          }
+                                          setShowSecondaryColorPicker(false);
+                                        }}
                                       >
                                         Chiudi
                                       </Button>
