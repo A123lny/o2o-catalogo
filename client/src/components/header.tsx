@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +9,39 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location] = useLocation();
   const { user } = useAuth();
+  
+  // Aggiungi event listeners per rilevare lo scroll e click fuori dal menu
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    
+    // Chiudi il menu quando l'utente scrolla verso il basso
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      if (scrollY > lastScrollY && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+      lastScrollY = scrollY;
+    };
+    
+    // Chiudi il menu quando l'utente clicca fuori da esso
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Se il menu è aperto e il click non è sul pulsante del menu o all'interno del menu
+      if (mobileMenuOpen && 
+          !target.closest('button[aria-label="Toggle menu"]') && 
+          !target.closest('.mobile-menu-container')) {
+        setMobileMenuOpen(false);
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    document.addEventListener('click', handleClickOutside);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [mobileMenuOpen]);
 
   // Fetch general settings to get site name
   const { data: generalSettings, isLoading: isLoadingSettings } = useQuery({
@@ -93,7 +126,7 @@ export default function Header() {
       </div>
 
       {/* Mobile menu - Solo Home, Catalogo e Contatti */}
-      <div className={`md:hidden bg-white px-4 py-2 shadow-md fixed top-16 left-0 w-full z-[1000] ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+      <div className={`mobile-menu-container md:hidden bg-white px-4 py-2 shadow-md fixed top-16 left-0 w-full z-[1000] ${mobileMenuOpen ? 'block' : 'hidden'}`}>
         <nav className="flex flex-col space-y-3 py-3">
           <a 
             href="/" 
