@@ -71,21 +71,20 @@ export default function EmailConfig() {
       console.log("DATI EMAIL RICEVUTI:", data);
       console.log("ENABLED VALUE:", data.enabled, "TYPE:", typeof data.enabled);
       
+      // Converti il valore di enabled a boolean in modo esplicito
+      const isEnabled = Boolean(data.enabled);
+      console.log("CONVERTED ENABLED VALUE:", isEnabled, "TYPE:", typeof isEnabled);
+      
       // Impostazione esplicita dello stato enabled
-      if (data.enabled === true) {
-        console.log(">>> IMPOSTAZIONE TOGGLE A TRUE");
-        setEnabled(true);
-      } else {
-        console.log(">>> IMPOSTAZIONE TOGGLE A FALSE");
-        setEnabled(false);
-      }
+      console.log(">>> IMPOSTAZIONE TOGGLE A", isEnabled ? "TRUE" : "FALSE");
+      setEnabled(isEnabled);
       
       // Reset del form con i dati
       form.reset({
         provider: data.provider || "smtp",
         host: data.host || "",
         port: data.port || 587,
-        secure: data.secure === true,
+        secure: Boolean(data.secure),
         username: data.username || "",
         password: data.password || "",
         fromEmail: data.fromEmail || "",
