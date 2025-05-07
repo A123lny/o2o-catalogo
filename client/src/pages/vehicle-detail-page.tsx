@@ -520,9 +520,9 @@ export default function VehicleDetailPage() {
                 </Tabs>
               </div>
               
-              {/* Veicoli correlati - mostra solo 3 auto */}
+              {/* Veicoli correlati - visualizzati solo su desktop e tablet */}
               {relatedVehicles && relatedVehicles.length > 0 && (
-                <div className="mt-8">
+                <div className="mt-8 hidden sm:block">
                   <h2 className="text-2xl font-bold mb-6">Auto simili</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {relatedVehicles.slice(0, 3).map(relatedVehicle => (
