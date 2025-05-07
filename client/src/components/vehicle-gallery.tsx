@@ -104,27 +104,29 @@ export default function VehicleGallery({ mainImage, images = [], title }: Vehicl
         <div className="relative">
           {/* Main image display */}
           {currentImage ? (
-            <div className="relative bg-gradient-to-b from-gray-50 to-white flex justify-center">
-              <img 
-                src={processImageUrl(currentImage)} 
-                alt={title} 
-                className="w-full h-[300px] sm:h-[450px] object-contain sm:object-cover cursor-pointer"
-                onClick={() => validImages.length > 0 && openLightbox(selectedIndex)}
-              />
+            <div className="relative">
+              <div className="bg-gradient-to-b from-gray-50 to-white flex justify-center">
+                <img 
+                  src={processImageUrl(currentImage)} 
+                  alt={title} 
+                  className="w-full h-[300px] sm:h-[450px] object-contain sm:object-cover cursor-pointer"
+                  onClick={() => validImages.length > 0 && openLightbox(selectedIndex)}
+                />
+              </div>
               
-              {/* Fullscreen button - responsive per entrambe le versioni */}
-              {validImages.length > 0 && (
+              {/* Fullscreen button - identico sia per desktop che mobile */}
+              <div className="absolute top-0 right-0 p-2">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
                     openLightbox(selectedIndex);
                   }}
-                  className="absolute bottom-3 right-3 bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-blue-500 sm:text-primary transition-colors z-10"
+                  className="bg-white/90 hover:bg-white shadow-md p-2 rounded-full text-blue-500 sm:text-primary transition-colors z-10"
                   title="Visualizza a schermo intero"
                 >
                   <Maximize size={20} />
                 </button>
-              )}
+              </div>
             </div>
           ) : (
             <div className="w-full h-[300px] sm:h-[450px] bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
