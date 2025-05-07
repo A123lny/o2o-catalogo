@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
 // UI Components
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Schema per la configurazione email
 const schema = z.object({
@@ -35,54 +36,66 @@ const schema = z.object({
   sendgridApiKey: z.string().optional(),
 });
 
+// Default values
+const defaultValues = {
+  provider: "smtp",
+  host: "",
+  port: 587,
+  secure: false,
+  username: "",
+  password: "",
+  fromEmail: "",
+  sendgridApiKey: "",
+};
+
 export default function EmailConfig() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isEnabled, setIsEnabled] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-
+  const [retryCount, setRetryCount] = useState(0);
+  
+  // Form per la configurazione
   const form = useForm({
     resolver: zodResolver(schema),
-    defaultValues: {
-      provider: "smtp",
-      host: "",
-      port: 587,
-      secure: false,
-      username: "",
-      password: "",
-      fromEmail: "",
-      sendgridApiKey: "",
-    },
+    defaultValues,
   });
 
-  // Carica configurazione esistente
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["/api/integrations/email"],
+  // Fetch configuration - using admin endpoint to avoid middleware issues
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["/api/admin/integrations", retryCount],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/integrations/email");
-      if (!res.ok) throw new Error("Errore nel caricamento della configurazione");
-      return res.json();
+      try {
+        const res = await apiRequest("GET", "/api/admin/integrations");
+        if (!res.ok) throw new Error("Errore nel caricamento della configurazione");
+        const allConfigs = await res.json();
+        
+        // Extract email config from the combined configurations response
+        return allConfigs.email;
+      } catch (error) {
+        console.error("Error fetching email config:", error);
+        throw error;
+      }
     },
+    retry: false,
+    staleTime: 30000, // 30 seconds
   });
 
-  // Debug
+  // Debug log
   useEffect(() => {
     if (data) {
       console.log("Email config ricevuta:", data);
-      console.log("data.enabled:", data.enabled, "tipo:", typeof data.enabled);
+      console.log("Enabled:", data.enabled, "Type:", typeof data.enabled);
     }
   }, [data]);
 
-  // Inizializza il form quando i dati sono caricati
+  // Update form when data is loaded
   useEffect(() => {
-    if (data && !isInitialized) {
-      // Assicuriamoci che enabled sia un booleano
+    if (data) {
+      // Check if enabled is strictly boolean true
       const configEnabled = data.enabled === true;
-      
-      console.log("Impostazione enabled a:", configEnabled);
       setIsEnabled(configEnabled);
 
-      // Reset del form con i dati ricevuti
+      // Reset the form with the received data
       form.reset({
         provider: data.provider || "smtp",
         host: data.host || "",
@@ -93,24 +106,22 @@ export default function EmailConfig() {
         fromEmail: data.fromEmail || "",
         sendgridApiKey: data.sendgridApiKey || "",
       });
-      
-      setIsInitialized(true);
     }
-  }, [data, form, isInitialized]);
+  }, [data, form]);
 
-  // Mutazione per salvare
+  // Save configuration
   const saveMutation = useMutation({
     mutationFn: async (values: any) => {
-      // Crea il payload con lo stato enabled separato
       const payload = {
         ...values,
-        enabled: isEnabled,
+        enabled: isEnabled, // Use the separate state for 'enabled'
       };
       
-      console.log("Salvataggio payload:", payload);
+      console.log("Saving payload:", payload);
       
-      const res = await apiRequest("POST", "/api/integrations/email", payload);
-      if (!res.ok) throw new Error("Errore nel salvataggio");
+      // Using the admin endpoint to avoid middleware issues
+      const res = await apiRequest("PUT", "/api/admin/integrations/email", payload);
+      if (!res.ok) throw new Error("Errore nel salvataggio della configurazione");
       return res.json();
     },
     onSuccess: () => {
@@ -118,7 +129,8 @@ export default function EmailConfig() {
         title: "Configurazione salvata",
         description: "La configurazione email è stata salvata con successo",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/integrations/email"] });
+      // Refetch data
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/integrations"] });
     },
     onError: (error) => {
       toast({
@@ -173,6 +185,11 @@ export default function EmailConfig() {
     testEmailMutation.mutate();
   };
 
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    refetch();
+  };
+
   const provider = form.watch("provider");
 
   if (isLoading) {
@@ -185,10 +202,43 @@ export default function EmailConfig() {
 
   if (error) {
     return (
-      <div className="p-4 border border-red-300 bg-red-50 rounded-md">
-        <h3 className="text-red-800 font-medium">Errore di caricamento</h3>
-        <p className="text-red-600 text-sm">Si è verificato un errore nel caricamento della configurazione email.</p>
-      </div>
+      <Alert variant="destructive" className="mb-6">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Errore di caricamento</AlertTitle>
+        <AlertDescription className="mt-2">
+          <p>Si è verificato un errore nel caricamento della configurazione email.</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2" 
+            onClick={handleRetry}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Riprova
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // If no data yet, show a message
+  if (!data) {
+    return (
+      <Alert className="mb-6">
+        <AlertTitle>Configurazione non disponibile</AlertTitle>
+        <AlertDescription>
+          <p>Non è stato possibile caricare la configurazione email. Potrebbe essere necessario accedere con un account amministratore.</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2" 
+            onClick={handleRetry}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Riprova
+          </Button>
+        </AlertDescription>
+      </Alert>
     );
   }
 
