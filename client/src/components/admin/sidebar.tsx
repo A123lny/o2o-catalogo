@@ -8,7 +8,7 @@ import {
   Tag,
   Users,
   Settings,
-  Plug,
+
   LogOut,
   Megaphone,
   Loader2
@@ -117,12 +117,7 @@ export default function AdminSidebar() {
           </div>
         </Link>
         
-        <Link href="/admin/integrations">
-          <div className={`flex items-center px-4 py-3 hover:bg-sidebar-accent ${isActive('/admin/integrations') ? 'bg-sidebar-accent' : ''}`}>
-            <Plug className="w-5 h-5 mr-3" />
-            <span>Integrazioni</span>
-          </div>
-        </Link>
+
       </nav>
       
       <div className="p-4 border-t border-sidebar-border">
