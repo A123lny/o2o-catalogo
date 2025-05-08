@@ -1,58 +1,69 @@
-import React, { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import React from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Mail, Send, Save } from "lucide-react";
-import AdminSidebar from "@/components/admin/sidebar";
-import AdminHeader from "@/components/admin/header";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Separator } from "@/components/ui/separator";
+import AdminLayout from "@/components/admin/layout";
+import { Loader2, Mail, RefreshCcw } from "lucide-react";
 
-// Schema for SMTP configuration
+// Schema per la configurazione SMTP
 const smtpConfigSchema = z.object({
-  id: z.number().optional(),
+  id: z.number(),
   enabled: z.boolean().default(false),
   provider: z.string().default("smtp"),
-  host: z.string().min(1, "L'host è obbligatorio"),
-  port: z.number().int().positive().default(587),
+  host: z.string().min(1, { message: "L'host SMTP è obbligatorio" }).optional(),
+  port: z.number().int().min(1).max(65535).optional(),
   secure: z.boolean().default(false),
-  username: z.string().min(1, "L'username è obbligatorio"),
-  password: z.string().min(1, "La password è obbligatoria"),
-  fromEmail: z.string().email("Indirizzo email non valido").min(1, "L'email mittente è obbligatoria"),
+  username: z.string().min(1, { message: "Il nome utente è obbligatorio" }).optional(),
+  password: z.string().min(1, { message: "La password è obbligatoria" }).optional(),
+  fromEmail: z.string().email({ message: "Inserisci un indirizzo email valido" }).optional(),
   sendgridApiKey: z.string().optional(),
 });
 
-// Email test schema
+// Schema per il test dell'email
 const emailTestSchema = z.object({
-  to: z.string().email("Indirizzo email non valido").min(1, "L'email destinatario è obbligatoria"),
-  subject: z.string().min(1, "L'oggetto è obbligatorio"),
-  message: z.string().min(1, "Il messaggio è obbligatorio"),
+  to: z.string().email({ message: "Inserisci un indirizzo email valido" }),
+  subject: z.string().min(1, { message: "L'oggetto è obbligatorio" }),
+  message: z.string().min(1, { message: "Il messaggio è obbligatorio" }),
 });
 
 type SmtpConfigValues = z.infer<typeof smtpConfigSchema>;
 type EmailTestValues = z.infer<typeof emailTestSchema>;
 
 export default function IntegrationsPage() {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("smtp");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSendingTest, setIsSendingTest] = useState(false);
+  const [testTab, setTestTab] = React.useState("config");
 
-  // Form for SMTP configuration
-  const smtpForm = useForm<SmtpConfigValues>({
+  // Carica la configurazione SMTP
+  const { data: emailConfigData, isLoading: isLoadingConfig } = useQuery({
+    queryKey: ["/api/integrations/email"],
+    retry: false,
+  });
+
+  // Form per la configurazione SMTP
+  const form = useForm<SmtpConfigValues>({
     resolver: zodResolver(smtpConfigSchema),
     defaultValues: {
+      id: 0,
       enabled: false,
       provider: "smtp",
       host: "",
@@ -65,150 +76,166 @@ export default function IntegrationsPage() {
     },
   });
 
-  // Form for testing email
-  const testEmailForm = useForm<EmailTestValues>({
+  // Form per il test dell'email
+  const testForm = useForm<EmailTestValues>({
     resolver: zodResolver(emailTestSchema),
     defaultValues: {
       to: "",
-      subject: "Test email da o2o Mobility",
-      message: "Questo è un messaggio di test per verificare la configurazione SMTP.",
+      subject: "Test di invio email da O2O Mobility",
+      message: "Questo è un messaggio di test per verificare la configurazione email.",
     },
   });
 
-  // Fetch SMTP configuration
-  const { data: smtpConfig, isLoading: isLoadingSmtp } = useQuery({
-    queryKey: ['/api/integrations/email'],
-    queryFn: async () => {
-      const response = await fetch('/api/integrations/email');
-      if (!response.ok) throw new Error('Errore nel recupero della configurazione SMTP');
-      return response.json();
-    }
-  });
-  
-  // Update form when data is loaded
-  React.useEffect(() => {
-    if (smtpConfig) {
-      smtpForm.reset({
-        id: smtpConfig.id,
-        enabled: smtpConfig.enabled,
-        provider: smtpConfig.provider,
-        host: smtpConfig.host,
-        port: smtpConfig.port,
-        secure: smtpConfig.secure,
-        username: smtpConfig.username,
-        password: smtpConfig.password,
-        fromEmail: smtpConfig.fromEmail,
-        sendgridApiKey: smtpConfig.sendgridApiKey,
-      });
-    }
-  }, [smtpConfig, smtpForm]);
-
-  // Update SMTP configuration
-  const updateSmtpConfig = useMutation({
+  // Aggiorna la configurazione SMTP
+  const updateConfig = useMutation({
     mutationFn: async (data: SmtpConfigValues) => {
-      setIsSubmitting(true);
-      const response = await apiRequest('PATCH', '/api/integrations/email', data);
+      const response = await fetch("/api/integrations/email", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Errore durante l'aggiornamento della configurazione");
+      }
+
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Configurazione SMTP aggiornata",
-        description: "Le impostazioni SMTP sono state aggiornate con successo.",
+        title: "Configurazione aggiornata",
+        description: "Le impostazioni email sono state aggiornate con successo",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/integrations/email'] });
-      setIsSubmitting(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/integrations/email"] });
     },
     onError: (error) => {
       toast({
         title: "Errore",
-        description: "Si è verificato un errore durante l'aggiornamento delle impostazioni SMTP.",
+        description: error.message,
         variant: "destructive",
       });
-      console.error("Error updating SMTP settings:", error);
-      setIsSubmitting(false);
-    }
+    },
   });
 
-  // Send test email
-  const sendTestEmail = useMutation({
+  // Test di invio email
+  const testEmail = useMutation({
     mutationFn: async (data: EmailTestValues) => {
-      setIsSendingTest(true);
-      const response = await apiRequest('POST', '/api/integrations/email/test', data);
+      const response = await fetch("/api/integrations/email/test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Errore durante l'invio dell'email di test");
+      }
+
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Email di test inviata",
-        description: "L'email di test è stata inviata con successo.",
+        title: "Email inviata",
+        description: "L'email di test è stata inviata con successo",
       });
-      setIsSendingTest(false);
+      testForm.reset(testForm.getValues());
     },
     onError: (error) => {
       toast({
         title: "Errore",
-        description: "Si è verificato un errore durante l'invio dell'email di test.",
+        description: error.message,
         variant: "destructive",
       });
-      console.error("Error sending test email:", error);
-      setIsSendingTest(false);
-    }
+    },
   });
+
+  // Aggiorna i valori del form quando i dati vengono caricati
+  React.useEffect(() => {
+    if (emailConfigData) {
+      form.reset({
+        id: emailConfigData.id,
+        enabled: emailConfigData.enabled,
+        provider: emailConfigData.provider,
+        host: emailConfigData.host || "",
+        port: emailConfigData.port || 587,
+        secure: emailConfigData.secure || false,
+        username: emailConfigData.username || "",
+        password: emailConfigData.password || "",
+        fromEmail: emailConfigData.fromEmail || "",
+        sendgridApiKey: emailConfigData.sendgridApiKey || "",
+      });
+    }
+  }, [emailConfigData, form]);
 
   const onSmtpSubmit = (data: SmtpConfigValues) => {
-    updateSmtpConfig.mutate(data);
+    updateConfig.mutate(data);
   };
 
   const onTestEmailSubmit = (data: EmailTestValues) => {
-    sendTestEmail.mutate(data);
+    if (!form.getValues().enabled) {
+      toast({
+        title: "Configurazione non attiva",
+        description: "Attiva la configurazione email prima di inviare un'email di test",
+        variant: "destructive",
+      });
+      return;
+    }
+    testEmail.mutate(data);
   };
 
   return (
-    <div className="flex h-full min-h-screen bg-neutral-100">
-      <AdminSidebar />
-      
-      <div className="flex-1 flex flex-col pl-64 pb-16">
-        <AdminHeader user={user} />
-        
-        <main className="flex-1 p-4">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-neutral-800">Integrazioni</h1>
-            <p className="text-neutral-500">Configura le integrazioni del sistema con servizi esterni</p>
-          </div>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="smtp">
-                <Mail className="h-4 w-4 mr-2" /> Email (SMTP)
-              </TabsTrigger>
-            </TabsList>
-            
-            {/* SMTP Configuration */}
-            <TabsContent value="smtp">
-              <Card className="mb-6">
+    <AdminLayout title="Integrazioni" description="Gestisci le integrazioni con servizi esterni">
+      <Tabs defaultValue="email" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="email">Email</TabsTrigger>
+          <TabsTrigger value="sms" disabled>
+            SMS
+          </TabsTrigger>
+          <TabsTrigger value="payment" disabled>
+            Pagamenti
+          </TabsTrigger>
+          <TabsTrigger value="social" disabled>
+            Social Login
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="email">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <Card>
                 <CardHeader>
-                  <CardTitle>Configurazione Email (SMTP)</CardTitle>
-                  <CardDescription>
-                    Configura il server SMTP per l'invio di email dal sistema
-                  </CardDescription>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle>Configurazione Email</CardTitle>
+                      <CardDescription>
+                        Configura il server SMTP per l'invio di email automatiche
+                      </CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  {isLoadingSmtp ? (
-                    <div className="flex justify-center py-8">
+                  {isLoadingConfig ? (
+                    <div className="flex justify-center items-center h-60">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                   ) : (
-                    <Form {...smtpForm}>
-                      <form onSubmit={smtpForm.handleSubmit(onSmtpSubmit)} className="space-y-6">
-                        <div className="flex items-center space-x-2 mb-4">
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSmtpSubmit)} className="space-y-4">
+                        <div className="flex justify-between items-center pb-4">
                           <FormField
-                            control={smtpForm.control}
+                            control={form.control}
                             name="enabled"
                             render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between space-x-3 space-y-0">
+                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                 <div className="space-y-0.5">
-                                  <FormLabel>Attiva SMTP</FormLabel>
+                                  <FormLabel>Attiva invio email</FormLabel>
                                   <FormDescription>
-                                    Abilita l'invio di email tramite SMTP
+                                    Attiva o disattiva l'invio di email dal sistema
                                   </FormDescription>
                                 </div>
                                 <FormControl>
@@ -222,191 +249,211 @@ export default function IntegrationsPage() {
                           />
                         </div>
 
-                        <FormField
-                          control={smtpForm.control}
-                          name="provider"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Provider</FormLabel>
-                              <Select 
-                                onValueChange={field.onChange} 
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Seleziona provider" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="smtp">SMTP</SelectItem>
-                                  <SelectItem value="sendgrid">SendGrid</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormDescription>
-                                Scegli il provider per l'invio delle email
-                              </FormDescription>
-                            </FormItem>
-                          )}
-                        />
+                        <Separator className="my-6" />
 
-                        {smtpForm.watch("provider") === "smtp" ? (
-                          <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <FormField
-                                control={smtpForm.control}
-                                name="host"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Host SMTP</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} placeholder="es. smtp.gmail.com" />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              <FormField
-                                control={smtpForm.control}
-                                name="port"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Porta SMTP</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        {...field}
-                                        type="number"
-                                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                                        placeholder="es. 587"
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-
-                            <div className="flex items-center space-x-2 mb-4">
-                              <FormField
-                                control={smtpForm.control}
-                                name="secure"
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-center justify-between space-x-3 space-y-0">
-                                    <div className="space-y-0.5">
-                                      <FormLabel>Connessione sicura (SSL/TLS)</FormLabel>
-                                      <FormDescription>
-                                        Abilita per usare connessione criptata
-                                      </FormDescription>
-                                    </div>
-                                    <FormControl>
-                                      <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <FormField
-                                control={smtpForm.control}
-                                name="username"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Username</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              <FormField
-                                control={smtpForm.control}
-                                name="password"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Password</FormLabel>
-                                    <FormControl>
-                                      <Input type="password" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                          </>
-                        ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <FormField
-                            control={smtpForm.control}
-                            name="sendgridApiKey"
+                            control={form.control}
+                            name="provider"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>API Key SendGrid</FormLabel>
+                                <FormLabel>Provider</FormLabel>
+                                <select
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                  {...field}
+                                >
+                                  <option value="smtp">SMTP</option>
+                                  <option value="sendgrid">SendGrid</option>
+                                </select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="fromEmail"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email mittente</FormLabel>
                                 <FormControl>
-                                  <Input type="password" {...field} />
+                                  <Input
+                                    placeholder="noreply@example.com"
+                                    {...field}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
+                        </div>
+
+                        {form.watch("provider") === "smtp" && (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="host"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Host SMTP</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder="smtp.example.com"
+                                        {...field}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name="port"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Porta</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        max="65535"
+                                        {...field}
+                                        onChange={(e) => {
+                                          const value = parseInt(e.target.value);
+                                          field.onChange(isNaN(value) ? 587 : value);
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            <FormField
+                              control={form.control}
+                              name="secure"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel>Connessione sicura (SSL/TLS)</FormLabel>
+                                    <FormDescription>
+                                      Utilizza una connessione sicura (generalmente sulla porta 465)
+                                    </FormDescription>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="username"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Nome utente</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder="username"
+                                        {...field}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Password</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="password"
+                                        placeholder="********"
+                                        {...field}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
                         )}
 
-                        <FormField
-                          control={smtpForm.control}
-                          name="fromEmail"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email mittente</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="noreply@o2omobility.it" />
-                              </FormControl>
-                              <FormDescription>
-                                L'indirizzo email che apparirà come mittente
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {form.watch("provider") === "sendgrid" && (
+                          <div className="space-y-4">
+                            <FormField
+                              control={form.control}
+                              name="sendgridApiKey"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>API Key SendGrid</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="password"
+                                      placeholder="SG.xxxxxxxx"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                  <FormDescription>
+                                    Puoi ottenere la tua API key dal dashboard di SendGrid
+                                  </FormDescription>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        )}
 
-                        <Button type="submit" disabled={isSubmitting}>
-                          {isSubmitting ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvataggio in corso...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="h-4 w-4 mr-2" /> Salva Configurazione
-                            </>
-                          )}
-                        </Button>
+                        <div className="flex justify-end pt-4">
+                          <Button
+                            type="submit"
+                            disabled={updateConfig.isPending || !form.formState.isDirty}
+                          >
+                            {updateConfig.isPending && (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
+                            Salva configurazione
+                          </Button>
+                        </div>
                       </form>
                     </Form>
                   )}
                 </CardContent>
               </Card>
+            </div>
 
+            <div>
               <Card>
                 <CardHeader>
-                  <CardTitle>Test Email</CardTitle>
+                  <CardTitle>Test email</CardTitle>
                   <CardDescription>
                     Invia un'email di test per verificare la configurazione
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Form {...testEmailForm}>
-                    <form onSubmit={testEmailForm.handleSubmit(onTestEmailSubmit)} className="space-y-6">
+                  <Form {...testForm}>
+                    <form onSubmit={testForm.handleSubmit(onTestEmailSubmit)} className="space-y-4">
                       <FormField
-                        control={testEmailForm.control}
+                        control={testForm.control}
                         name="to"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email destinatario</FormLabel>
+                            <FormLabel>Destinatario</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="test@example.com" />
+                              <Input placeholder="test@example.com" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -414,7 +461,7 @@ export default function IntegrationsPage() {
                       />
 
                       <FormField
-                        control={testEmailForm.control}
+                        control={testForm.control}
                         name="subject"
                         render={({ field }) => (
                           <FormItem>
@@ -428,27 +475,32 @@ export default function IntegrationsPage() {
                       />
 
                       <FormField
-                        control={testEmailForm.control}
+                        control={testForm.control}
                         name="message"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Messaggio</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <textarea
+                                className="w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      <Button type="submit" disabled={isSendingTest || !smtpForm.watch("enabled")}>
-                        {isSendingTest ? (
+                      <Button type="submit" className="w-full" disabled={testEmail.isPending}>
+                        {testEmail.isPending ? (
                           <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Invio in corso...
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Invio in corso...
                           </>
                         ) : (
                           <>
-                            <Send className="h-4 w-4 mr-2" /> Invia Email di Test
+                            <Mail className="mr-2 h-4 w-4" />
+                            Invia email di test
                           </>
                         )}
                       </Button>
@@ -456,10 +508,52 @@ export default function IntegrationsPage() {
                   </Form>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
-        </main>
-      </div>
-    </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sms">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurazione SMS</CardTitle>
+              <CardDescription>
+                Configura i servizi per l'invio di SMS (non ancora implementato)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Questa funzionalità sarà disponibile in un futuro aggiornamento.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="payment">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurazione pagamenti</CardTitle>
+              <CardDescription>
+                Configura i gateway di pagamento (non ancora implementato)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Questa funzionalità sarà disponibile in un futuro aggiornamento.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="social">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurazione Social Login</CardTitle>
+              <CardDescription>
+                Configura i provider di autenticazione sociale (non ancora implementato)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Questa funzionalità sarà disponibile in un futuro aggiornamento.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </AdminLayout>
   );
 }

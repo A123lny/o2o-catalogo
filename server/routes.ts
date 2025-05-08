@@ -26,7 +26,8 @@ import {
   insertGeneralSettingsSchema,
   insertSecuritySettingsSchema,
   insertProvinceSchema,
-  insertActivityLogSchema
+  insertActivityLogSchema,
+  emailConfig
 } from "@shared/schema";
 
 // Assicurati che la directory uploads esista
