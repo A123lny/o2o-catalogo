@@ -24,10 +24,9 @@ import {
 interface AdminLayoutProps {
   children: React.ReactNode;
   title: string;
-  description?: string;
 }
 
-export default function AdminLayout({ children, title, description }: AdminLayoutProps) {
+export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const [location] = useLocation();
   const { user, logoutMutation, isLoading } = useAuth();
   const [isVehiclesOpen, setIsVehiclesOpen] = React.useState(location.includes("/admin/vehicles") || location.includes("/admin/rental-options"));
@@ -188,7 +187,6 @@ export default function AdminLayout({ children, title, description }: AdminLayou
       <main className="flex-1 p-8">
         <header className="mb-8">
           <h1 className="text-2xl font-bold">{title}</h1>
-          {description && <p className="text-gray-500 mt-1">{description}</p>}
         </header>
         {children}
       </main>

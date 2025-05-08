@@ -20,7 +20,6 @@ import RequestsPage from "@/pages/admin/requests";
 import UsersPage from "@/pages/admin/users";
 import SettingsPage from "@/pages/admin/settings";
 import PromoManagementPage from "@/pages/admin/promo-management";
-import IntegrationsPage from "@/pages/admin/integrations";
 
 import TwoFactorSetupPage from "@/pages/admin/two-factor-setup-page";
 import TwoFactorSetupNewPage from "@/pages/admin/two-factor-setup-new-page";
@@ -51,7 +50,6 @@ function Router() {
       <ProtectedRoute path="/admin/users" component={UsersPage} />
       <ProtectedRoute path="/admin/settings" component={SettingsPage} />
       <ProtectedRoute path="/admin/promos" component={PromoManagementPage} />
-      <ProtectedRoute path="/admin/integrations" component={IntegrationsPage} />
 
       <ProtectedRoute path="/admin/two-factor-setup" component={TwoFactorSetupPage} />
       <ProtectedRoute path="/admin/two-factor-setup-new" component={TwoFactorSetupNewPage} />
