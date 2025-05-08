@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -82,24 +82,26 @@ export default function IntegrationsPage() {
       const response = await fetch('/api/integrations/email');
       if (!response.ok) throw new Error('Errore nel recupero della configurazione SMTP');
       return response.json();
-    },
-    onSuccess: (data) => {
-      if (data) {
-        smtpForm.reset({
-          id: data.id,
-          enabled: data.enabled,
-          provider: data.provider,
-          host: data.host,
-          port: data.port,
-          secure: data.secure,
-          username: data.username,
-          password: data.password,
-          fromEmail: data.fromEmail,
-          sendgridApiKey: data.sendgridApiKey,
-        });
-      }
     }
   });
+  
+  // Update form when data is loaded
+  React.useEffect(() => {
+    if (smtpConfig) {
+      smtpForm.reset({
+        id: smtpConfig.id,
+        enabled: smtpConfig.enabled,
+        provider: smtpConfig.provider,
+        host: smtpConfig.host,
+        port: smtpConfig.port,
+        secure: smtpConfig.secure,
+        username: smtpConfig.username,
+        password: smtpConfig.password,
+        fromEmail: smtpConfig.fromEmail,
+        sendgridApiKey: smtpConfig.sendgridApiKey,
+      });
+    }
+  }, [smtpConfig, smtpForm]);
 
   // Update SMTP configuration
   const updateSmtpConfig = useMutation({
